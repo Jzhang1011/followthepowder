@@ -1,16 +1,16 @@
 // ski-data: scheduled data refresh + JSON API for SkiDay (https://followthepowder.com; old madeformykids.com/ski).
 //   Cron -> fetch upstream (Open-Meteo, CDOT COtrip, NWS, resort feeds) -> merge with last good -> KV.
 //   GET  /api/latest.json | intel.json | cameras.json | status.json   (followthepowder.com/api/* via the followthepowder Worker;
-//        madeformykids.com/ski/api/* via madeformykids-landing during the overlap)
-//   POST /ski/api/run?sources=weather,roads   Authorization: Bearer <REFRESH_TOKEN>
+//        madeformykids.com/ski/api/* via madeformykids-landing, for old links)
+//   POST /api/run?sources=weather,roads   Authorization: Bearer <REFRESH_TOKEN>
 import { DurableObject } from 'cloudflare:workers';
-import bundledCfg from '../../ski/data/resorts.json';
+import bundledCfg from '../../../data/resorts.json';
 import STATS_HTML from './stats.html';
-import { SOURCES, runSources, toLatest, toIntel, toCameras } from '../../ski/scripts/collect.mjs';
+import { SOURCES, runSources, toLatest, toIntel, toCameras } from '../../../scripts/collect.mjs';
 import { fetchReport } from './reports.js';
 import { BATCHES, refreshCatalogBatch, serveCatalogConditions, fetchForecast, catalogIds } from './catalog.js';
 
-const CFG_URL = 'https://raw.githubusercontent.com/Jzhang1011/MadeForMyKids/main/ski/data/resorts.json';
+const CFG_URL = 'https://raw.githubusercontent.com/Jzhang1011/followthepowder/main/data/resorts.json';
 const KEYS = ['weather', 'roads', 'alerts', 'cameras', 'camsall', 'intel', 'cotrip'];
 /** What a cron tick (every 15 min, UTC) refreshes. */
 function plan(d) {
@@ -181,7 +181,7 @@ export default {
       return new Response(STATS_HTML, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex', 'Referrer-Policy': 'no-referrer' } });
     }
     const m = url.pathname.match(/^\/(?:ski\/)?api\/([a-z-]+)(?:\.json)?$/);
-    if (!m) return json({ error: 'not found', endpoints: ['/ski/api/latest.json', '/ski/api/intel.json', '/ski/api/cameras.json', '/ski/api/status.json'] }, 404);
+    if (!m) return json({ error: 'not found', endpoints: ['/api/latest.json', '/api/intel.json', '/api/cameras.json', '/api/status.json', '/api/catalog-conditions.json'] }, 404);
     const name = m[1];
     if (name === 'event') return request.method === 'POST' ? handleEvent(request, env) : json({ error: 'POST only' }, 405);
     if (name === 'stats') {

@@ -1,4 +1,4 @@
-// Shared data collection for the ski dashboard. Used by the Cloudflare Worker (ski-data/) and by
+// Shared data collection for the ski dashboard. Used by the Cloudflare Worker (workers/ski-data/) and by
 // the GitHub Action backup (scripts/fetch-data.mjs). Dependency-free; only needs fetch().
 // Rule: a failed source never replaces good data with nothing. mergeSource() keeps the last good
 // value and its own fetchedAt, and records the failure (status 'stale' = serving last good copy,

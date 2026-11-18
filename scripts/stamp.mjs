@@ -1,6 +1,6 @@
 // Cache-busting: stamp ?v=<content hash> onto the CSS/JS URLs in index.html and the ES-module imports,
 // so iOS Safari (which caches aggressively) never mixes an old app.js with a new index.html or vice versa.
-// Run before committing front-end changes:  node ski/scripts/stamp.mjs
+// Run before committing front-end changes:  node scripts/stamp.mjs
 import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';

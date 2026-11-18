@@ -1,9 +1,9 @@
 import { openMeteoUrl, splitOpenMeteo, dailyRows, hourlyRows, weatherEmoji, carsUrl, slimEvents, EVENT_CLASSES,
-  nwsUrl, slimAlerts, verdictFor, outfitFor, fmt } from './core.js?v=a51aa11193';
-import { STR, PACK_DEFAULT } from './i18n.js?v=a51aa11193';
-import { selectCameras, routeSegments, inCO } from './route.js?v=a51aa11193';
-import { loadStart, saveStart, isDefaultStart, getRoute, mountStartUI } from './start.js?v=a51aa11193';
-import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic } from './discover.js?v=a51aa11193';
+  nwsUrl, slimAlerts, verdictFor, outfitFor, fmt } from './core.js?v=0e0897c875';
+import { STR, PACK_DEFAULT } from './i18n.js?v=0e0897c875';
+import { selectCameras, routeSegments, inCO } from './route.js?v=0e0897c875';
+import { loadStart, saveStart, isDefaultStart, getRoute, mountStartUI } from './start.js?v=0e0897c875';
+import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic } from './discover.js?v=0e0897c875';
 
 const LS = {
   get: (k, d) => { try { const v = localStorage.getItem('ski.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -71,7 +71,7 @@ async function getJson(url, ms = 20000) {
 
 /* ---------- Data loading ---------- */
 
-// Data comes from the ski-data Worker (api/ = /ski/api/*: refreshed on a schedule into KV, cached 60 s),
+// Data comes from the ski-data Worker (api/ = /api/*: refreshed on a schedule into KV, cached 60 s),
 // falling back to the git snapshot (data/*.json, GitHub Action backup). The browser only calls the
 // upstream APIs itself when neither copy is fresh enough (see LIMIT), so visitors share one fetch.
 const API = 'api/';

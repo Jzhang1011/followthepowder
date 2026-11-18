@@ -1,11 +1,11 @@
-// Resort catalog conditions: Open-Meteo model summaries for every resort in ski/data/catalog.json.
+// Resort catalog conditions: Open-Meteo model summaries for every resort in data/catalog.json.
 //   Cron: one of BATCHES slices per 15-min tick, so each resort refreshes hourly and every request stays small
 //   (one multi-location Open-Meteo call, unixtime, two points per resort: summit + mid-mountain).
-//   GET /ski/api/catalog-conditions.json   merged slices (+ resort-reported status where we have a feed)
-//   GET /ski/api/forecast.json?r=<id>      7-day hourly/daily forecast for one catalog resort (edge-cached 30 min)
-import bundledCatalog from '../../ski/data/catalog.json';
+//   GET /api/catalog-conditions.json   merged slices (+ resort-reported status where we have a feed)
+//   GET /api/forecast.json?r=<id>      7-day hourly/daily forecast for one catalog resort (edge-cached 30 min)
+import bundledCatalog from '../../../data/catalog.json';
 
-const CAT_URL = 'https://raw.githubusercontent.com/Jzhang1011/MadeForMyKids/main/ski/data/catalog.json';
+const CAT_URL = 'https://raw.githubusercontent.com/Jzhang1011/followthepowder/main/data/catalog.json';
 export const BATCHES = 4;
 const OM_FREE = 'https://api.open-meteo.com/v1/forecast';
 const OM_PAID = 'https://customer-api.open-meteo.com/v1/forecast';

@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-// Backup snapshot (GitHub Action): writes ski/data/latest.json, intel.json, cameras.json — the
-// fallback the page uses when the ski-data Worker (/ski/api/*) is unreachable.
+// Backup snapshot (GitHub Action): writes data/latest.json, intel.json, cameras.json — the
+// fallback the page uses when the ski-data Worker (/api/*) is unreachable.
 // Never invents data and never overwrites good data with nothing: each source is merged with the
 // previous file (last good value + its own fetchedAt kept, failure recorded). Exits 1 if any source
 // failed, so the workflow run goes red and GitHub emails the repo owner.
-//   node ski/scripts/fetch-data.mjs              all sources
-//   node ski/scripts/fetch-data.mjs --intel-only resort intel only
+//   node scripts/fetch-data.mjs              all sources
+//   node scripts/fetch-data.mjs --intel-only resort intel only
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';

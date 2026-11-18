@@ -1,9 +1,58 @@
-# SkiDay: resort discovery + Go / No-Go dashboard
+# SkiDay — followthepowder.com
 
-Live: https://followthepowder.com/ (www and the old https://madeformykids.com/ski/ 301 here)
+Live: https://followthepowder.com/ (www.followthepowder.com and the old https://madeformykids.com/ski/ 301 here)
 
-A self-contained, no-build static app (HTML + ES modules) that answers "do we drive up today?"
-for a Denver (DEN) → Arapahoe Basin / Copper Mountain / Steamboat ski trip.
+A no-build static web app (HTML + ES modules) for "should we go skiing today?": a discovery page for ~77 North
+American resorts (search, Near Me / Favorites / Best Conditions / Explore, list + map, compare) and a full Go / No-Go
+dashboard for A-Basin, Copper and Steamboat (verdict, weather, CDOT roads + cameras, what to wear, cams, packing).
+English / 中文, °F·in / °C·cm, built for iPhone Safari first.
+
+## Repo layout
+| Path | What |
+|---|---|
+| `index.html`, `css/`, `js/`, `img/`, `fonts/`, `vendor/` | The site. Repo root = site root; all paths are relative. |
+| `data/` | `resorts.json` (full-dashboard resorts, routes, cams), `catalog.json` (discovery catalog), and the fallback snapshots `latest.json`, `intel.json`, `cameras.json` written by the backup Action. |
+| `scripts/` | `stamp.mjs` (cache-busting), `fetch-data.mjs` + `collect.mjs` (data collection shared with the Worker). |
+| `workers/site/` | `followthepowder` Worker: custom domains followthepowder.com + www, proxies GitHub Pages, `/api/*` → ski-data. |
+| `workers/ski-data/` | `ski-data` Worker: 15-min cron refresh into KV, JSON API, anonymous event counter + stats page. |
+| `.github/workflows/data-refresh.yml` | Daily backup data refresh (commits `data/*.json`). |
+
+## How it is served / deploy
+- **Site**: GitHub Pages of this repo (branch `main`, folder `/`, `.nojekyll`) at `jzhang1011.github.io/followthepowder/`.
+  The `followthepowder` Worker (`workers/site`) owns followthepowder.com + www (Workers Custom Domains, so DNS
+  records and edge certs are managed by Cloudflare) and proxies every non-API path to Pages. **Pushing to `main` is
+  the only deploy step for the site**, including the Action's data commits.
+- **API**: `/api/*` goes to the `ski-data` Worker through a service binding. Stats page:
+  https://followthepowder.com/api/stats.html (asks for the refresh token; the token is never in the repo).
+- **Workers** deploy by hand only when their code changes: `cd workers/site && npx wrangler@4 deploy`,
+  `cd workers/ski-data && npx wrangler@4 deploy` (Cloudflare account of wealthlanding001@gmail.com). There is no
+  CI deploy, so the repo needs no Cloudflare secret. (Wrangler wants a `package.json` + `node_modules/` in the
+  folder it runs from; `workers/site` has one, for ski-data run `mkdir -p node_modules` first. Both are git-ignored.)
+- Redirects: www → apex 301 (query kept); `/ski/...` on this host → root; old `madeformykids.com/ski/*` → here
+  (handled by the madeformykids-landing Worker in Jzhang1011/MadeForMyKids; its `/ski/api/*` still proxies to ski-data).
+- Repo internals (`/workers/`, `/scripts/`, `/.github/`, `/README.md`) are 404 on followthepowder.com.
+
+## Cache-busting / iOS — run `stamp.mjs`
+After editing anything in `js/` or `css/`, run `node scripts/stamp.mjs` before committing. It stamps a content hash
+(`?v=…`) on `css/ski.css`, `js/app.js` and every module import, so Safari can't mix cached old and new files.
+
+## Data jobs
+- **Primary**: `ski-data` Worker cron (`*/15`), see `workers/ski-data/README.md`. The page reads `api/*`.
+- **Fallback**: if an `api/` call fails, the page reads `data/latest.json`, `data/intel.json`, `data/cameras.json`.
+  `.github/workflows/data-refresh.yml` refreshes them daily at 13:10 UTC (6:10 AM MST) with `node scripts/fetch-data.mjs`
+  and commits to `main` with the built-in `GITHUB_TOKEN` (`contents: write`); that push also republishes Pages.
+  Run it from the Actions tab (**Run workflow**) or locally. A failed source keeps its last good data and the run goes
+  red (GitHub emails the owner).
+
+## Secrets
+| Where | Name | Notes |
+|---|---|---|
+| ski-data Worker (`wrangler secret put`) | `REFRESH_TOKEN` | Bearer for `POST /api/run` and the stats page. Local copy only at `~/.config/ski-data-refresh-token` on the maintainer's machine — never commit it. |
+| ski-data Worker (optional) | `OPEN_METEO_KEY`, `COTRIP_API_KEY` | Not set (free tier). |
+| GitHub Actions | none | The data Action uses the automatic `GITHUB_TOKEN`. |
+
+Privacy: the event counter stores only allowlisted event names + labels and daily counts — no IPs, cookies or IDs;
+`start_select` records `preset id` or `custom`, never an address or coordinates.
 
 ## Sections
 - **Verdict** – GO / CAUTION / NO-GO per resort with itemized reasons (CDOT chain & traction law,
@@ -27,31 +76,14 @@ for a Denver (DEN) → Arapahoe Basin / Copper Mountain / Steamboat ski trip.
 The browser fetches everything live on load and every 10 minutes. `data/latest.json` is a
 morning snapshot used as a fallback if a live call fails. A failed source shows "unavailable" — nothing is invented.
 
-## Morning refresh
-`.github/workflows/ski-refresh.yml` runs `node ski/scripts/fetch-data.mjs` daily at 12:30 UTC
-(5:30 AM MST) and commits `ski/data/latest.json` to `main`. Run it by hand from the Actions tab
-(**Run workflow**) or locally with `node ski/scripts/fetch-data.mjs`.
-
 ## Adding resorts (Ikon expansion)
 Everything is driven by `data/resorts.json`: add a resort (lat/lon, base/summit elevation, webcams,
 links) and its `route` as a list of `segments` (route names + bbox). Cameras reference COtrip camera IDs.
 `shop.enabled` reserves a nav slot for a future gear shop.
 
-## How it is served
-Code stays in this folder (`ski/` of Jzhang1011/MadeForMyKids), published by GitHub Pages
-(private.madeformykids.com/ski/). The `followthepowder` Worker (`../followthepowder`, custom domains
-followthepowder.com + www) proxies `followthepowder.com/<path>` → Pages `/ski/<path>` and sends `/api/*` to the
-ski-data Worker, so a push to `main` is still the only deploy step for the site. All asset paths are relative,
-so the same files work at `/` (followthepowder.com) and under `/ski/` (Pages).
-- www.followthepowder.com → 301 apex; `/ski/...` on the new host → 301 to the root path.
-- madeformykids.com/ski/* pages (incl. `?resort=`) → 301 https://followthepowder.com/* (madeformykids-landing);
-  its `/ski/` assets and `/ski/api/*` still answer for tabs opened before the move.
-- Stats page: https://followthepowder.com/api/stats.html (token prompt; token is not in the repo).
-Canonical URL: https://followthepowder.com/
-
 ## v2: resort intel (lifts, runs, hours, snow report)
 
-`ski/js/intel.js` normalizes each resort's own public report into one shape
+`js/intel.js` normalizes each resort's own public report into one shape
 (`lifts`, `trails`, `terrain`, `hours`, `status`, `baseCm`, `snow.h24/h48/d7/season`, `surface`, `asOf`).
 Provider per resort is set in `data/resorts.json` → `resorts[].intel`:
 
@@ -61,9 +93,9 @@ Provider per resort is set in `data/resorts.json` → `resorts[].intel`:
 | `powdr` | Copper | api.coppercolorado.com/api/v1/dor (needs Origin header → server-side only) |
 | `mtnpowder` | Steamboat | mtnpowder.com/feed?resortId=6 |
 
-`node ski/scripts/fetch-data.mjs --intel-only` writes `data/intel.json` only. The GitHub Action runs it hourly
-13–23 UTC; the full weather/roads snapshot still runs at 12:30 UTC. Missing fields render as "n/a" — never guessed.
-Resort photos in `ski/img/` are from Wikimedia Commons (credits in `resorts.json` and the page footer).
+`node scripts/fetch-data.mjs --intel-only` writes `data/intel.json` only. The Worker refreshes intel hourly
+13–23 UTC. Missing fields render as "n/a" — never guessed.
+Resort photos in `img/` are from Wikimedia Commons (credits in `resorts.json` and the page footer).
 
 ## v3: starting location, dynamic route, route cameras, design system
 
@@ -82,8 +114,3 @@ Resort photos in `ski/img/` are from Wikimedia Commons (credits in `resorts.json
 - **Map**: Leaflet 1.9.4 (self-hosted in `vendor/leaflet`, BSD-2) + OSM tiles, lazy-loaded when the roads section is near.
 - **Design**: navy #14283F (nav, hero, verdict panel), glacier #DCEAF3, snow #F7F9FB, orange #F28C38, green #25845A,
   Inter (self-hosted variable font, OFL) — white cards for planning/weather sections.
-
-## Cache-busting / iOS
-After editing anything in `ski/js` or `ski/css`, run `node ski/scripts/stamp.mjs` before committing. It stamps a
-content hash (`?v=…`) on `css/ski.css`, `js/app.js` and every module import, so Safari can't mix cached old and new
-files. Each section renders independently (`safe()`), so one failing feed or feature can't blank the page.
