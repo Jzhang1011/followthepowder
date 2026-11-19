@@ -514,3 +514,23 @@ section{scroll-margin-top:70px}
   .tiles.t6 .tile b{font-size:22px}
   .rsrc{white-space:normal}
 }
+/* ===== v5: alternatives ===== */
+.altsec h2{margin-bottom:4px}
+.alts{list-style:none;margin:14px 0 10px;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.alt{border:1px solid #E3EAF0;border-radius:14px;padding:14px;background:#fff;display:flex;flex-direction:column;gap:8px;min-width:0}
+.alt-h{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.alt-h a{color:var(--navy);text-decoration:none;font-size:1.05rem;line-height:1.25}
+.alt-h a:hover{text-decoration:underline}
+.alt-sc{background:var(--navy);color:#fff;border-radius:9px;font-weight:800;font-size:.95rem;padding:3px 8px;flex:none}
+.alt-m{margin:-4px 0 0;color:#5f7186;font-size:.85rem}
+.alt-chips{display:flex;flex-wrap:wrap;gap:6px}
+.alt-st{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr) minmax(0,1fr);gap:6px;border-top:1px solid #EEF2F6;padding-top:8px}
+.alt-st span{display:flex;flex-direction:column;min-width:0}
+.alt-st b{font-size:.95rem;color:var(--navy)}
+.alt-st b.nr{font-size:.78rem;color:#7a8a9b;font-weight:600}
+.alt-st small{font-size:.72rem;color:#5f7186;line-height:1.25}
+.alt-why{margin:0;font-size:.9rem;color:#24384f}
+.alt-go{align-self:flex-start;margin-top:auto}
+.alt-none{background:#F7F9FB;border:1px solid #E3EAF0;border-radius:12px;padding:12px 14px;margin:12px 0}
+.alt-none p{margin:0 0 4px}
+.alt-go{text-decoration:none;display:inline-flex;align-items:center}

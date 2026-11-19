@@ -1,5 +1,5 @@
 // Starting location: input with Photon autocomplete, presets, browser geolocation; OSRM routing with cache + throttle.
-import { buildRoute, osrmRouteUrl } from './route.js?v=011555dd97';
+import { buildRoute, osrmRouteUrl, osrmTableUrl } from './route.js?v=02407861d4';
 
 const LSK = 'ski.start', RCK = 'ski.routes';
 const round = (v, n = 3) => +(+v).toFixed(n); // ~100 m: enough for routing, kinder to privacy
@@ -45,6 +45,33 @@ export async function getRoute(cfg, start, resort) {
       route.cum = route.cum.map(v => Math.round(v));
       const c = readCache(); c[key] = { at: Date.now(), route }; writeCache(c);
       return route;
+    } finally { clearTimeout(tm); inflight.delete(key); }
+  })();
+  inflight.set(key, p);
+  return p;
+}
+
+/** Drive estimates to a few resorts in ONE OSRM table request (alternatives list); cached 1 day, same 1 req/s throttle. */
+const TBK = 'ski.alttab';
+export async function getTable(cfg, start, resorts) {
+  const from = { lat: round(start.lat), lon: round(start.lon) };
+  const key = `${from.lat},${from.lon}>${resorts.map(r => r.id).sort().join(',')}`;
+  let c = {}; try { c = JSON.parse(localStorage.getItem(TBK)) || {}; } catch {}
+  if (c[key] && Date.now() - c[key].at < 864e5) return c[key].v;
+  if (inflight.has(key)) return inflight.get(key);
+  const p = (async () => {
+    await throttle();
+    const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 15000);
+    try {
+      const res = await fetch(osrmTableUrl(cfg.sources.osrm, from, resorts.map(r => r.parking || { lat: r.lat, lon: r.lon })), { signal: ctl.signal });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const j = await res.json(); if (j.code !== 'Ok') throw new Error(j.code);
+      const v = Object.fromEntries(resorts.map((r, i) => [r.id, j.durations?.[0]?.[i + 1] != null ? { durS: j.durations[0][i + 1], distM: j.distances?.[0]?.[i + 1] ?? null } : null]));
+      let c2 = {}; try { c2 = JSON.parse(localStorage.getItem(TBK)) || {}; } catch {}
+      c2[key] = { at: Date.now(), v };
+      const keep = Object.keys(c2).sort((a, b) => c2[b].at - c2[a].at).slice(0, 6);
+      try { localStorage.setItem(TBK, JSON.stringify(Object.fromEntries(keep.map(k => [k, c2[k]])))); } catch {}
+      return v;
     } finally { clearTimeout(tm); inflight.delete(key); }
   })();
   inflight.set(key, p);

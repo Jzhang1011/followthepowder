@@ -1,9 +1,9 @@
 import { openMeteoUrl, splitOpenMeteo, dailyRows, hourlyRows, weatherEmoji, carsUrl, slimEvents, EVENT_CLASSES,
-  nwsUrl, slimAlerts, verdictFor, outfitFor, fmt } from './core.js?v=011555dd97';
-import { STR, PACK_DEFAULT } from './i18n.js?v=011555dd97';
-import { selectCameras, routeSegments, inCO } from './route.js?v=011555dd97';
-import { loadStart, saveStart, isDefaultStart, getRoute, mountStartUI } from './start.js?v=011555dd97';
-import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan } from './discover.js?v=011555dd97';
+  nwsUrl, slimAlerts, verdictFor, outfitFor, fmt } from './core.js?v=02407861d4';
+import { STR, PACK_DEFAULT } from './i18n.js?v=02407861d4';
+import { selectCameras, routeSegments, inCO } from './route.js?v=02407861d4';
+import { loadStart, saveStart, isDefaultStart, getRoute, mountStartUI } from './start.js?v=02407861d4';
+import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts } from './discover.js?v=02407861d4';
 
 const LS = {
   get: (k, d) => { try { const v = localStorage.getItem('ski.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -738,7 +738,7 @@ function renderAll() {
   safe('start', () => { state.startUI?.relabel(); updateStartMsg(); });
   safe('verdict', renderVerdict); safe('mountains', renderResortCards); safe('intel', renderIntel); safe('outlook', renderOutlook);
   safe('weather', renderWeather); safe('roads', renderRoads); safe('wear', renderWear); safe('resorts', renderResorts);
-  safe('pack', renderPack); safe('sources', renderSources);
+  safe('pack', renderPack); safe('alts', () => renderAlts(resort().id, $('#alts'))); safe('sources', renderSources);
 }
 
 function bind() {
@@ -823,7 +823,7 @@ function goHome() {
   try { state.start = loadStart(state.cfg); } catch { state.start = { ...state.cfg.trip.origin, kind: 'preset' }; }
   try { if ($('#start')) state.startUI = mountStartUI($('#start'), { cfg: state.cfg, t, L, getStart: () => state.start, onChange: setStart }); }
   catch (e) { console.warn('[ski] start UI failed:', e); }
-  initDiscover({ state, L, getJson, track, loadLeaflet, getStart: () => state.start, setStart, open: openResort, home: goHome, plan: openPlan, view: () => state.view });
+  initDiscover({ state, L, getJson, track, loadLeaflet, getStart: () => state.start, setStart, open: openResort, loadRoads: async () => { if (!state.roads.data) { try { await loadServer(); } catch {} } return state.roads; }, home: goHome, plan: openPlan, view: () => state.view });
   try { bind(); } catch (e) { console.warn('[ski] bind failed:', e); }
   document.querySelector('.brand')?.addEventListener('click', e => { e.preventDefault(); goHome(); });
   $$('#dash-back').addEventListener('click', e => { e.preventDefault(); goHome(); });
@@ -838,5 +838,5 @@ function goHome() {
   await route();
   window.__skiReady = true;
   track('page_view', state.lang);
-  if (isFull) { await Promise.all([catP, condP]); }
+  if (isFull) { await Promise.all([catP, condP]); if (state.view === 'dash') safe('alts', () => renderAlts(resort().id, $('#alts'))); }
 })();

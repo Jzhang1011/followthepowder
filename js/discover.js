@@ -1,8 +1,8 @@
 // Resort discovery (default home) + basic resort view for catalog resorts without a full dashboard.
 // Data: data/catalog.json (static, verified) + api/catalog-conditions.json (Open-Meteo model, refreshed hourly by
 // the ski-data Worker; resort-published base depth / terrain open / lifts / 24 h snow where SkiDay reads a public feed) + api/forecast.json?r=<id> (basic view).
-import { fmt, weatherEmoji } from './core.js?v=011555dd97';
-import { getRoute } from './start.js?v=011555dd97';
+import { fmt, weatherEmoji, chainLevel } from './core.js?v=02407861d4';
+import { getRoute, getTable } from './start.js?v=02407861d4';
 
 const S = {
   en: {
@@ -76,6 +76,39 @@ const S = {
     p_note: '这里不会为你预订或保存任何内容。上线后将使用与 SkiDay 其他部分相同的实时数据。', p_back: '← 返回最佳雪况'
   }
 };
+// Alternatives ("Not looking great here?") — stage 2.
+Object.assign(S.en, {
+  a_h: 'Not looking great here? Compare nearby mountains.',
+  a_lead: 'Open resorts near {0} that look better or comparable today, ranked by ski-day score, drive from {1}, pass match and road reports.',
+  a_none: 'Nothing nearby looks better than {0} right now.',
+  a_none_why: 'Checked {0} resorts within reach: {1}.',
+  a_x_closed: '{0} closed', a_x_nr: '{0} without a report SkiDay can read', a_x_worse: '{0} looking worse today', a_x_road: '{0} with a CDOT closure or chain law nearby', a_x_wind: '{0} with strong summit gusts',
+  a_drive_est: '≈ {0}', a_drive_osrm: 'drive · road estimate, no traffic', a_drive_line: 'drive · rough straight-line estimate',
+  a_pass_same: 'Same pass ({0})', a_pass_diff: 'Different pass ({0})', a_pass_ticket: 'Lift ticket',
+  a_terrain: 'terrain open', a_snow: 'new 24 h', a_view: 'View conditions',
+  a_r_open: 'Open with {0} lifts running while {1} is closed.', a_r_notlim: 'More of the mountain running: {0} lifts vs {1} here.',
+  a_r_terrain: '{0} of terrain open vs {1} here.', a_r_snow: '{0} of new snow in 24 h vs {1} here.', a_r_lifts: '{0} lifts running vs {1} here.',
+  a_r_closer: 'Similar conditions and about {0} less driving.', a_r_closer_line: 'Similar conditions and about {0} closer as the crow flies.', a_r_comp: 'Comparable conditions today.', a_r_pass: ' Same pass as {0}.',
+  a_road_chain: 'CDOT: traction/chain law near the resort', a_road_na: 'Road reports: Colorado only (CDOT)',
+  a_note: 'Closed resorts and resorts without a readable report are never suggested, however much snow they have. Snow and status come from the resorts’ own reports where available (otherwise the Open-Meteo model). CDOT road reports cover Colorado only and are checked within ~20 km of each resort, not along your whole route. Drive times are estimates without traffic. No crowd data.',
+  a_loading: 'Loading nearby resorts…'
+});
+Object.assign(S.zh, {
+  a_h: '这里不太理想？对比附近的雪山。',
+  a_lead: '{0} 附近今天看起来更好或相当的营业雪场，按滑雪日评分、从 {1} 出发的车程、雪票匹配和路况排序。',
+  a_none: '附近暂时没有比 {0} 更好的选择。',
+  a_none_why: '已检查可到达范围内的 {0} 个雪场：{1}。',
+  a_x_closed: '{0} 个公布关闭', a_x_nr: '{0} 个没有 SkiDay 可读取的报告', a_x_worse: '{0} 个今天看起来更差', a_x_road: '{0} 个附近有 CDOT 封路或链条法规', a_x_wind: '{0} 个山顶阵风强',
+  a_drive_est: '约 {0}', a_drive_osrm: '车程 · 道路估算，不含路况', a_drive_line: '车程 · 按直线粗略估算',
+  a_pass_same: '同一雪票（{0}）', a_pass_diff: '不同雪票（{0}）', a_pass_ticket: '单买缆车票',
+  a_terrain: '地形开放', a_snow: '24小时新雪', a_view: '查看雪况',
+  a_r_open: '今天营业，缆车运行 {0}，而{1}未开放。', a_r_notlim: '开放更多：缆车 {0}，这里 {1}。',
+  a_r_terrain: '地形开放 {0}，这里 {1}。', a_r_snow: '24小时新雪 {0}，这里 {1}。', a_r_lifts: '缆车运行 {0}，这里 {1}。',
+  a_r_closer: '雪况相近，车程少约 {0}。', a_r_closer_line: '雪况相近，直线距离近约 {0}。', a_r_comp: '今天雪况相当。', a_r_pass: ' 与{0}同一雪票。',
+  a_road_chain: 'CDOT：雪场附近有牵引力/链条法规', a_road_na: '路况：仅覆盖科罗拉多（CDOT）',
+  a_note: '无论降雪多少，都不会推荐已关闭或没有可读取报告的雪场。降雪和营业状态尽量来自雪场自己的报告（否则用 Open-Meteo 模型）。CDOT 路况只覆盖科罗拉多，检查的是每个雪场约 20 公里范围内，而不是你的整条路线。车程为不含路况的估算。没有人流数据。',
+  a_loading: '正在加载附近雪场…'
+});
 const STATE_NAMES = { CO: 'Colorado', UT: 'Utah', CA: 'California', NV: 'Nevada', 'CA/NV': 'California Nevada', WA: 'Washington', OR: 'Oregon', AK: 'Alaska', WY: 'Wyoming', MT: 'Montana', ID: 'Idaho', NM: 'New Mexico', AB: 'Alberta', BC: 'British Columbia', QC: 'Quebec', ON: 'Ontario', VT: 'Vermont', ME: 'Maine', NH: 'New Hampshire', NY: 'New York' };
 const STATE_ZH = { CO: '科罗拉多', UT: '犹他', CA: '加州', NV: '内华达', 'CA/NV': '加州 内华达', WA: '华盛顿州', OR: '俄勒冈', AK: '阿拉斯加', WY: '怀俄明', MT: '蒙大拿', ID: '爱达荷', NM: '新墨西哥', AB: '阿尔伯塔', BC: '不列颠哥伦比亚', QC: '魁北克', ON: '安大略', VT: '佛蒙特', ME: '缅因', NH: '新罕布什尔', NY: '纽约' };
 
@@ -698,8 +731,10 @@ export function renderBasic() {
       <ul class="blinks"><li><a href="${esc(r.url)}" target="_blank" rel="noopener">🌐 ${esc(tr('b_site'))} ↗</a></li><li><a href="${esc(r.url)}" target="_blank" rel="noopener">🎿 ${esc(tr('b_report'))} ↗</a></li></ul>
       <p class="small muted">${esc(tr('b_elev'))}: ${fmt.elevRange(r.baseElevM, r.summitElevM, u)} · ${esc(tr('b_src'))}: <a href="${esc(r.src)}" target="_blank" rel="noopener">Wikipedia</a> · ${esc(tr('b_pass'))}: ${esc(passTxt(r))} (ikonpass.com / epicpass.com, 2026/27)</p>
     </section>
+    <section class="block card altsec" id="b-alts"></section>
   </main>`;
   drawBasicMap(r);
+  renderAlts(r.id, document.getElementById('b-alts'));
 }
 function drawBasicMap(r) {
   const el = document.getElementById('b-map'); if (!el) return;
@@ -731,9 +766,113 @@ export async function showBasic(id) {
   const r = D.byId.get(id);
   const jobs = [];
   if (!D.cond) jobs.push(loadConditions(true).finally(() => { if (D.basic.id === id && X.view() === 'basic') renderBasic(); }));
+  if (r.state === 'CO' && !X.state.roads?.data && X.loadRoads) jobs.push(X.loadRoads().finally(() => { if (D.basic.id === id && X.view() === 'basic') renderBasic(); }));
   if (!B.fc) jobs.push(X.getJson(`api/forecast.json?r=${encodeURIComponent(id)}`, 20000).then(j => { if (D.basic.id === id) B.fc = j; }).catch(() => { if (D.basic.id === id) B.fcErr = true; }).finally(() => { if (D.basic.id === id && X.view() === 'basic') renderBasic(); }));
   if (!B.route) jobs.push(getRoute(X.state.cfg, startPt(), r).then(rt => { if (D.basic.id === id) B.route = rt; }).catch(() => { if (D.basic.id === id) B.routeErr = true; }).finally(() => { if (D.basic.id === id && X.view() === 'basic') renderBasic(); }));
   await Promise.allSettled(jobs);
+}
+
+
+/* ================= Alternatives: "Not looking great here? Compare nearby mountains." ================= */
+// Pure ranking over data SkiDay already has (catalog report + Open-Meteo summary + CDOT events). Rules:
+//  - never suggest a resort that reports itself closed, or one with no readable status (can't confirm it's open);
+//  - skip resorts with a full CDOT closure or passenger chain law within ~20 km (Colorado only), or summit gusts >= 80 km/h;
+//  - keep only options that are better (open vs closed, more terrain/lifts/new snow, or closer with similar conditions) or comparable
+//    (ski-day score within 3 points), never clearly worse on terrain;
+//  - rank by ski-day score (already includes distance from the start) + 6 for the same pass − 5 for a traction law nearby.
+const ALT_NEAR_KM = 250, GUST_HOLD = 80;
+function roadNear(r) {
+  if (r.state !== 'CO') return { na: true };
+  const ev = X.state.roads?.data; if (!ev) return { unknown: true };
+  const near = ev.filter(e => (e.geo || []).some(([lon, lat]) => hav({ lat, lon }, r) <= 20));
+  const closure = near.filter(e => e.cls === 'roadClosures' && /closed|closure/i.test(e.title) && !/lane|shoulder|ramp|seasonal/i.test(e.title) && !(e.start && e.start > Date.now() + 2 * 3600e3));
+  const chains = near.filter(e => e.cls === 'chainLaws').map(chainLevel);
+  return { closure: closure.length, chainNogo: chains.filter(l => l === 'nogo').length, chain: chains.filter(l => l === 'caution').length };
+}
+const minTxt = m => m < 60 ? (X.state.lang === 'zh' ? `${m} 分钟` : `${m} min`) : durTxt(m);
+const lineMin = km => Math.round(km * 1.3 / 80 * 60);     // straight line × 1.3 road factor at ~80 km/h average
+function passInfo(cur, r) {
+  const same = r.passes.filter(p => cur.passes.includes(p)).map(p => p[0].toUpperCase() + p.slice(1));
+  if (same.length) return { cls: 'go', txt: tr('a_pass_same', same.join(' · ')), same: true };
+  if (!r.passes.length) return { cls: 'na', txt: tr('a_pass_ticket') };
+  return { cls: 'caution', txt: tr('a_pass_diff', passTxt(r)) };
+}
+export function altCandidates(curId, drive = null) {
+  const cur = D.byId.get(curId); if (!cur || !D.cond) return null;
+  const sc0 = score(cur)?.total ?? 0, km0 = distKm(cur), o0 = opStatus(cur), p0 = report(cur);
+  const maxKm = km0 + 150;
+  const pool = D.cat.resorts.filter(r => r.id !== curId && hav(r, cur) <= ALT_NEAR_KM && distKm(r) <= maxKm);
+  const x = { closed: 0, nr: 0, worse: 0, road: 0, wind: 0 }, out = [];
+  for (const r of pool) {
+    const p = report(r), o = opStatus(r), c = cond(r), sc = score(r);
+    if (o.cls === 'nogo') { x.closed++; continue; }
+    if (o.cls === 'na' || !sc) { x.nr++; continue; }
+    const rd = roadNear(r);
+    if (rd.closure || rd.chainNogo) { x.road++; continue; }
+    if ((c?.summit?.gust ?? 0) >= GUST_HOLD) { x.wind++; continue; }
+    const adv = [], u = U();
+    const pc = pctOpen(r), pc0 = pctOpen(cur), s = snow24(r), s0 = snow24(cur);
+    const lif = p?.lifts, lif0 = p0?.lifts;
+    if (o0.cls === 'nogo') adv.push(['open', tr('a_r_open', lif?.total ? `${lif.open}/${lif.total}` : '?', cur.name)]);
+    else if (o0.cls === 'caution' && o.cls === 'go' && lif && lif0) adv.push(['notlim', tr('a_r_notlim', `${lif.open}/${lif.total}`, `${lif0.open}/${lif0.total}`)]);
+    if (pc != null && pc0 != null && pc - pc0 >= 10) adv.push(['terrain', tr('a_r_terrain', pctTxt(p), pctTxt(p0))]);
+    if (s != null && s0 != null && s - s0 >= 5) adv.push(['snow', tr('a_r_snow', fmt.snow(s, u), fmt.snow(s0, u))]);
+    if (lif && lif0 && o0.cls !== 'nogo' && lif.open - lif0.open >= 3 && !adv.some(a => a[0] === 'notlim')) adv.push(['lifts', tr('a_r_lifts', lif.open, lif0.open)]);
+    // "Closer" only from the road-network estimate (both legs from the same OSRM table); otherwise as the crow flies, said so.
+    const dv = drive?.[r.id], dv0 = drive?.[curId];
+    if (dv && dv0) { const m = Math.round((dv0.durS - dv.durS) / 60); if (m >= 15 && sc.total >= sc0 - 3) adv.push(['closer', tr('a_r_closer', minTxt(m))]); }
+    else { const dk = km0 - distKm(r); if (dk >= 40 && sc.total >= sc0 - 3) adv.push(['closer', tr('a_r_closer_line', kmTxt(dk))]); }
+    const comparable = Math.abs(sc.total - sc0) <= 3 || sc.total > sc0;
+    const worseTerrain = o0.cls !== 'nogo' && pc != null && pc0 != null && pc0 - pc > 10;
+    const keep = !worseTerrain && ((adv.length && sc.total >= sc0 - 5) || comparable || o0.cls === 'nogo');
+    if (!keep) { x.worse++; continue; }
+    const pi = passInfo(cur, r);
+    out.push({ r, sc: sc.total, adv, pi, rd, rank: sc.total + (pi.same ? 6 : 0) - (rd.chain ? 5 : 0) });
+  }
+  out.sort((a, b) => b.rank - a.rank);
+  return { cur, list: out.slice(0, 5), checked: pool.length, x };
+}
+function altCard(a, cur, drive) {
+  const r = a.r, p = report(r), u = U(), s = snow24(r);
+  const dv = drive?.[r.id];
+  const dTxt = dv ? durTxt(Math.round(dv.durS / 60)) : durTxt(lineMin(distKm(r)));
+  const reason = a.adv[0]?.[1] || tr('a_r_comp');
+  return `<li class="alt" data-id="${r.id}">
+    <div class="alt-h"><a href="?resort=${encodeURIComponent(r.id)}" data-alt="${r.id}"><b>${esc(r.name)}</b></a><span class="alt-sc" title="${esc(tr('d_score'))}">${a.sc}</span></div>
+    <p class="alt-m">${esc(regionName(r.region))} · ${esc(stateTxt(r))}</p>
+    <div class="alt-chips">${statusHtml(r)}<span class="dst s-${a.pi.cls}"><i aria-hidden="true"></i>${esc(a.pi.txt)}</span>${a.rd.chain ? `<span class="dst s-caution"><i aria-hidden="true"></i>${esc(tr('a_road_chain'))}</span>` : ''}</div>
+    <div class="alt-st">
+      <span><b>${esc(tr('a_drive_est', dTxt))}</b><small>${esc(tr(dv ? 'a_drive_osrm' : 'a_drive_line'))}</small></span>
+      <span>${pctTxt(p) != null ? `<b>${esc(pctTxt(p))}</b>` : nr()}<small>${esc(tr('a_terrain'))}</small></span>
+      <span>${s != null ? `<b>${fmt.snow(s, u)}</b>` : nr()}<small>${esc(tr(rep24(p) != null ? 'c_new_rep' : 'c_new_mod'))}</small></span>
+    </div>
+    <p class="alt-why">${esc(reason)}</p>
+    <a class="dgo alt-go" href="?resort=${encodeURIComponent(r.id)}" data-alt="${r.id}">${esc(tr('a_view'))} →</a>
+  </li>`;
+}
+/** Render the alternatives block into `el` (dashboard #alts or the basic page's section). */
+export function renderAlts(curId, el) {
+  if (!el) return;
+  if (!el.dataset.altBound) {
+    el.dataset.altBound = '1';
+    el.addEventListener('click', e => { const a = e.target.closest('[data-alt]'); if (!a || e.metaKey || e.ctrlKey) return; e.preventDefault(); X.track('alt_open', a.dataset.alt); X.open(a.dataset.alt); });
+  }
+  const head = `<h2>${esc(tr('a_h'))}</h2>`;
+  if (!D.cat || !D.cond) { el.innerHTML = `${head}<p class="muted">${esc(tr('a_loading'))}</p>`; return; }
+  let res = altCandidates(curId); if (!res) { el.innerHTML = ''; return; }
+  const s = startPt(), key = `${s.lat.toFixed(3)},${s.lon.toFixed(3)}>${curId}>${res.list.map(a => a.r.id).join(',')}`;
+  const st = D.altDrive?.key === key ? D.altDrive : null, drive = st?.v || null;
+  if (drive) res = altCandidates(curId, drive);
+  const why = Object.entries(res.x).filter(([, n]) => n).map(([k, n]) => tr('a_x_' + k, n)).join(' · ');
+  el.innerHTML = `${head}<p class="muted small">${esc(tr('a_lead', res.cur.name, X.L(s.name) || ''))}</p>
+    ${res.list.length ? `<ul class="alts">${res.list.map(a => altCard(a, res.cur, drive)).join('')}</ul>`
+      : `<div class="alt-none"><p><b>${esc(tr('a_none', res.cur.name))}</b></p>${res.checked ? `<p class="small muted">${esc(tr('a_none_why', res.checked, why))}</p>` : ''}</div>`}
+    ${res.list.length && why ? `<p class="small muted">${esc(tr('a_none_why', res.checked, why))}</p>` : ''}
+    <p class="small muted">${esc(tr('a_note'))}</p>`;
+  if (res.list.length && !st) {
+    D.altDrive = { key, v: null };   // one table request per start + list; a failure keeps the straight-line estimate
+    getTable(X.state.cfg, s, [res.cur, ...res.list.map(a => a.r)]).then(v => { if (D.altDrive?.key !== key) return; D.altDrive = { key, v }; if (document.body.contains(el)) renderAlts(curId, el); }).catch(() => {});
+  }
 }
 
 /* ================= Plan a Ski Trip (placeholder for the coming trip planner) ================= */
