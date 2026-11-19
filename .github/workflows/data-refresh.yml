@@ -7,8 +7,10 @@ name: Ski dashboard refresh (backup)
 # emails the repo owner.
 on:
   schedule:
-    # 13:10 UTC = 6:10 AM MST, after the Worker's 5:30 AM full refresh. GitHub may start it late.
-    - cron: '10 13 * * *'
+    # 13:17 UTC = 6:17 AM MST, after the Worker's 5:30 AM full refresh. Off the busy top/ten-past slots;
+    # GitHub may still start it late. (The schedule only registers from a push to main that touches the
+    # workflow; the repo's initial history push did not register it, so this line was edited on 2026-11-19.)
+    - cron: '17 13 * * *'
   workflow_dispatch:
 
 permissions:
