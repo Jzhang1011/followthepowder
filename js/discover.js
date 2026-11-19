@@ -1,8 +1,8 @@
 // Resort discovery (default home) + basic resort view for catalog resorts without a full dashboard.
 // Data: data/catalog.json (static, verified) + api/catalog-conditions.json (Open-Meteo model, refreshed hourly by
 // the ski-data Worker; resort-published base depth / terrain open / lifts / 24 h snow where SkiDay reads a public feed) + api/forecast.json?r=<id> (basic view).
-import { fmt, weatherEmoji, chainLevel } from './core.js?v=02407861d4';
-import { getRoute, getTable } from './start.js?v=02407861d4';
+import { fmt, weatherEmoji, chainLevel, recommendFrom } from './core.js?v=5deb313c41';
+import { getRoute, getTable } from './start.js?v=5deb313c41';
 
 const S = {
   en: {
@@ -108,6 +108,27 @@ Object.assign(S.zh, {
   a_road_chain: 'CDOT：雪场附近有牵引力/链条法规', a_road_na: '路况：仅覆盖科罗拉多（CDOT）',
   a_note: '无论降雪多少，都不会推荐已关闭或没有可读取报告的雪场。降雪和营业状态尽量来自雪场自己的报告（否则用 Open-Meteo 模型）。CDOT 路况只覆盖科罗拉多，检查的是每个雪场约 20 公里范围内，而不是你的整条路线。车程为不含路况的估算。没有人流数据。',
   a_loading: '正在加载附近雪场…'
+});
+// Basic resort pages on the shared resort-page layout — stage 2.
+Object.assign(S.en, {
+  b_temp_now: 'Summit temp now · forecast', b_new_mod: 'New snow 24 h · model', b_new_rep: 'New snow 24 h · resort', b_lifts: 'Lifts operating', b_runs: 'Runs open', b_terrain: 'Terrain open', b_base: 'Base depth · resort',
+  b_src_rep: 'Lifts, runs, terrain, base and new snow: {0}, updated {1}. Temperature: Open-Meteo model at the summit ({2}).',
+  b_src_none: 'SkiDay can’t read a lift or terrain report for this resort, so those show “Not reported”. New snow and temperature: Open-Meteo model at the summit ({0}).',
+  b_norep: 'SkiDay can’t read this resort’s lift and terrain report. Check the official snow report.', b_nostatus: 'The resort’s report doesn’t say whether lifts are running.',
+  b_noroads: 'No road reports here: SkiDay’s road data (CDOT) covers Colorado only. Check the state DOT or 511 before you go.',
+  b_roads_out: 'Road reports', b_roads_out_v: 'Colorado only (CDOT)', b_traffic_link: 'Check live traffic in Google Maps', b_drive_src: 'Drive: OSRM road-network estimate from {0}.',
+  b_heavy: 'Heavy snow today: {0}, expect slow driving', b_nws: 'Weather alerts (National Weather Service) are only checked on SkiDay’s full dashboards.',
+  b_rest_co: 'CDOT road data and the Open-Meteo forecast', b_rest: 'the Open-Meteo forecast', b_map: 'Route map', b_wait_route: 'Waiting for the drive estimate', b_wx_wait: 'Forecast loading…'
+});
+Object.assign(S.zh, {
+  b_temp_now: '山顶现在 · 预报', b_new_mod: '24小时新雪 · 模型', b_new_rep: '24小时新雪 · 雪场', b_lifts: '缆车运行', b_runs: '雪道开放', b_terrain: '地形开放', b_base: '雪底深度 · 雪场',
+  b_src_rep: '缆车、雪道、地形、雪底和新雪：{0}，更新于 {1}。气温：Open-Meteo 模型（山顶，{2}）。',
+  b_src_none: 'SkiDay 读取不到此雪场的缆车或地形报告，所以显示“未公布”。新雪和气温：Open-Meteo 模型（山顶，{0}）。',
+  b_norep: 'SkiDay 读取不到此雪场的缆车和地形报告。请查看官方雪况报告。', b_nostatus: '雪场报告没有说明缆车是否运行。',
+  b_noroads: '这里没有路况：SkiDay 的路况数据（CDOT）只覆盖科罗拉多。出发前请查看当地交通部门或 511。',
+  b_roads_out: '路况', b_roads_out_v: '仅科罗拉多（CDOT）', b_traffic_link: '在 Google 地图查看实时路况', b_drive_src: '车程：OSRM 道路网络估算，从 {0} 出发。',
+  b_heavy: '今天大雪：{0}，开车会慢', b_nws: '天气预警（美国国家气象局）只在 SkiDay 的完整看板中检查。',
+  b_rest_co: 'CDOT 路况和 Open-Meteo 预报', b_rest: 'Open-Meteo 预报', b_map: '路线地图', b_wait_route: '等待车程估算', b_wx_wait: '正在加载预报…'
 });
 const STATE_NAMES = { CO: 'Colorado', UT: 'Utah', CA: 'California', NV: 'Nevada', 'CA/NV': 'California Nevada', WA: 'Washington', OR: 'Oregon', AK: 'Alaska', WY: 'Wyoming', MT: 'Montana', ID: 'Idaho', NM: 'New Mexico', AB: 'Alberta', BC: 'British Columbia', QC: 'Quebec', ON: 'Ontario', VT: 'Vermont', ME: 'Maine', NH: 'New Hampshire', NY: 'New York' };
 const STATE_ZH = { CO: '科罗拉多', UT: '犹他', CA: '加州', NV: '内华达', 'CA/NV': '加州 内华达', WA: '华盛顿州', OR: '俄勒冈', AK: '阿拉斯加', WY: '怀俄明', MT: '蒙大拿', ID: '爱达荷', NM: '新墨西哥', AB: '阿尔伯塔', BC: '不列颠哥伦比亚', QC: '魁北克', ON: '安大略', VT: '佛蒙特', ME: '缅因', NH: '新罕布什尔', NY: '纽约' };
@@ -694,25 +715,81 @@ function table7(pt) {
     ${d.time.map((t, i) => `<tr><td>${esc(dayName(t))}</td><td>${weatherEmoji(d.weather_code[i])}</td><td><b>${fmt.snow(d.snowfall_sum[i], u)}</b></td><td>${fmt.temp(d.temperature_2m_max[i], u)} / ${fmt.temp(d.temperature_2m_min[i], u)}</td><td>${fmt.wind(d.wind_speed_10m_max[i], u)} <small class="muted">(${fmt.wind(d.wind_gusts_10m_max[i], u)})</small></td></tr>`).join('')}
   </tbody></table></div>`;
 }
+/** Today's weather checks from the basic forecast (summit point): same thresholds as the full dashboards (data/resorts.json rules). */
+function basicWeather(fc) {
+  const T = X.t, u = U(), rules = X.state.cfg.rules, pt = fc?.summit; if (!pt?.daily) return null;
+  const d = pt.daily, h = pt.hourly, day = d.time[0], src = T('src_om'), out = [];
+  const sn = d.snowfall_sum?.[0];
+  if (sn != null) out.push(sn >= rules.snowCautionCm ? { level: 'caution', text: tr('b_heavy', fmt.snow(sn, u)), src } : { level: 'go', text: T('r_snow_ok', fmt.snow(sn, u)), src });
+  const g = d.wind_gusts_10m_max?.[0];
+  if (g != null) out.push(g >= rules.gustCautionKmh ? { level: 'caution', text: T('r_wind', fmt.wind(g, u)), src } : { level: 'go', text: T('r_wind_ok', fmt.wind(g, u)), src });
+  const feels = (h?.time || []).map((t, k) => t.startsWith(day) ? h.apparent_temperature?.[k] : null).filter(v => v != null);
+  if (feels.length && Math.min(...feels) <= rules.feelsLikeCautionC) out.push({ level: 'caution', text: T('r_cold', fmt.temp(Math.min(...feels), u)), src });
+  return out;
+}
 export function renderBasic() {
   const B = D.basic, r = D.byId.get(B.id), el = $('#basic'); if (!r || !el) return;
-  const c = cond(r), u = U(), f = favs().includes(r.id), s = startPt(), p = report(r);
-  const pt = B.fc ? B.fc[B.point] : null;
-  const rt = B.route;
+  const T = X.t, UI = X.ui, c = cond(r), u = U(), f = favs().includes(r.id), s = startPt(), p = report(r), co = r.state === 'CO';
+  ensureBasicRoute(r);
+  const pt = B.fc ? B.fc[B.point] : null, rt = B.route;
+  // Checks: Mountain (resort report) / Road (CDOT along the OSRM route, Colorado only) / Weather (Open-Meteo)
+  const repSrc = p?.source?.name || tr('d_rep');
+  const mtn = [];
+  if (p?.status === 'closed') mtn.push({ level: 'nogo', text: T('r_resort_closed', ''), src: repSrc });
+  else if (p?.status && p.lifts?.total && p.lifts.open / p.lifts.total < 0.25) mtn.push({ level: 'caution', text: pctTxt(p) != null ? T('r_limited_t', `${p.lifts.open}/${p.lifts.total}`, pctTxt(p)) : T('r_limited', `${p.lifts.open}/${p.lifts.total}`), src: repSrc });
+  else if (p?.status && p.lifts?.total) mtn.push({ level: 'go', text: T('r_lifts_ok', `${p.lifts.open}/${p.lifts.total}`), src: repSrc });
+  else if (p) mtn.push({ level: 'unknown', text: tr('b_nostatus'), src: repSrc });
+  if (p) mtn.push({ level: 'info', text: seasonTxt(r), src: repSrc });
+  const rc = co && rt ? X.roadCheck(r, rt) : null;
+  const road = !co ? [{ level: 'unknown', text: tr('b_noroads') }]
+    : rc ? rc.reasons.map(x => ({ level: x.level, text: x.text, src: T('src_cdot'), det: [x.segLabel ? `<b>${esc(x.segLabel)}</b>` : '', x.ev?.detail ? esc(x.ev.detail) : ''].filter(Boolean).join('<br>') }))
+    : [{ level: 'unknown', text: B.routeErr ? tr('b_route_fail') : !X.state.roads?.data && rt ? T('g_roads_na') : tr('b_wait_route') }];
+  const wx = basicWeather(B.fc);
+  const weather = wx || [{ level: 'unknown', text: B.fcErr ? tr('b_fc_fail') : tr('b_wx_wait') }];
+  const all = [...mtn, ...road, ...weather];
+  const level = all.some(x => x.level === 'nogo') ? 'nogo' : all.some(x => x.level === 'caution') ? 'caution' : 'go';
+  const rec = recommendFrom(p ? { ok: true, status: p.status, lifts: p.lifts, terrain: { pct: p.pct }, snow: { h24: rep24(p) } } : null, level);
+  const when = updTime([p?.at, p?.snowAt].filter(Boolean).sort().pop() || p?.fetchedAt);
+  const basis = rec.key === 'rec_noreport' ? T('rec_noreport_sub') : T('rec_basis', `${T('rec_src_rep', `${repSrc}, ${when}`)}, ${tr(co ? 'b_rest_co' : 'b_rest')}`);
+  const why = all.filter(x => x.level === 'nogo' || x.level === 'caution').sort((a, b) => (a.level === 'nogo' ? 0 : 1) - (b.level === 'nogo' ? 0 : 1)).map(x => x.text);
+  // Mountain conditions tiles ("Not reported" for what the resort doesn't publish)
+  const NR = tr('d_nr'), frac = o => o?.total ? `${o.open}<small>/${o.total}</small>` : null, s24 = snow24(r);
+  const tiles = `<div class="tiles t6">
+      ${UI.tile('❄️', s24 != null ? fmt.snow(s24, u) : null, tr(rep24(p) != null ? 'b_new_rep' : 'b_new_mod'), '', NR)}
+      ${UI.tile('🌡️', c?.summit?.t != null ? fmt.temp(c.summit.t, u) : null, tr('b_temp_now'), '', '—')}
+      ${UI.tile('🚡', frac(p?.lifts), tr('b_lifts'), '', NR)}
+      ${UI.tile('⛷️', frac(p?.trails), tr('b_runs'), '', NR)}
+      ${UI.tile('🗺️', pctTxt(p) != null ? esc(pctTxt(p)) : null, tr('b_terrain'), p?.basis === 'acres' && p.acres ? esc(tr('d_acres', nf0(p.acres.open), nf0(p.acres.total))) : '', NR)}
+      ${UI.tile('📏', baseCm(r) != null ? baseTxt(baseCm(r), u) : null, tr('b_base'), '', NR)}
+    </div>`;
+  const elev = fmt.elev(c?.elev?.summit ?? r.summitElevM, u);
+  const msrc = p ? tr('b_src_rep', repSrc, when, elev) : tr('b_src_none', elev);
+  // Getting there
+  const roadsOk = !!X.state.roads?.data && !!rc;
+  const cnt = kinds => rc ? X.roadCount(rc.reasons, kinds, roadsOk) : { cls: 'unknown', txt: '—' };
+  const gdir = `https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lon}`;
+  const glist = `<ul class="glist">
+      ${UI.grow(T('g_dist'), rt ? esc(kmTxt(rt.distM / 1000)) : `${esc(kmTxt(distKm(r)))}`, '', rt ? '' : esc(tr('d_straight')))}
+      ${UI.grow(T('g_time'), rt ? `~${esc(durTxt(Math.round(rt.durS / 60)))}` : `<span class="muted">${esc(B.routeErr ? tr('b_route_fail') : tr('b_route_loading'))}</span>`, '', rt ? esc(T('g_time_note')) : '')}
+      ${UI.grow(T('g_traffic'), `<span class="muted">${esc(T('g_traffic_na'))}</span>`, '', co ? `<a href="https://www.cotrip.org/trip-planner" target="_blank" rel="noopener">${esc(T('g_traffic_link'))} ↗</a>` : `<a href="${gdir}" target="_blank" rel="noopener">${esc(tr('b_traffic_link'))} ↗</a>`)}
+      ${co ? ['chain', 'closure', 'incident'].map((k, n) => { const v = cnt(n === 2 ? ['incident', 'conditions'] : [k]); return UI.grow(T('g_' + k), esc(v.txt), v.cls); }).join('')
+        : UI.grow(tr('b_roads_out'), esc(tr('b_roads_out_v')), 'unknown')}
+    </ul><p class="hp-src">${esc(tr('b_drive_src', X.L(s.name) || ''))}${co ? ` · ${esc(T('g_src', X.state.roads?.at ? updTime(X.state.roads.at) : T('unavailable')))}` : ''}</p>`;
+  const stEl = document.getElementById('start'); if (stEl && el.contains(stEl)) stEl.remove();
   el.innerHTML = `
-  <div class="hero-wrap bhero" style="${r.photo?.src ? `--hero-img:url('${esc(new URL(r.photo.src, location.href).href)}')` : ''}"><div class="wrap hero-in">
+  <div class="hero-wrap b2" style="${r.photo?.src ? `--hero-img:url('${esc(new URL(r.photo.src, location.href).href)}')` : ''}"><div class="wrap hero-in">
     <button type="button" class="dback" data-home>← ${esc(tr('d_back'))}</button>
-    <div class="bhead"><h1 class="q">${esc(r.name)}</h1><button type="button" class="dfav big${f ? ' on' : ''}" data-fav="${r.id}" aria-pressed="${f}" title="${esc(tr(f ? 'd_remfav' : 'd_addfav'))}">${f ? '★' : '☆'}</button></div>
-    <p class="bmeta2">${esc(r.city)}, ${esc(stateTxt(r))} · ${esc(regionName(r.region))} · ${esc(passTxt(r))} · ${esc(r.range)}</p>
-    <div class="vpanel"><div class="tiles">
-      <div class="tile"><span class="ti">🌡️</span><b>${c ? fmt.temp(c.summit.t, u) : '—'}</b><span>${esc(tr('d_temp'))}</span><small class="dnote">${esc(tr('b_mid'))} ${c ? fmt.temp(c.mid.t, u) : '—'}</small></div>
-      <div class="tile"><span class="ti">❄️</span><b>${snow24(r) != null ? fmt.snow(snow24(r), u) : '—'}</b><span>${esc(tr('d_new'))}</span><small class="dnote">${rep24(p) != null ? '✓ ' + esc(tr('d_rep')) : 'model'}</small></div>
-      <div class="tile"><span class="ti">📏</span><b${baseCm(r) == null ? ' class="nr"' : ''}>${baseCm(r) != null ? baseTxt(baseCm(r), u) : esc(tr('d_nr'))}</b><span>${esc(tr('d_base'))}</span>${baseCm(r) != null ? `<small class="dnote">${esc(tr('d_rep'))}</small>` : ''}</div>
-      <div class="tile"><span class="ti">🎿</span><b${pctOpen(r) == null ? ' class="nr"' : ''}>${pctOpen(r) != null ? pctOpen(r) + '%' : esc(tr('d_nr'))}</b><span>${esc(tr('d_terrain'))}</span><small class="dnote">${p?.lifts ? esc(tr('d_lifts', p.lifts.open, p.lifts.total)) + (terrainTip(p) ? ' · ' : '') : ''}${esc(terrainTip(p))}</small></div>
-      <div class="tile"><span class="ti">📈</span><b>${c ? fmt.snow(c.summit.s72, u) : '—'}</b><span>${esc(tr('d_fc72'))}</span></div>
-      <div class="tile"><span class="ti">🚗</span><b>${rt ? durTxt(Math.round(rt.durS / 60)) : kmTxt(distKm(r))}</b><span>${rt ? esc(tr('d_drive')) + ' · ' + esc(tr('d_nt')) : esc(tr('d_straight'))}</span><small class="dnote">${esc(tr('b_drive_from', X.L(s.name) || ''))}</small></div>
-    </div></div>
-    <p class="blimit">ⓘ ${p ? `${esc(tr('b_limited_rep', p.source?.name || ''))} ${esc(cardUpd(r))}. ${p.source?.url ? `<a href="${esc(p.source.url)}" target="_blank" rel="noopener">${esc(tr('d_rep_src', new URL(p.source.url).host.replace(/^www\./, '')))} ↗</a>` : ''}` : esc(tr('b_limited'))}</p>
+    <div class="bhead"><h1 class="q" id="b-q">${esc(T('q_dyn', r.name))}</h1><button type="button" class="dfav big${f ? ' on' : ''}" data-fav="${r.id}" aria-pressed="${f}" title="${esc(tr(f ? 'd_remfav' : 'd_addfav'))}">${f ? '★' : '☆'}</button></div>
+    <p class="bmeta2">${esc(r.city)}, ${esc(stateTxt(r))} · ${esc(regionName(r.region))} · <b>${esc(passTxt(r))}</b> · ${esc(r.range)} · ${fmt.elevRange(r.baseElevM, r.summitElevM, u)}</p>
+    <div id="b-verdict">${UI.rec(rec, why, basis)}</div>
+    <div class="hgrid">
+      <div class="vpanel hp" id="b-mtn"><h2 class="hp-h">🏔️ ${esc(T('mtn_h'))}</h2>${tiles}<p class="hp-src">${esc(msrc)}${p?.source?.url ? ` <a href="${esc(p.source.url)}" target="_blank" rel="noopener">${esc(tr('d_rep_src', new URL(p.source.url).host.replace(/^www\./, '')))} ↗</a>` : ''}</p></div>
+      <div class="vpanel hp getthere" id="b-get"><h2 class="hp-h">🚗 ${esc(T('get_h'))}</h2><div id="b-start-slot"></div>${glist}</div>
+    </div>
+    <div class="why" id="b-why">${UI.know([
+      { g: 'mountain', items: mtn, empty: tr('b_norep') },
+      { g: 'road', items: road },
+      { g: 'weather', items: weather, note: [tr('b_nws'), basicWeatherNote()].filter(Boolean).join(' ') }])}</div>
     ${r.photo ? `<p class="hero-credit">📷 ${esc(r.photo.credit)} · <a href="${esc(r.photo.page)}" target="_blank" rel="noopener">${esc(r.photo.license)}</a></p>` : ''}
   </div></div>
   <main class="wrap">
@@ -722,10 +799,9 @@ export function renderBasic() {
       ${B.fc ? `<p class="small muted">${esc(tr('b_fc_src', tr(B.point === 'mid' ? 'b_mid' : 'b_summit'), fmt.elev(B.fc.points[B.point], u)))} ${esc(tr('d_upd', updTime(B.fc.fetchedAt)))}</p>` : ''}
     </section>
     <section class="block card"><h2>${esc(tr('b_7d'))}</h2>${pt ? table7(pt) : `<p class="muted">${esc(B.fcErr ? tr('b_fc_fail') : tr('b_loading'))}</p>`}</section>
-    <section class="block card"><h2>${esc(tr('b_get'))}</h2>
-      <p>${rt ? `🚗 <b>${durTxt(Math.round(rt.durS / 60))}</b> · ${kmTxt(rt.distM / 1000)} · <span class="muted">${esc(tr('d_nt'))} · ${esc(tr('b_drive_from', X.L(s.name) || ''))}</span>` : `<span class="muted">${esc(B.routeErr ? tr('b_route_fail') : tr('b_route_loading'))}</span> · ${kmTxt(distKm(r))} ${esc(tr('d_straight'))}`}</p>
+    <section class="block card"><h2>${esc(tr('b_map'))}</h2>
       <div id="b-map" class="rmap"></div>
-      <p class="small"><a href="https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lon}" target="_blank" rel="noopener">${esc(tr('b_dir'))} ↗</a></p>
+      <p class="small"><a href="${gdir}" target="_blank" rel="noopener">${esc(tr('b_dir'))} ↗</a></p>
     </section>
     <section class="block card"><h2>${esc(tr('b_links'))}</h2>
       <ul class="blinks"><li><a href="${esc(r.url)}" target="_blank" rel="noopener">🌐 ${esc(tr('b_site'))} ↗</a></li><li><a href="${esc(r.url)}" target="_blank" rel="noopener">🎿 ${esc(tr('b_report'))} ↗</a></li></ul>
@@ -733,8 +809,21 @@ export function renderBasic() {
     </section>
     <section class="block card altsec" id="b-alts"></section>
   </main>`;
+  if (stEl) { el.querySelector('#b-start-slot')?.replaceWith(stEl); try { X.state.startUI?.relabel(); X.state.startUI?.setMsg(''); } catch {} }
+  document.title = `SkiDay · ${T('q_dyn', r.name)}`;
   drawBasicMap(r);
   renderAlts(r.id, document.getElementById('b-alts'));
+}
+const basicWeatherNote = () => X.t('no_vis');
+/** Drive estimate for the current start (re-fetched when the start changes; cached by start.js). */
+function ensureBasicRoute(r) {
+  const B = D.basic, s = startPt(), sk = `${s.lat.toFixed(3)},${s.lon.toFixed(3)}`;
+  if (B.routeFor === sk) return;
+  B.routeFor = sk; B.route = null; B.routeErr = null;
+  const id = r.id;
+  getRoute(X.state.cfg, s, r).then(rt => { if (B.id === id && B.routeFor === sk) B.route = rt; })
+    .catch(() => { if (B.id === id && B.routeFor === sk) B.routeErr = true; })
+    .finally(() => { if (B.id === id && B.routeFor === sk && X.view() === 'basic') renderBasic(); });
 }
 function drawBasicMap(r) {
   const el = document.getElementById('b-map'); if (!el) return;
@@ -753,7 +842,7 @@ function drawBasicMap(r) {
 }
 export async function showBasic(id) {
   const B = D.basic;
-  if (B.id !== id) Object.assign(B, { id, fc: null, fcErr: null, route: null, routeErr: null });
+  if (B.id !== id) Object.assign(B, { id, fc: null, fcErr: null, route: null, routeErr: null, routeFor: null });
   renderBasic();
   if (!document.getElementById('basic').dataset.bound) {
     document.getElementById('basic').dataset.bound = '1';
@@ -768,7 +857,6 @@ export async function showBasic(id) {
   if (!D.cond) jobs.push(loadConditions(true).finally(() => { if (D.basic.id === id && X.view() === 'basic') renderBasic(); }));
   if (r.state === 'CO' && !X.state.roads?.data && X.loadRoads) jobs.push(X.loadRoads().finally(() => { if (D.basic.id === id && X.view() === 'basic') renderBasic(); }));
   if (!B.fc) jobs.push(X.getJson(`api/forecast.json?r=${encodeURIComponent(id)}`, 20000).then(j => { if (D.basic.id === id) B.fc = j; }).catch(() => { if (D.basic.id === id) B.fcErr = true; }).finally(() => { if (D.basic.id === id && X.view() === 'basic') renderBasic(); }));
-  if (!B.route) jobs.push(getRoute(X.state.cfg, startPt(), r).then(rt => { if (D.basic.id === id) B.route = rt; }).catch(() => { if (D.basic.id === id) B.routeErr = true; }).finally(() => { if (D.basic.id === id && X.view() === 'basic') renderBasic(); }));
   await Promise.allSettled(jobs);
 }
 

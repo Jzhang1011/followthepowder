@@ -1,5 +1,5 @@
 // Starting location: input with Photon autocomplete, presets, browser geolocation; OSRM routing with cache + throttle.
-import { buildRoute, osrmRouteUrl, osrmTableUrl } from './route.js?v=02407861d4';
+import { buildRoute, osrmRouteUrl, osrmTableUrl } from './route.js?v=5deb313c41';
 
 const LSK = 'ski.start', RCK = 'ski.routes';
 const round = (v, n = 3) => +(+v).toFixed(n); // ~100 m: enough for routing, kinder to privacy

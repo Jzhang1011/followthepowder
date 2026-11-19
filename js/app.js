@@ -1,9 +1,9 @@
 import { openMeteoUrl, splitOpenMeteo, dailyRows, hourlyRows, weatherEmoji, carsUrl, slimEvents, EVENT_CLASSES,
-  nwsUrl, slimAlerts, verdictFor, outfitFor, fmt } from './core.js?v=02407861d4';
-import { STR, PACK_DEFAULT } from './i18n.js?v=02407861d4';
-import { selectCameras, routeSegments, inCO } from './route.js?v=02407861d4';
-import { loadStart, saveStart, isDefaultStart, getRoute, mountStartUI } from './start.js?v=02407861d4';
-import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts } from './discover.js?v=02407861d4';
+  nwsUrl, slimAlerts, verdictFor, outfitFor, recommendFrom, fmt } from './core.js?v=5deb313c41';
+import { STR, PACK_DEFAULT } from './i18n.js?v=5deb313c41';
+import { selectCameras, routeSegments, inCO } from './route.js?v=5deb313c41';
+import { loadStart, saveStart, isDefaultStart, getRoute, mountStartUI } from './start.js?v=5deb313c41';
+import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts } from './discover.js?v=5deb313c41';
 
 const LS = {
   get: (k, d) => { try { const v = localStorage.getItem('ski.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -245,17 +245,7 @@ function reasonText(x) {
 }
 
 /** Plain-language recommendation, derived only from data on the page (resort report + the existing verdict). */
-function recommend(r, v, i) {
-  if (!i || !i.ok) return { cls: 'unknown', key: 'rec_noreport' };
-  if (i.status === 'closed') return { cls: 'nogo', key: 'rec_closed' };
-  if (v.level === 'nogo') return { cls: 'nogo', key: 'rec_other' };
-  const lim = i.status === 'open' && ((i.lifts?.total && i.lifts.open / i.lifts.total < 0.25) || (i.terrain?.pct != null && i.terrain.pct < 25));
-  if (lim) return { cls: 'caution', key: 'rec_limited' };
-  if (v.level === 'caution') return { cls: 'caution', key: 'rec_some' };
-  // "Great" only with fresh snow reported by the resort (15 cm ≈ 6″) and at least half the terrain open.
-  if ((i.snow?.h24 ?? 0) >= 15 && (i.terrain?.pct ?? 0) >= 50) return { cls: 'go', key: 'rec_great' };
-  return { cls: 'go', key: 'rec_good' };
-}
+function recommend(r, v, i) { return recommendFrom(i, v.level); }
 const SEV = { nogo: 0, caution: 1, unknown: 2, info: 3, go: 4 };
 const GROUP = { resort: 'mountain', chain: 'road', closure: 'road', incident: 'road', conditions: 'road', roads: 'road', nws: 'weather', snow: 'weather', wind: 'weather', cold: 'weather', weather: 'weather' };
 function srcOf(x, r) {
@@ -263,74 +253,92 @@ function srcOf(x, r) {
   if (GROUP[x.kind] === 'road') return t('src_cdot');
   return x.kind === 'nws' ? t('src_nws') : t('src_om');
 }
+/* ---------- Shared resort-page components (full dashboards + basic catalog pages, via ctx.ui) ---------- */
+const sevPill = lv => `<span class="pill-s p-${PILL[lv]}">${esc(t('sev_' + lv))}</span>`;
+const UI = {
+  today: () => new Intl.DateTimeFormat(locale(), { timeZone: tz(), weekday: 'long', month: 'short', day: 'numeric' }).format(new Date()),
+  /** Recommendation banner: rec from recommendFrom(), up to 3 reason strings (serious/caution only), basis line. */
+  rec: (rec, why, basis) => `<div class="rec rec-${rec.cls}"><div class="rec-main"><span class="rec-dot" aria-hidden="true"></span><b>${esc(t(rec.key))}</b></div>
+    ${why.length && rec.cls !== 'go' ? `<ul class="rec-why">${why.slice(0, 3).map(w => `<li>${esc(w)}</li>`).join('')}</ul>` : ''}
+    <p class="rec-basis">${esc(UI.today())} · ${esc(basis)}</p></div>`,
+  tile: (ic, val, label, sub = '', naTxt = t('unavailable_short')) => `<div class="tile"><span class="ti">${ic}</span>${val != null ? `<b>${val}</b>` : `<b class="nr">${esc(naTxt)}</b>`}<span>${esc(label)}</span>${sub ? `<small class="dnote">${sub}</small>` : ''}</div>`,
+  grow: (label, val, cls = '', note = '') => `<li class="grow"><span class="gk">${esc(label)}</span><span class="gv${cls ? ` g-${cls}` : ''}">${val}${note ? `<small>${note}</small>` : ''}</span></li>`,
+  /** "What you should know before heading out". groups = [{g:'mountain'|'road'|'weather', items:[{level, text, src, det}], empty, note}] */
+  know: (groups, extra = '') => `<h2 class="know-h">${esc(t('know_h'))}</h2>${groups.map(({ g, items, empty, note }) => {
+    const l = [...items].sort((a, b) => SEV[a.level] - SEV[b.level]);
+    const issues = l.filter(x => x.level !== 'go'), ok = l.filter(x => x.level === 'go');
+    const srcs = [...new Set(l.map(x => x.src).filter(Boolean))].join(' · ');
+    const row = x => `<li class="rrow">${sevPill(x.level)}${x.det ? `<details><summary>${esc(x.text)} <small class="rsrc">${esc(x.src || '')}</small></summary><p>${x.det}</p></details>` : `<span>${esc(x.text)} <small class="rsrc">${esc(x.src || '')}</small></span>`}</li>`;
+    const checks = ok.length ? `<li class="rrow rok">${sevPill('go')}<span><b>${esc(t('checked_h'))}:</b> ${ok.map(x => esc(x.text)).join(' · ')} <small class="rsrc">${esc([...new Set(ok.map(x => x.src).filter(Boolean))].join(' · '))}</small></span></li>` : '';
+    const none = !l.length ? `<li class="rrow">${sevPill('unknown')}<span>${esc(empty || t('unavailable'))}</span></li>` : '';
+    return `<div class="kgrp"><h3>${esc(t('grp_' + g))}${srcs ? ` <small class="muted">· ${esc(srcs)}</small>` : ''}</h3><ul class="rlist">${issues.map(row).join('')}${checks}${none}</ul>${note ? `<p class="small muted">${esc(note)}</p>` : ''}</div>`;
+  }).join('')}${extra}`
+};
+/** CDOT checks along a route (any resort, e.g. a basic Colorado page): same matching and levels as the full dashboards. */
+function roadCheck(r, route) {
+  if (!state.roads.data || !route) return null;
+  const dyn = routeSegments(route, state.roads.data);
+  const cfg = { ...state.cfg, segments: { ...state.cfg.segments, ...dyn.segments } };
+  const v = verdictFor(cfg, { ...r, route: dyn.legs }, { roads: { ok: true, events: dyn.events }, alerts: { ok: true, list: [] }, days: null });
+  const segN = id => { const sg = dyn.segments[id]; return sg ? `${sg.key} · ${km(sg.km * 1000)}` : id; };
+  return { at: state.roads.at, reasons: v.reasons.filter(x => GROUP[x.kind] === 'road').map(x => ({ ...x, text: reasonText(x), segLabel: x.seg ? segN(x.seg) : '' })) };
+}
 function renderVerdict() {
   const r = resort(); const v = verdict(r); const u = U();
   const i = intelFor(r); const days = daysFor(r); const now = nowRow(r, 'base');
   const rec = recommend(r, v, i);
   $$('#dash-q').textContent = t('q_dyn', L(r.name));
-  const today = new Intl.DateTimeFormat(locale(), { timeZone: tz(), weekday: 'long', month: 'short', day: 'numeric' }).format(new Date());
   const hero = $$('#hero'); if (r.photo?.src) hero.style.setProperty('--hero-img', `url('${new URL(r.photo.src, location.href).href}')`);
   $$('#hero-credit').innerHTML = r.photo ? `📷 ${esc(r.photo.credit)} · <a href="${esc(r.photo.page)}" target="_blank" rel="noopener">${esc(r.photo.license)}</a>` : '';
-  const bad = [...v.reasons].filter(x => x.level !== 'go').sort((a, b) => SEV[a.level] - SEV[b.level]);
+  const bad = [...v.reasons].filter(x => x.level === 'nogo' || x.level === 'caution').sort((a, b) => SEV[a.level] - SEV[b.level]);
   const when = i?.ok ? fmtTime([i.asOf, i.snowAsOf].filter(Boolean).sort((a, b) => ageMin(a) - ageMin(b))[0] || i.fetchedAt) : '';
   const basis = rec.key === 'rec_noreport' ? t('rec_noreport_sub') : t('rec_basis', `${t('rec_src_rep', `${i.source?.name || r.short}, ${when}`)}, ${t('rec_src_rest')}`);
-  $('#verdict').innerHTML = `<div class="rec rec-${rec.cls}"><div class="rec-main"><span class="rec-dot" aria-hidden="true"></span><b>${esc(t(rec.key))}</b></div>
-    ${bad.some(x => x.level === 'nogo' || x.level === 'caution') && rec.cls !== 'go' ? `<ul class="rec-why">${bad.filter(x => x.level === 'nogo' || x.level === 'caution').slice(0, 3).map(x => `<li>${esc(reasonText(x))}</li>`).join('')}</ul>` : ''}
-    <p class="rec-basis">${esc(today)} · ${esc(basis)}</p></div>`;
+  $('#verdict').innerHTML = UI.rec(rec, bad.map(reasonText), basis);
 
   // A. Mountain conditions
-  const na = `<b class="nr">${esc(t('unavailable_short'))}</b>`;
   const rep = i?.ok;
   const newSnow = rep && i.snow?.h24 != null ? { v: fmt.snow(i.snow.h24, u), k: 'm_new_rep' } : { v: days ? fmt.snow(days[0].summit.snow, u) : null, k: 'm_new_fc' };
   const frac = o => o?.total ? `${o.open}<small>/${o.total}</small>` : null;
-  const tile = (ic, val, k, sub = '') => `<div class="tile"><span class="ti">${ic}</span>${val != null ? `<b>${val}</b>` : na}<span>${esc(t(k))}</span>${sub ? `<small class="dnote">${sub}</small>` : ''}</div>`;
   const ter = i?.terrain;
   $$('#mtn-now').innerHTML = `<h2 class="hp-h">🏔️ ${esc(t('mtn_h'))}</h2><div class="tiles t6">
-      ${tile('❄️', newSnow.v, newSnow.k)}
-      ${tile('🌡️', now ? fmt.temp(now.t, u) : null, 'm_temp')}
-      ${tile('🚡', rep ? frac(i.lifts) : null, 'm_lifts', rep && freshness('intel', r).cls === 'stale' ? esc(freshness('intel', r).text) : '')}
-      ${tile('⛷️', rep ? frac(i.trails) : null, 'm_runs')}
-      ${tile('🗺️', rep && ter?.pct != null ? `${ter.pct}<small>%</small>` : null, 'm_terrain', ter?.totalAcres ? esc(t('i_terrain_ac', ter.openAcres ?? '—', ter.totalAcres.toLocaleString(locale()))) : '')}
-      ${tile('📏', rep && i.baseCm != null ? fmt.snow(i.baseCm, u) : null, 'm_base')}
+      ${UI.tile('❄️', newSnow.v, t(newSnow.k))}
+      ${UI.tile('🌡️', now ? fmt.temp(now.t, u) : null, t('m_temp'))}
+      ${UI.tile('🚡', rep ? frac(i.lifts) : null, t('m_lifts'), rep && freshness('intel', r).cls === 'stale' ? esc(freshness('intel', r).text) : '')}
+      ${UI.tile('⛷️', rep ? frac(i.trails) : null, t('m_runs'))}
+      ${UI.tile('🗺️', rep && ter?.pct != null ? `${ter.pct}<small>%</small>` : null, t('m_terrain'), ter?.totalAcres ? esc(t('i_terrain_ac', ter.openAcres ?? '—', ter.totalAcres.toLocaleString(locale()))) : '')}
+      ${UI.tile('📏', rep && i.baseCm != null ? fmt.snow(i.baseCm, u) : null, t('m_base'))}
     </div><p class="hp-src">${esc(rep ? t('m_src', i.source?.name || r.short, when, fmt.elev(r.baseElevM, u)) : t('m_src_fc'))}</p>`;
 
   // B. Getting there (start-location UI lives in #start, above this)
   const rs = state.routes[r.id]; const dm = driveMin(r);
   const dur = dm == null ? null : `${Math.floor(dm / 60)}h${String(dm % 60).padStart(2, '0')}`;
   const roadsOk = !!state.roads.data;
-  const cnt = kinds => { const l = v.reasons.filter(x => kinds.includes(x.kind) && x.seg); const main = l.filter(x => x.level !== 'info');
-    if (!roadsOk) return { cls: 'unknown', txt: t('g_roads_na') };
-    if (!l.length) return { cls: 'go', txt: t('g_none') };
-    const lv = main.some(x => x.level === 'nogo') ? 'nogo' : main.length ? 'caution' : 'info';
-    return { cls: lv, txt: [main.length ? t('g_n', main.length) : '', l.length - main.length ? t('g_info', l.length - main.length) : ''].filter(Boolean).join(' · ') }; };
-  const grow = (k, val, cls = '', note = '') => `<li class="grow"><span class="gk">${esc(t(k))}</span><span class="gv${cls ? ` g-${cls}` : ''}">${val}${note ? `<small>${note}</small>` : ''}</span></li>`;
+  const cnt = kinds => roadCount(v.reasons, kinds, roadsOk);
   const ch = cnt(['chain']), cl = cnt(['closure']), inc = cnt(['incident', 'conditions']);
   $$('#getthere').innerHTML = `<ul class="glist">
-      ${grow('g_dist', rs?.status === 'ok' ? esc(km(rs.route.distM)) : rs?.status === 'loading' ? `<span class="muted">${esc(t('route_loading'))}</span>` : '—')}
-      ${grow('g_time', dur ? `~${esc(dur)}` : '—', '', esc(rs?.status === 'ok' ? t('g_time_note') : dur ? t('g_time_static') : ''))}
-      ${grow('g_traffic', `<span class="muted">${esc(t('g_traffic_na'))}</span>`, '', `<a href="https://www.cotrip.org/trip-planner" target="_blank" rel="noopener">${esc(t('g_traffic_link'))} ↗</a>`)}
-      ${grow('g_chain', esc(ch.txt), ch.cls)}
-      ${grow('g_closure', esc(cl.txt), cl.cls)}
-      ${grow('g_incident', esc(inc.txt), inc.cls)}
+      ${UI.grow(t('g_dist'), rs?.status === 'ok' ? esc(km(rs.route.distM)) : rs?.status === 'loading' ? `<span class="muted">${esc(t('route_loading'))}</span>` : '—')}
+      ${UI.grow(t('g_time'), dur ? `~${esc(dur)}` : '—', '', esc(rs?.status === 'ok' ? t('g_time_note') : dur ? t('g_time_static') : ''))}
+      ${UI.grow(t('g_traffic'), `<span class="muted">${esc(t('g_traffic_na'))}</span>`, '', `<a href="https://www.cotrip.org/trip-planner" target="_blank" rel="noopener">${esc(t('g_traffic_link'))} ↗</a>`)}
+      ${UI.grow(t('g_chain'), esc(ch.txt), ch.cls)}
+      ${UI.grow(t('g_closure'), esc(cl.txt), cl.cls)}
+      ${UI.grow(t('g_incident'), esc(inc.txt), inc.cls)}
     </ul><p class="hp-src">${esc(t('g_src', roadsOk ? ago(state.roads.at) : t('unavailable')))} · <a href="#roads">${esc(t('g_more'))} ↓</a></p>`;
 
   // What you should know before heading out: Mountain / Road / Weather
-  const sevPill = lv => `<span class="pill-s p-${PILL[lv]}">${esc(t('sev_' + lv))}</span>`;
-  const row = x => {
-    const det = [x.seg ? `<b>${esc(segName(r, x.seg))}</b>` : '', x.ev?.detail ? esc(x.ev.detail) : '', x.alert?.headline ? esc(x.alert.headline) : '', x.kind === 'resort' && x.note ? esc(x.note) : ''].filter(Boolean).join('<br>');
-    const src = `<small class="rsrc">${esc(srcOf(x, r))}</small>`;
-    return `<li class="rrow">${sevPill(x.level)}${det ? `<details><summary>${esc(reasonText(x))} ${src}</summary><p>${det}</p></details>` : `<span>${esc(reasonText(x))} ${src}</span>`}</li>`;
-  };
-  const groups = ['mountain', 'road', 'weather'].map(g => {
-    const l = v.reasons.filter(x => (GROUP[x.kind] || 'weather') === g).sort((a, b) => SEV[a.level] - SEV[b.level]);
-    const issues = l.filter(x => x.level !== 'go'), ok = l.filter(x => x.level === 'go');
-    const srcs = [...new Set(l.map(x => srcOf(x, r)))].join(' · ');
-    const checks = ok.length ? `<li class="rrow rok">${sevPill('go')}<span><b>${esc(t('checked'))}:</b> ${ok.map(x => esc(reasonText(x))).join(' · ')} <small class="rsrc">${esc([...new Set(ok.map(x => srcOf(x, r)))].join(' · '))}</small></span></li>` : '';
-    const empty = !l.length ? `<li class="rrow">${sevPill('unknown')}<span>${esc(g === 'mountain' ? t('intel_unavailable') : t('unavailable'))}</span></li>` : '';
-    return `<div class="kgrp"><h3>${esc(t('grp_' + g))}${srcs ? ` <small class="muted">· ${esc(srcs)}</small>` : ''}</h3><ul class="rlist">${issues.map(row).join('')}${checks}${empty}</ul>${g === 'weather' ? `<p class="small muted">${esc(t('no_vis'))}</p>` : ''}</div>`;
-  }).join('');
-  $$('#why').innerHTML = `<h2 class="know-h">${esc(t('know_h'))}</h2>${groups}
-    ${v.reasons.some(x => x.kind === 'chain') ? `<details class="more"><summary>ⓘ ${esc(t('more_info'))}</summary><p class="small muted">${esc(t('traction_help'))}</p></details>` : ''}`;
+  const item = x => ({ level: x.level, text: reasonText(x), src: srcOf(x, r),
+    det: [x.seg ? `<b>${esc(segName(r, x.seg))}</b>` : '', x.ev?.detail ? esc(x.ev.detail) : '', x.alert?.headline ? esc(x.alert.headline) : '', x.kind === 'resort' && x.note ? esc(x.note) : ''].filter(Boolean).join('<br>') });
+  const groups = ['mountain', 'road', 'weather'].map(g => ({ g, items: v.reasons.filter(x => (GROUP[x.kind] || 'weather') === g).map(item),
+    empty: g === 'mountain' ? t('intel_unavailable') : t('unavailable'), note: g === 'weather' ? weatherNote() : '' }));
+  $$('#why').innerHTML = UI.know(groups, v.reasons.some(x => x.kind === 'chain') ? `<details class="more"><summary>ⓘ ${esc(t('more_info'))}</summary><p class="small muted">${esc(t('traction_help'))}</p></details>` : '');
+}
+const weatherNote = () => t('no_vis');
+/** Count CDOT reasons of some kinds on the route: main vs minor/other-direction. */
+function roadCount(reasons, kinds, roadsOk) {
+  const l = reasons.filter(x => kinds.includes(x.kind) && x.seg); const main = l.filter(x => x.level !== 'info');
+  if (!roadsOk) return { cls: 'unknown', txt: t('g_roads_na') };
+  if (!l.length) return { cls: 'go', txt: t('g_none') };
+  const lv = main.some(x => x.level === 'nogo') ? 'nogo' : main.length ? 'caution' : 'info';
+  return { cls: lv, txt: [main.length ? t('g_n', main.length) : '', l.length - main.length ? t('g_info', l.length - main.length) : ''].filter(Boolean).join(' · ') };
 }
 
 function renderResortCards() {
@@ -777,6 +785,7 @@ function renderView() {
 }
 async function showDash(id) {
   setBodyView('dash');
+  { const st = document.getElementById('start'), gt = document.getElementById('getthere'); if (st && gt && st.nextElementSibling !== gt) gt.before(st); }
   if (state.resort !== id) { state.resort = id; LS.set('resort', id); }
   safe('nav', renderChrome);
   if (!dashLoaded) {
@@ -823,7 +832,7 @@ function goHome() {
   try { state.start = loadStart(state.cfg); } catch { state.start = { ...state.cfg.trip.origin, kind: 'preset' }; }
   try { if ($('#start')) state.startUI = mountStartUI($('#start'), { cfg: state.cfg, t, L, getStart: () => state.start, onChange: setStart }); }
   catch (e) { console.warn('[ski] start UI failed:', e); }
-  initDiscover({ state, L, getJson, track, loadLeaflet, getStart: () => state.start, setStart, open: openResort, loadRoads: async () => { if (!state.roads.data) { try { await loadServer(); } catch {} } return state.roads; }, home: goHome, plan: openPlan, view: () => state.view });
+  initDiscover({ state, L, t, ui: UI, roadCheck, roadCount, reasonText, getJson, track, loadLeaflet, getStart: () => state.start, setStart, open: openResort, loadRoads: async () => { if (!state.roads.data) { try { await loadServer(); } catch {} } return state.roads; }, home: goHome, plan: openPlan, view: () => state.view });
   try { bind(); } catch (e) { console.warn('[ski] bind failed:', e); }
   document.querySelector('.brand')?.addEventListener('click', e => { e.preventDefault(); goHome(); });
   $$('#dash-back').addEventListener('click', e => { e.preventDefault(); goHome(); });

@@ -295,6 +295,23 @@ export function verdictFor(cfg, resort, { roads, alerts, days, intel = null, now
   return { level, reasons, segIds };
 }
 
+/**
+ * Plain-language recommendation from the resort's own report and the worst issue found on the page.
+ * `rep` = {ok, status, lifts:{open,total}, terrain:{pct}, snow:{h24 (cm)}}; `level` = worst of the page's checks (go|caution|nogo).
+ * Used by the full dashboards and the basic catalog pages, so both say the same thing for the same data.
+ */
+export function recommendFrom(rep, level) {
+  if (!rep || !rep.ok || !rep.status) return { cls: 'unknown', key: 'rec_noreport' };
+  if (rep.status === 'closed') return { cls: 'nogo', key: 'rec_closed' };
+  if (level === 'nogo') return { cls: 'nogo', key: 'rec_other' };
+  const lim = rep.status === 'open' && ((rep.lifts?.total && rep.lifts.open / rep.lifts.total < 0.25) || (rep.terrain?.pct != null && rep.terrain.pct < 25));
+  if (lim) return { cls: 'caution', key: 'rec_limited' };
+  if (level === 'caution') return { cls: 'caution', key: 'rec_some' };
+  // "Great" only with fresh snow reported by the resort (15 cm ≈ 6″) and at least half the terrain open.
+  if ((rep.snow?.h24 ?? 0) >= 15 && (rep.terrain?.pct ?? 0) >= 50) return { cls: 'go', key: 'rec_great' };
+  return { cls: 'go', key: 'rec_good' };
+}
+
 /* ---------------- What to wear ---------------- */
 
 /** Returns {band, adult:[keys], kid:[keys], notes:[keys]} for one day. Temps in °C, wind km/h. */
