@@ -1,9 +1,9 @@
 import { openMeteoUrl, splitOpenMeteo, dailyRows, hourlyRows, weatherEmoji, carsUrl, slimEvents, EVENT_CLASSES,
-  nwsUrl, slimAlerts, verdictFor, outfitFor, recommendFrom, fmt, wxGroupOf, wxGroupCfg, wxGroupCount } from './core.js?v=f3d14d2469';
-import { STR, PACK_DEFAULT } from './i18n.js?v=f3d14d2469';
-import { selectCameras, routeSegments, inCO } from './route.js?v=f3d14d2469';
-import { loadStart, saveStart, isDefaultStart, getRoute, mountStartUI } from './start.js?v=f3d14d2469';
-import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=f3d14d2469';
+  nwsUrl, slimAlerts, verdictFor, outfitFor, recommendFrom, fmt, wxGroupOf, wxGroupCfg, wxGroupCount } from './core.js?v=38f78c3347';
+import { STR, PACK_DEFAULT } from './i18n.js?v=38f78c3347';
+import { selectCameras, routeSegments, inCO } from './route.js?v=38f78c3347';
+import { loadStart, saveStart, isDefaultStart, getRoute, mountStartUI } from './start.js?v=38f78c3347';
+import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=38f78c3347';
 
 const LS = {
   get: (k, d) => { try { const v = localStorage.getItem('ski.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -440,7 +440,9 @@ function renderIntel() {
 function renderOutlook() {
   const u = U();
   const cur = resort();
-  const list = [cur, ...state.cfg.resorts.filter(r => r.id !== cur.id && state.wx.data?.[r.id])]; // resorts whose forecast is loaded, open one first
+  // Open resort first, then the others whose forecast is loaded, snowiest next 5 days first; 3 rows shown (as before), the rest folded.
+  const s5 = r => { const d = daysFor(r); return d ? d.slice(0, 5).reduce((a, x) => a + (x.summit.snow || 0), 0) : -1; };
+  const list = [cur, ...state.cfg.resorts.filter(r => r.id !== cur.id && state.wx.data?.[r.id]).sort((a, b) => s5(b) - s5(a))];
   const rows = list.map(r => {
     const i = intelFor(r); const d = daysFor(r);
     if (!d) return `<div class="orow"><b>${esc(r.short)}</b><span class="muted">${esc(t('r_wx_unavailable'))}</span></div>`;
@@ -456,8 +458,9 @@ function renderOutlook() {
       <div class="oblk"><span class="small muted">${esc(t('next15'))} · <b>${f(sum(a))}</b></span>${mini(a, lab.slice(0, 5))}</div>
       <div class="oblk"><span class="small muted">${esc(t('next610'))} · <b>${f(sum(b))}</b></span>${mini(b, lab.slice(5, 10))}</div>
     </div>`;
-  }).join('');
-  $('#outlook').innerHTML = `<h2>${esc(t('outlook_h'))}</h2>${rows}<p class="note">${esc(t('outlook_src'))}</p>`;
+  });
+  const more = rows.length > 3 ? `<details class="more omore"><summary>${esc(t('show_all'))} (${rows.length})</summary>${rows.slice(3).join('')}</details>` : '';
+  $('#outlook').innerHTML = `<h2>${esc(t('outlook_h'))}</h2>${rows.slice(0, 3).join('')}${more}<p class="note">${esc(t('outlook_src'))}</p>`;
 }
 
 function segCtl(name, opts, cur) {
@@ -804,7 +807,7 @@ function bind() {
   $('#btn-refresh').onclick = () => { if (state.view === 'dash') refresh(); else { const b = $('#btn-refresh'); b.classList.add('spin'); loadConditions(true).finally(() => { b.classList.remove('spin'); renderView(); }); } };
   document.addEventListener('click', e => {
     const rc = e.target.closest('[data-resort]');
-    if (rc && !e.target.closest('details')) { state.resort = rc.dataset.resort; LS.set('resort', state.resort); track('resort_select', state.resort); try { addRecent(state.resort); history.replaceState({ resort: state.resort }, '', `?resort=${encodeURIComponent(state.resort)}`); } catch {} syncWx(); renderAll(); routeAll(); if (state.view === 'dash') ensureWx(); if (rc.classList.contains('orow') || rc.classList.contains('rcard')) $('#verdict').scrollIntoView({ behavior: 'smooth' }); return; }
+    if (rc && (!e.target.closest('details') || e.target.closest('.omore'))) { state.resort = rc.dataset.resort; LS.set('resort', state.resort); track('resort_select', state.resort); try { addRecent(state.resort); history.replaceState({ resort: state.resort }, '', `?resort=${encodeURIComponent(state.resort)}`); } catch {} syncWx(); renderAll(); routeAll(); if (state.view === 'dash') ensureWx(); if (rc.classList.contains('orow') || rc.classList.contains('rcard')) $('#verdict').scrollIntoView({ behavior: 'smooth' }); return; }
     const b = e.target.closest('.seg-ctl button');
     if (b && !b.closest('#basic')) { if (b.parentElement.dataset.ctl === 'point') { state.point = b.dataset.v; LS.set('point', state.point); } renderWeather(); return; }
     const yt = e.target.closest('.yt[data-yt]');
