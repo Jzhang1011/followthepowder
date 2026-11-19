@@ -14,6 +14,12 @@ const DAILY = ['temperature_2m_max', 'temperature_2m_min', 'apparent_temperature
 
 /** One request for every resort: two points each — base (base lat/lon + base elevation) and summit
  * (summit lat/lon + official summit elevation, so summit wind/precip come from the summit grid cell). */
+/** Weather is fetched and stored in small groups of resorts (resorts.json wxGroup, default 0) so no
+ *  single request, KV value or page download carries all of them. Group 0 rides in latest.json. */
+export const wxGroupOf = r => r?.wxGroup || 0;
+export const wxGroupCount = cfg => 1 + Math.max(0, ...cfg.resorts.map(wxGroupOf));
+export const wxGroupCfg = (cfg, g) => ({ ...cfg, resorts: cfg.resorts.filter(r => wxGroupOf(r) === g) });
+
 export function openMeteoUrl(cfg) {
   const lat = [], lon = [], elev = [];
   for (const r of cfg.resorts) {

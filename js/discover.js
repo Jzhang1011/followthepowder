@@ -1,8 +1,8 @@
 // Resort discovery (default home) + basic resort view for catalog resorts without a full dashboard.
 // Data: data/catalog.json (static, verified) + api/catalog-conditions.json (Open-Meteo model, refreshed hourly by
 // the ski-data Worker; resort-published base depth / terrain open / lifts / 24 h snow where SkiDay reads a public feed) + api/forecast.json?r=<id> (basic view).
-import { fmt, weatherEmoji, chainLevel, recommendFrom, visLevel } from './core.js?v=4a32a8f6b0';
-import { getRoute, getTable } from './start.js?v=4a32a8f6b0';
+import { fmt, weatherEmoji, chainLevel, recommendFrom, visLevel } from './core.js?v=f3d14d2469';
+import { getRoute, getTable } from './start.js?v=f3d14d2469';
 
 const S = {
   en: {
@@ -150,6 +150,8 @@ const LSd = {
 const favs = () => LSd.get('favs', []).filter(id => D.byId.has(id));
 const recents = () => LSd.get('recent', []).filter(id => D.byId.has(id));
 export const catalogResort = id => D.byId.get(id) || null;
+/** The resort's own lift/terrain/snow report as fetched for the catalog (null when none / not loaded). */
+export const catalogReport = id => D.cond?.reports?.[id] || null;
 
 /* ---------- distance / drive / score ---------- */
 function hav(a, b) {

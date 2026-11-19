@@ -538,3 +538,6 @@ section{scroll-margin-top:70px}
 .b2{padding:22px 0 18px}
 .b2 .bmeta2{margin-bottom:14px}
 .b2 #b-start-slot{display:none}
+/* Official live-only stream (no still image published): navy tile with play button + label */
+.thumb.live{background:linear-gradient(135deg,#1d3a5c,#14283F)}
+.thumb.live .lv{position:absolute;top:8px;left:8px;font-style:normal;font-size:10.5px;background:rgba(242,140,56,.9);color:#fff;border-radius:6px;padding:1px 6px}

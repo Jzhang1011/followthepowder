@@ -1,5 +1,5 @@
 // Starting location: input with Photon autocomplete, presets, browser geolocation; OSRM routing with cache + throttle.
-import { buildRoute, osrmRouteUrl, osrmTableUrl } from './route.js?v=4a32a8f6b0';
+import { buildRoute, osrmRouteUrl, osrmTableUrl } from './route.js?v=f3d14d2469';
 
 const LSK = 'ski.start', RCK = 'ski.routes';
 const round = (v, n = 3) => +(+v).toFixed(n); // ~100 m: enough for routing, kinder to privacy
@@ -22,7 +22,7 @@ async function throttle() {
 }
 function readCache() { try { return JSON.parse(localStorage.getItem(RCK)) || {}; } catch { return {}; } }
 function writeCache(c) {
-  const keys = Object.keys(c).sort((a, b) => c[b].at - c[a].at).slice(0, 8);
+  const keys = Object.keys(c).sort((a, b) => c[b].at - c[a].at).slice(0, 20);
   const out = Object.fromEntries(keys.map(k => [k, c[k]]));
   try { localStorage.setItem(RCK, JSON.stringify(out)); } catch { try { localStorage.removeItem(RCK); } catch {} }
 }

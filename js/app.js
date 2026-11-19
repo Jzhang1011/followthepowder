@@ -1,9 +1,9 @@
 import { openMeteoUrl, splitOpenMeteo, dailyRows, hourlyRows, weatherEmoji, carsUrl, slimEvents, EVENT_CLASSES,
-  nwsUrl, slimAlerts, verdictFor, outfitFor, recommendFrom, fmt } from './core.js?v=4a32a8f6b0';
-import { STR, PACK_DEFAULT } from './i18n.js?v=4a32a8f6b0';
-import { selectCameras, routeSegments, inCO } from './route.js?v=4a32a8f6b0';
-import { loadStart, saveStart, isDefaultStart, getRoute, mountStartUI } from './start.js?v=4a32a8f6b0';
-import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts } from './discover.js?v=4a32a8f6b0';
+  nwsUrl, slimAlerts, verdictFor, outfitFor, recommendFrom, fmt, wxGroupOf, wxGroupCfg, wxGroupCount } from './core.js?v=f3d14d2469';
+import { STR, PACK_DEFAULT } from './i18n.js?v=f3d14d2469';
+import { selectCameras, routeSegments, inCO } from './route.js?v=f3d14d2469';
+import { loadStart, saveStart, isDefaultStart, getRoute, mountStartUI } from './start.js?v=f3d14d2469';
+import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=f3d14d2469';
 
 const LS = {
   get: (k, d) => { try { const v = localStorage.getItem('ski.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -15,7 +15,7 @@ const state = {
   resort: LS.get('resort', null),
   point: LS.get('point', 'summit'),
   cfg: null,
-  wx: { data: null, mode: null, at: null }, roads: { data: null, mode: null, at: null }, alerts: { data: null, mode: null, at: null },
+  wx: { data: null, mode: null, at: null }, wxG: {}, roads: { data: null, mode: null, at: null }, alerts: { data: null, mode: null, at: null },
   intel: { data: {}, at: null, mode: null }, cams: null, camsAt: null, start: null, routes: {}, camsAll: null, startUI: null, map: null, refreshing: false, lastLive: 0
 };
 
@@ -99,7 +99,7 @@ async function loadServer() {
   ]);
   if (snap.status === 'fulfilled') {
     const s = snap.value.j, from = snap.value.from, src = s.sources || {};
-    if (src.weather?.ok && s.weather) take('wx', s.weather, src.weather.fetchedAt, from, src.weather.status);
+    if (src.weather?.ok && s.weather) takeWx(0, s.weather, src.weather.fetchedAt, from, src.weather.status);
     if (src.roads?.ok && s.roads) take('roads', s.roads.events, src.roads.fetchedAt, from, src.roads.status);
     if (s.alerts && src.alerts?.ok !== false && Object.values(s.alerts).some(v => v)) take('alerts', s.alerts, src.alerts?.fetchedAt, from, src.alerts?.status);
     if (s.cameras) state.cams = s.cameras;
@@ -113,16 +113,41 @@ async function loadServer() {
   }
 }
 
+/* Weather comes in groups of resorts (resorts.json wxGroup): group 0 inside latest.json, the others from
+   api/weather.json?g=N. state.wxG keeps each group; state.wx is the merged view, timed by the open resort's group. */
+function takeWx(g, data, at, mode, status) {
+  if (data == null) return;
+  const cur = state.wxG[g];
+  if (cur?.data && cur.at && at && ageMin(at) > ageMin(cur.at)) return;
+  state.wxG[g] = { data, mode, at, status: status || 'ok' };
+  syncWx();
+}
+function syncWx() {
+  const all = Object.assign({}, ...Object.values(state.wxG).map(x => x.data || {}));
+  const cur = state.wxG[wxGroupOf(resort())] || {};
+  state.wx = { data: Object.keys(all).length ? all : null, mode: cur.mode || null, at: cur.at || null, status: cur.status, error: cur.error };
+}
+const wxFresh = g => state.wxG[g]?.data && ageMin(state.wxG[g].at) <= LIMIT.wx;
+/** Fetch weather groups (the open resort's first); renders as each one lands. */
+async function loadWxGroups(groups) {
+  const bust = `&v=${Math.floor(Date.now() / 60000)}`;
+  await Promise.allSettled(groups.filter(g => g > 0).map(g => getJson(`${API}weather.json?g=${g}${bust}`, 15000)
+    .then(j => { if (j?.weather && j.source?.ok !== false) { takeWx(g, j.weather, j.source?.fetchedAt || j.generatedAt, 'server', j.source?.status); if (state.view === 'dash') renderAll(); } })
+    .catch(e => { state.wxG[g] = { ...(state.wxG[g] || {}), error: String(e.message || e) }; })));
+}
+const otherWxGroups = () => { const cur = wxGroupOf(resort()); return Array.from({ length: wxGroupCount(state.cfg) }, (_, i) => i).filter(g => g !== cur && g > 0 && !wxFresh(g)); };
+
 /** Last resort: fetch upstream directly, only for sources with no fresh copy. */
 async function loadLiveFallback() {
-  const cfg = state.cfg; const jobs = [];
-  if (isStale('wx')) jobs.push(getJson(openMeteoUrl(cfg)).then(j => { const d = splitOpenMeteo(cfg, j); if (!Object.keys(d).length) throw new Error('empty'); state.wx = { data: d, mode: 'live', at: new Date().toISOString(), status: 'ok' }; })
-    .catch(e => { state.wx.error = String(e.message || e); }));
+  const cfg = state.cfg; const jobs = []; const g = wxGroupOf(resort());
+  // Only the open resort's weather group, and only the open resort's NWS alerts: one visitor never fans out to every resort.
+  if (!wxFresh(g)) { const gc = wxGroupCfg(cfg, g); jobs.push(getJson(openMeteoUrl(gc)).then(j => { const d = splitOpenMeteo(gc, j); if (!Object.keys(d).length) throw new Error('empty'); takeWx(g, d, new Date().toISOString(), 'live', 'ok'); })
+    .catch(e => { state.wx.error = String(e.message || e); })); }
   if (isStale('roads')) jobs.push(Promise.all(EVENT_CLASSES.map(c => getJson(carsUrl(cfg, c), 30000).then(j => slimEvents(cfg, c, j))))
     .then(all => { state.roads = { data: all.flat(), mode: 'live', at: new Date().toISOString(), status: 'ok' }; })
     .catch(e => { state.roads.error = String(e.message || e); }));
-  if (isStale('alerts')) jobs.push(Promise.all(cfg.resorts.map(r => getJson(nwsUrl(cfg, r)).then(j => [r.id, slimAlerts(j)])))
-    .then(all => { state.alerts = { data: Object.fromEntries(all), mode: 'live', at: new Date().toISOString(), status: 'ok' }; })
+  if (isStale('alerts') || !state.alerts.data?.[resort().id]) jobs.push(Promise.all([resort()].map(r => getJson(nwsUrl(cfg, r)).then(j => [r.id, slimAlerts(j)])))
+    .then(all => { state.alerts = { data: { ...(state.alerts.data || {}), ...Object.fromEntries(all) }, mode: state.alerts.data ? state.alerts.mode : 'live', at: state.alerts.at || new Date().toISOString(), status: 'ok' }; })
     .catch(e => { state.alerts.error = String(e.message || e); }));
   await Promise.all(jobs);
 }
@@ -130,13 +155,26 @@ async function loadLiveFallback() {
 async function refresh() {
   if (state.refreshing) return;
   state.refreshing = true; $('#btn-refresh').classList.add('spin');
-  try { await Promise.allSettled([loadServer(), loadCams()]); await loadLiveFallback(); state.lastLive = Date.now(); if (Object.values(state.routes).some(x => x.status === 'fail')) { for (const k in state.routes) if (state.routes[k].status === 'fail') delete state.routes[k]; routeAll(); } } finally { state.refreshing = false; $('#btn-refresh').classList.remove('spin'); renderAll(); }
+  try { await Promise.allSettled([loadServer(), loadCams(), loadWxGroups([wxGroupOf(resort())])]); await loadLiveFallback(); loadWxGroups(otherWxGroups()); state.lastLive = Date.now(); if (Object.values(state.routes).some(x => x.status === 'fail')) { for (const k in state.routes) if (state.routes[k].status === 'fail') delete state.routes[k]; routeAll(); } } finally { state.refreshing = false; $('#btn-refresh').classList.remove('spin'); renderAll(); }
 }
 
 /* ---------- Derived ---------- */
 
 function daysFor(r) { const w = state.wx.data?.[r.id]; try { return w ? dailyRows(w, r) : null; } catch { return null; } }
-function intelFor(r) { return state.intel.data[r.id] || null; }
+/** Resort report: the dashboard's own feed (intel.json) or, for resorts marked intelFrom:'catalog', the same
+ *  lift/terrain/snow report the catalog already fetches hourly (api/catalog-conditions.json) — one integration per resort. */
+function intelFor(r) {
+  const own = state.intel.data[r.id]; if (own || r.intelFrom !== 'catalog') return own || null;
+  const c = catalogReport(r.id); if (!c) return null;
+  const ac = c.acres;
+  return { ok: true, viaCatalog: true, source: c.source, asOf: c.at, snowAsOf: c.snowAt, fetchedAt: c.fetchedAt, status: c.status, note: null,
+    lifts: c.lifts, trails: c.trails, terrain: ac?.total ? { openAcres: ac.open, totalAcres: ac.total, pct: c.pct } : null,
+    hours: c.hours || null, baseCm: c.baseCm ?? null, surface: null,
+    snow: { h24: c.s24Cm ?? null, h48: c.s48Cm ?? null, d7: c.s7dCm ?? null, season: c.seasonCm ?? null } };
+}
+/** A catalog-fed resort that publishes no machine-readable report (never guessed). */
+const noFeed = r => r.intelFrom === 'catalog' && !!catalogResort(r.id) && !catalogResort(r.id).report;
+const intelNa = r => noFeed(r) ? t('intel_nofeed') : t('intel_unavailable');
 const ctxMemo = new Map();
 /** Dynamic route context for a resort: synthetic segments/legs, matched events and picked cameras. */
 function ctxFor(r) {
@@ -293,7 +331,7 @@ function renderVerdict() {
   $$('#hero-credit').innerHTML = r.photo ? `📷 ${esc(r.photo.credit)} · <a href="${esc(r.photo.page)}" target="_blank" rel="noopener">${esc(r.photo.license)}</a>` : '';
   const bad = [...v.reasons].filter(x => x.level === 'nogo' || x.level === 'caution').sort((a, b) => SEV[a.level] - SEV[b.level]);
   const when = i?.ok ? fmtTime([i.asOf, i.snowAsOf].filter(Boolean).sort((a, b) => ageMin(a) - ageMin(b))[0] || i.fetchedAt) : '';
-  const basis = rec.key === 'rec_noreport' ? t('rec_noreport_sub') : t('rec_basis', `${t('rec_src_rep', `${i.source?.name || r.short}, ${when}`)}, ${t('rec_src_rest')}`);
+  const basis = rec.key === 'rec_noreport' ? (noFeed(r) ? t('intel_nofeed') : t('rec_noreport_sub')) : t('rec_basis', `${t('rec_src_rep', `${i.source?.name || r.short}, ${when}`)}, ${t('rec_src_rest')}`);
   $('#verdict').innerHTML = UI.rec(rec, bad.map(reasonText), basis);
 
   // A. Mountain conditions
@@ -329,7 +367,7 @@ function renderVerdict() {
   const item = x => ({ level: x.level, text: reasonText(x), src: srcOf(x, r),
     det: [x.seg ? `<b>${esc(segName(r, x.seg))}</b>` : '', x.ev?.detail ? esc(x.ev.detail) : '', x.alert?.headline ? esc(x.alert.headline) : '', x.kind === 'resort' && x.note ? esc(x.note) : ''].filter(Boolean).join('<br>') });
   const groups = ['mountain', 'road', 'weather'].map(g => ({ g, items: v.reasons.filter(x => (GROUP[x.kind] || 'weather') === g).map(item),
-    empty: g === 'mountain' ? t('intel_unavailable') : t('unavailable'), note: g === 'weather' ? weatherNote() : '' }));
+    empty: g === 'mountain' ? intelNa(r) : t('unavailable'), note: g === 'weather' ? weatherNote() : '' }));
   $$('#why').innerHTML = UI.know(groups, v.reasons.some(x => x.kind === 'chain') ? `<details class="more"><summary>ⓘ ${esc(t('more_info'))}</summary><p class="small muted">${esc(t('traction_help'))}</p></details>` : '');
 }
 const weatherNote = () => t('vis_note');
@@ -371,7 +409,7 @@ function renderIntel() {
   const r = resort(); const i = intelFor(r); const u = U(); const el = $('#intel');
   const head = `<div class="sec-h"><h2>${esc(t('intel_h'))} · ${esc(r.short)}</h2>${badge('intel', r)}</div>`;
   if (!i || !i.ok) {
-    el.innerHTML = `${head}<p class="muted">${esc(t('intel_unavailable'))}${i?.error ? ` <span class="small">(${esc(i.error)})</span>` : ''} · <a href="${esc(r.links.report)}" target="_blank" rel="noopener">${esc(t('report'))} ↗</a></p>`;
+    el.innerHTML = `${head}<p class="muted">${esc(intelNa(r))}${i?.error ? ` <span class="small">(${esc(i.error)})</span>` : ''} · <a href="${esc(r.links.report)}" target="_blank" rel="noopener">${esc(t('report'))} ↗</a></p>`;
     return;
   }
   const na = `<span class="na">${esc(t('unavailable_short'))}</span>`;
@@ -401,7 +439,9 @@ function renderIntel() {
 
 function renderOutlook() {
   const u = U();
-  const rows = state.cfg.resorts.map(r => {
+  const cur = resort();
+  const list = [cur, ...state.cfg.resorts.filter(r => r.id !== cur.id && state.wx.data?.[r.id])]; // resorts whose forecast is loaded, open one first
+  const rows = list.map(r => {
     const i = intelFor(r); const d = daysFor(r);
     if (!d) return `<div class="orow"><b>${esc(r.short)}</b><span class="muted">${esc(t('r_wx_unavailable'))}</span></div>`;
     const sv = d.map(x => snowVal(x.summit.snow) || 0);
@@ -478,8 +518,9 @@ const badge = (kind, r) => { const f = freshness(kind, r); return `<span class="
 function camTile({ href, img, name, ts, broken, extra = '', title = '' }) {
   const m = ageMin(ts), old = isFinite(m) && m > 60;
   const age = isFinite(m) ? `<em class="cage${old ? ' old' : ''}">${esc(old ? `${t('cam_old')} ${ago(ts)}` : ago(ts))}</em>` : '';
-  return `<a class="thumb${broken || !img ? ' na' : ''}" data-na="${esc(t('cam_na'))}" href="${esc(href)}" target="_blank" rel="noopener"${title ? ` title="${esc(title)}"` : ''}>
-      ${img && !broken ? `<img loading="lazy" alt="${esc(name)}" src="${esc(camImg(img))}" onerror="this.parentNode.classList.add('na')">` : ''}${extra}${broken || !img ? '' : age}<span>${esc(name)}</span></a>`;
+  const liveOnly = !img && !broken && extra.includes('play');
+  return `<a class="thumb${liveOnly ? ' live' : broken || !img ? ' na' : ''}" data-na="${esc(t('cam_na'))}" href="${esc(href)}" target="_blank" rel="noopener"${title ? ` title="${esc(title)}"` : ''}>
+      ${img && !broken ? `<img loading="lazy" alt="${esc(name)}" src="${esc(camImg(img))}" onerror="this.parentNode.classList.add('na')">` : ''}${extra}${broken || !img ? '' : age}${liveOnly ? `<em class="lv">${esc(t('cam_live_only'))}</em>` : ''}<span>${esc(name)}</span></a>`;
 }
 function camImg(src) { return src + (src.includes('?') ? '&' : '?') + 't=' + Math.floor(Date.now() / 120000); }
 
@@ -599,7 +640,7 @@ function mountMap(c) {
 let routeGen = 0;
 async function routeAll() {
   const gen = ++routeGen; const start = state.start;
-  const order = [resort(), ...state.cfg.resorts.filter(r => r.id !== resort().id)];
+  const order = [resort()]; // only the open dashboard: switching resorts routes that one (start.js caches recent routes)
   for (const r of order) {
     const key = `${start.lat.toFixed(3)},${start.lon.toFixed(3)}>${r.id}`;
     if (state.routes[r.id]?.key === key && state.routes[r.id].status === 'ok') continue;
@@ -615,6 +656,13 @@ async function routeAll() {
     }
     renderAll();
   }
+}
+/** After switching resorts: make sure that resort's weather group (and NWS alerts) are loaded. */
+async function ensureWx() {
+  const g = wxGroupOf(resort());
+  if (!wxFresh(g)) await loadWxGroups([g]);
+  try { await loadLiveFallback(); } catch {}
+  if (state.view === 'dash') renderAll();
 }
 function updateStartMsg() {
   if (!state.startUI) return;
@@ -682,7 +730,7 @@ function renderResorts() {
   const block = r => `<div class="links"><b>${esc(L(r.name))}</b>
       <a href="${esc(r.links.webcams)}" target="_blank" rel="noopener">${esc(t('official'))} ↗</a>
       <a href="${esc(r.links.report)}" target="_blank" rel="noopener">${esc(t('report'))} ↗</a></div>
-    <div class="thumbs">${r.webcams.map(w => w.youtube
+    <div class="thumbs">${(r.webcams || []).map(w => w.youtube
       ? `<div class="thumb yt" data-yt="${esc(w.youtube)}" role="button" tabindex="0" aria-label="${esc(t('play'))}"><img loading="lazy" alt="" src="https://i.ytimg.com/vi/${esc(w.youtube)}/hqdefault_live.jpg"><b class="play">▶</b><span>${esc(L(w.name))}</span></div>`
       : camTile({ href: w.live || r.links.webcams, img: w.image, name: L(w.name), extra: w.live ? '<b class="play">▶</b>' : '' })).join('')}</div>`;
   $('#resorts').innerHTML = `<h2>${esc(t('cams_h'))}</h2>${block(sel)}
@@ -756,7 +804,7 @@ function bind() {
   $('#btn-refresh').onclick = () => { if (state.view === 'dash') refresh(); else { const b = $('#btn-refresh'); b.classList.add('spin'); loadConditions(true).finally(() => { b.classList.remove('spin'); renderView(); }); } };
   document.addEventListener('click', e => {
     const rc = e.target.closest('[data-resort]');
-    if (rc && !e.target.closest('details')) { state.resort = rc.dataset.resort; LS.set('resort', state.resort); track('resort_select', state.resort); try { addRecent(state.resort); history.replaceState({ resort: state.resort }, '', `?resort=${encodeURIComponent(state.resort)}`); } catch {} renderAll(); routeAll(); if (rc.classList.contains('orow') || rc.classList.contains('rcard')) $('#verdict').scrollIntoView({ behavior: 'smooth' }); return; }
+    if (rc && !e.target.closest('details')) { state.resort = rc.dataset.resort; LS.set('resort', state.resort); track('resort_select', state.resort); try { addRecent(state.resort); history.replaceState({ resort: state.resort }, '', `?resort=${encodeURIComponent(state.resort)}`); } catch {} syncWx(); renderAll(); routeAll(); if (state.view === 'dash') ensureWx(); if (rc.classList.contains('orow') || rc.classList.contains('rcard')) $('#verdict').scrollIntoView({ behavior: 'smooth' }); return; }
     const b = e.target.closest('.seg-ctl button');
     if (b && !b.closest('#basic')) { if (b.parentElement.dataset.ctl === 'point') { state.point = b.dataset.v; LS.set('point', state.point); } renderWeather(); return; }
     const yt = e.target.closest('.yt[data-yt]');
@@ -792,13 +840,14 @@ async function showDash(id) {
   if (!dashLoaded) {
     dashLoaded = true;
     $$('#verdict').innerHTML = '<div class="skeleton"></div>';
-    await Promise.allSettled([loadServer(), loadCams()]);
-    renderAll();
+    await Promise.allSettled([loadServer(), loadCams(), loadWxGroups([wxGroupOf(resort())])]);
+    syncWx(); renderAll();
     routeAll().catch(e => console.warn('[ski] routing failed:', e));
     try { await loadLiveFallback(); } catch (e) { console.warn('[ski] live fallback failed:', e); }
     state.lastLive = Date.now();
     renderAll();
-  } else { renderAll(); routeAll().catch(() => {}); }
+    loadWxGroups(otherWxGroups()); // the other resorts' forecasts for the cards and the outlook, after the page is up
+  } else { syncWx(); renderAll(); routeAll().catch(() => {}); ensureWx(); }
 }
 /** Route from the URL (?resort=<id|name>); push=true adds a history entry. */
 async function route(push) {
@@ -848,5 +897,5 @@ function goHome() {
   await route();
   window.__skiReady = true;
   track('page_view', state.lang);
-  if (isFull) { await Promise.all([catP, condP]); if (state.view === 'dash') safe('alts', () => renderAlts(resort().id, $('#alts'))); }
+  if (isFull) { await Promise.all([catP, condP]); if (state.view === 'dash') renderAll(); } // catalog-fed resort reports + alternatives
 })();

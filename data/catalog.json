@@ -182,7 +182,7 @@
    "summitElevM": 3676,
    "tz": "America/Denver",
    "url": "https://www.winterparkresort.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Winter_Park_Resort",
    "photo": {
     "src": "img/cat/winter-park.jpg",
@@ -215,7 +215,7 @@
    "summitElevM": 3231,
    "tz": "America/Denver",
    "url": "https://www.eldora.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Eldora_Mountain_Resort",
    "photo": {
     "src": "img/cat/eldora.jpg",
@@ -253,7 +253,7 @@
    "summitElevM": 3813,
    "tz": "America/Denver",
    "url": "https://www.aspensnowmass.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Snowmass_(ski_area)",
    "photo": {
     "src": "img/cat/aspen-snowmass.jpg",
@@ -290,7 +290,7 @@
    "summitElevM": 3527,
    "tz": "America/Denver",
    "url": "https://www.vail.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Vail_Ski_Resort",
    "photo": {
     "src": "img/cat/vail.jpg",
@@ -323,7 +323,7 @@
    "summitElevM": 3487,
    "tz": "America/Denver",
    "url": "https://www.beavercreek.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Beaver_Creek_Resort",
    "report": {
     "p": "vail",
@@ -350,7 +350,7 @@
    "summitElevM": 3962,
    "tz": "America/Denver",
    "url": "https://www.breckenridge.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Breckenridge_Ski_Resort",
    "photo": {
     "src": "img/cat/breckenridge.jpg",
@@ -383,7 +383,7 @@
    "summitElevM": 3782,
    "tz": "America/Denver",
    "url": "https://www.keystoneresort.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Keystone_Resort",
    "photo": {
     "src": "img/cat/keystone.jpg",
@@ -418,7 +418,7 @@
    "summitElevM": 3707,
    "tz": "America/Denver",
    "url": "https://www.skicb.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Crested_Butte_Mountain_Resort",
    "photo": {
     "src": "img/cat/crested-butte.jpg",
@@ -451,7 +451,7 @@
    "summitElevM": 4008,
    "tz": "America/Denver",
    "url": "https://www.tellurideskiresort.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Telluride_Ski_Resort",
    "photo": {
     "src": "img/cat/telluride.jpg",
@@ -476,7 +476,7 @@
    "summitElevM": 3965,
    "tz": "America/Denver",
    "url": "https://www.skiloveland.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Loveland_Ski_Area",
    "photo": {
     "src": "img/cat/loveland.jpg",
@@ -501,7 +501,7 @@
    "summitElevM": 3645,
    "tz": "America/Denver",
    "url": "https://www.skimonarch.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Monarch_Mountain_(ski_area)",
    "photo": {
     "src": "img/cat/monarch.jpg",
@@ -526,7 +526,7 @@
    "summitElevM": 3628,
    "tz": "America/Denver",
    "url": "https://www.wolfcreekski.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Wolf_Creek_ski_area",
    "photo": {
     "src": "img/cat/wolf-creek.jpg",

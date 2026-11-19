@@ -220,6 +220,288 @@
     -105.62,
     40.12
    ]
+  },
+  "us40-winterpark": {
+   "name": {
+    "en": "US 40 Empire → Berthoud Pass → Winter Park",
+    "zh": "US 40 Empire → Berthoud 山口 → Winter Park"
+   },
+   "routes": [
+    "US 40"
+   ],
+   "bbox": [
+    -105.82,
+    39.7,
+    -105.62,
+    39.92
+   ]
+  },
+  "den-boulder": {
+   "name": {
+    "en": "DEN → Boulder (E-470 / Northwest Pkwy / US 36)",
+    "zh": "机场 → Boulder（E-470 / Northwest Pkwy / US 36）"
+   },
+   "routes": [
+    "E-470",
+    "Northwest Pkwy",
+    "Northwest Parkway",
+    "US 36",
+    "Peña Blvd",
+    "Pena Blvd"
+   ],
+   "bbox": [
+    -105.29,
+    39.8,
+    -104.65,
+    40.05
+   ]
+  },
+  "co119-nederland": {
+   "name": {
+    "en": "CO 119 Boulder Canyon → Nederland → Eldora",
+    "zh": "CO 119 Boulder 峡谷 → Nederland → Eldora"
+   },
+   "routes": [
+    "CO 119"
+   ],
+   "bbox": [
+    -105.6,
+    39.93,
+    -105.27,
+    40.03
+   ]
+  },
+  "us6-keystone": {
+   "name": {
+    "en": "US 6 Dillon → Keystone",
+    "zh": "US 6 Dillon → Keystone"
+   },
+   "routes": [
+    "US 6"
+   ],
+   "bbox": [
+    -106.06,
+    39.58,
+    -105.93,
+    39.64
+   ]
+  },
+  "co9-breck": {
+   "name": {
+    "en": "CO 9 Frisco → Breckenridge",
+    "zh": "CO 9 Frisco → Breckenridge"
+   },
+   "routes": [
+    "CO 9"
+   ],
+   "bbox": [
+    -106.12,
+    39.46,
+    -106.02,
+    39.59
+   ]
+  },
+  "i70-vail": {
+   "name": {
+    "en": "I-70 Copper → Vail Pass → Vail",
+    "zh": "I-70 Copper → Vail 山口 → Vail"
+   },
+   "routes": [
+    "I-70"
+   ],
+   "bbox": [
+    -106.4,
+    39.52,
+    -106.14,
+    39.66
+   ]
+  },
+  "i70-avon": {
+   "name": {
+    "en": "I-70 Vail → Avon (exit 167) → Beaver Creek",
+    "zh": "I-70 Vail → Avon（167 出口）→ Beaver Creek"
+   },
+   "routes": [
+    "I-70",
+    "US 6"
+   ],
+   "bbox": [
+    -106.56,
+    39.58,
+    -106.38,
+    39.67
+   ]
+  },
+  "i70-glenwood": {
+   "name": {
+    "en": "I-70 Avon → Glenwood Canyon → Glenwood Springs",
+    "zh": "I-70 Avon → Glenwood 峡谷 → Glenwood Springs"
+   },
+   "routes": [
+    "I-70"
+   ],
+   "bbox": [
+    -107.36,
+    39.52,
+    -106.55,
+    39.72
+   ]
+  },
+  "co82-snowmass": {
+   "name": {
+    "en": "CO 82 Glenwood Springs → Basalt → Snowmass",
+    "zh": "CO 82 Glenwood Springs → Basalt → Snowmass"
+   },
+   "routes": [
+    "CO 82"
+   ],
+   "bbox": [
+    -107.36,
+    39.18,
+    -106.86,
+    39.56
+   ]
+  },
+  "i70-gj": {
+   "name": {
+    "en": "I-70 Glenwood Springs → Grand Junction",
+    "zh": "I-70 Glenwood Springs → Grand Junction"
+   },
+   "routes": [
+    "I-70"
+   ],
+   "bbox": [
+    -108.62,
+    39.0,
+    -107.3,
+    39.6
+   ]
+  },
+  "us50-delta": {
+   "name": {
+    "en": "US 50 Grand Junction → Delta → Montrose",
+    "zh": "US 50 Grand Junction → Delta → Montrose"
+   },
+   "routes": [
+    "US 50",
+    "CO 141"
+   ],
+   "bbox": [
+    -108.62,
+    38.4,
+    -107.8,
+    39.1
+   ]
+  },
+  "us550-telluride": {
+   "name": {
+    "en": "US 550 / CO 62 / CO 145 Montrose → Ridgway → Dallas Divide → Telluride",
+    "zh": "US 550 / CO 62 / CO 145 Montrose → Ridgway → Dallas Divide → Telluride"
+   },
+   "routes": [
+    "US 550",
+    "CO 62",
+    "CO 145"
+   ],
+   "bbox": [
+    -108.1,
+    37.9,
+    -107.6,
+    38.5
+   ]
+  },
+  "us285-southpark": {
+   "name": {
+    "en": "C-470 / US 285 → Kenosha Pass → Fairplay → Poncha Springs",
+    "zh": "C-470 / US 285 → Kenosha 山口 → Fairplay → Poncha Springs"
+   },
+   "routes": [
+    "US 285",
+    "C-470",
+    "CO 470"
+   ],
+   "bbox": [
+    -106.2,
+    38.5,
+    -105.05,
+    39.75
+   ]
+  },
+  "us50-monarch": {
+   "name": {
+    "en": "US 50 Poncha Springs → Monarch Pass",
+    "zh": "US 50 Poncha Springs → Monarch 山口"
+   },
+   "routes": [
+    "US 50"
+   ],
+   "bbox": [
+    -106.4,
+    38.45,
+    -106.0,
+    38.58
+   ]
+  },
+  "us50-gunnison": {
+   "name": {
+    "en": "US 50 Monarch Pass → Gunnison",
+    "zh": "US 50 Monarch 山口 → Gunnison"
+   },
+   "routes": [
+    "US 50"
+   ],
+   "bbox": [
+    -106.95,
+    38.45,
+    -106.3,
+    38.6
+   ]
+  },
+  "co135-cb": {
+   "name": {
+    "en": "CO 135 Gunnison → Crested Butte",
+    "zh": "CO 135 Gunnison → Crested Butte"
+   },
+   "routes": [
+    "CO 135"
+   ],
+   "bbox": [
+    -107.0,
+    38.53,
+    -106.85,
+    38.92
+   ]
+  },
+  "us285-sanluis": {
+   "name": {
+    "en": "US 285 Poncha Pass → Saguache → CO 112 Center → Del Norte",
+    "zh": "US 285 Poncha 山口 → Saguache → CO 112 Center → Del Norte"
+   },
+   "routes": [
+    "US 285",
+    "CO 112"
+   ],
+   "bbox": [
+    -106.45,
+    37.6,
+    -105.9,
+    38.55
+   ]
+  },
+  "us160-wolfcreek": {
+   "name": {
+    "en": "US 160 Del Norte → South Fork → Wolf Creek Pass",
+    "zh": "US 160 Del Norte → South Fork → Wolf Creek 山口"
+   },
+   "routes": [
+    "US 160"
+   ],
+   "bbox": [
+    -106.9,
+    37.4,
+    -106.3,
+    37.75
+   ]
   }
  },
  "resorts": [
@@ -333,7 +615,8 @@
    "summitLat": 39.6249,
    "summitLon": -105.8624,
    "summitSource": "East Wall summit 13,050 ft (arapahoebasin.com); point on the East Wall ridge, Copernicus DEM 3,953 m",
-   "baseSource": "Base 10,780 ft (Mountain Goat Plaza)"
+   "baseSource": "Base 10,780 ft (Mountain Goat Plaza)",
+   "wxGroup": 0
   },
   {
    "id": "copper",
@@ -456,7 +739,8 @@
    "summitLat": 39.4552,
    "summitLon": -106.1902,
    "summitSource": "Summit 12,441 ft / 3,792 m (coppercolorado.com winter mountain stats); Tucker Mountain ridge, Copernicus DEM 3,798 m",
-   "baseSource": "Base 9,712 ft (coppercolorado.com)"
+   "baseSource": "Base 9,712 ft (coppercolorado.com)",
+   "wxGroup": 0
   },
   {
    "id": "steamboat",
@@ -581,7 +865,1156 @@
    "summitLat": 40.456,
    "summitLon": -106.7402,
    "summitSource": "Summit/Mt. Werner 10,568 ft (steamboat.com mountain stats); USGS GNIS 172767 high point, Copernicus DEM 3,213 m",
-   "baseSource": "Base 6,900 ft (steamboat.com)"
+   "baseSource": "Base 6,900 ft (steamboat.com)",
+   "wxGroup": 0
+  },
+  {
+   "id": "breckenridge",
+   "name": {
+    "en": "Breckenridge",
+    "zh": "Breckenridge（布雷肯里奇）"
+   },
+   "short": "Breck",
+   "passes": [
+    "epic"
+   ],
+   "region": "CO",
+   "lat": 39.477,
+   "lon": -106.048,
+   "baseElevM": 2926,
+   "summitElevM": 3962,
+   "driveMin": 145,
+   "driveSource": "OSRM route from DEN, no traffic (computed 2026-11-19)",
+   "routeNote": {
+    "en": "DEN → I-70 W through the Eisenhower-Johnson Tunnel → exit 203 Frisco → CO 9 south to Breckenridge.",
+    "zh": "机场 → I-70 西，过艾森豪威尔-约翰逊隧道 → 203 出口 Frisco → CO 9 南行到 Breckenridge。"
+   },
+   "route": [
+    {
+     "seg": "den-metro",
+     "closure": "caution"
+    },
+    {
+     "seg": "i70-foothills",
+     "closure": "nogo"
+    },
+    {
+     "seg": "i70-tunnel",
+     "closure": "nogo"
+    },
+    {
+     "seg": "co9-breck",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.breckenridge.com/",
+    "webcams": "https://www.breckenridge.com/the-mountain/mountain-conditions/mountain-cams.aspx",
+    "report": "https://www.breckenridge.com/the-mountain/mountain-conditions/snow-and-weather-report.aspx"
+   },
+   "webcams": [
+    {
+     "name": {
+      "en": "Snow Stake",
+      "zh": "量雪杆"
+     },
+     "image": "https://cache.snow.com/Mtncams/BreckSnowStake.jpg"
+    },
+    {
+     "name": {
+      "en": "Peak 8 from Peak 9",
+      "zh": "从 Peak 9 看 Peak 8"
+     },
+     "image": "https://live9.brownrice.com/cam-images/breckenridge9.jpg",
+     "live": "https://player.brownrice.com/embed/breckenridge9"
+    },
+    {
+     "name": {
+      "en": "Peak 9 (live)",
+      "zh": "Peak 9（直播）"
+     },
+     "live": "https://player.brownrice.com/embed/breckenridge10"
+    },
+    {
+     "name": {
+      "en": "Peak 7 (live)",
+      "zh": "Peak 7（直播）"
+     },
+     "live": "https://player.brownrice.com/embed/breckenridge7"
+    }
+   ],
+   "intel": null,
+   "intelFrom": "catalog",
+   "parking": {
+    "lat": 39.477,
+    "lon": -106.048
+   },
+   "summitLat": 39.4727,
+   "summitLon": -106.1013,
+   "summitSource": "Summit 12,999 ft / 3,962 m (Breckenridge Ski Resort on Wikipedia); weather point = top of Imperial SuperChair (OpenStreetMap aerialway), Copernicus DEM 3,909 m",
+   "baseSource": "Base 9,600 ft / 2,926 m (Wikipedia, Breckenridge Ski Resort); base point = Peak 9 base / town (Copernicus DEM ≈2,939 m)",
+   "wxGroup": 1,
+   "photo": {
+    "src": "img/cat/breckenridge.jpg",
+    "credit": "Ahodges7",
+    "license": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Breckenridge_Ski_Area_from_Dercum_Mountain,_Keystone_Ski_Area.jpg",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+   }
+  },
+  {
+   "id": "keystone",
+   "name": {
+    "en": "Keystone",
+    "zh": "Keystone（基斯通）"
+   },
+   "short": "Keystone",
+   "passes": [
+    "epic"
+   ],
+   "region": "CO",
+   "lat": 39.605,
+   "lon": -105.95417,
+   "baseElevM": 2829,
+   "summitElevM": 3782,
+   "driveMin": 129,
+   "driveSource": "OSRM route from DEN, no traffic (computed 2026-11-19)",
+   "routeNote": {
+    "en": "DEN → I-70 W through the Eisenhower-Johnson Tunnel → exit 205 Silverthorne/Dillon → US 6 east to Keystone.",
+    "zh": "机场 → I-70 西，过艾森豪威尔-约翰逊隧道 → 205 出口 Silverthorne/Dillon → US 6 东行到 Keystone。"
+   },
+   "route": [
+    {
+     "seg": "den-metro",
+     "closure": "caution"
+    },
+    {
+     "seg": "i70-foothills",
+     "closure": "nogo"
+    },
+    {
+     "seg": "i70-tunnel",
+     "closure": "nogo"
+    },
+    {
+     "seg": "us6-keystone",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.keystoneresort.com/",
+    "webcams": "https://www.keystoneresort.com/the-mountain/mountain-conditions/mountain-cams.aspx",
+    "report": "https://www.keystoneresort.com/the-mountain/mountain-conditions/snow-and-weather-report.aspx"
+   },
+   "webcams": [
+    {
+     "name": {
+      "en": "Snow Stake",
+      "zh": "量雪杆"
+     },
+     "image": "https://cache.snow.com/Mtncams/KeySnowStake.jpg"
+    },
+    {
+     "name": {
+      "en": "Dercum Mountain",
+      "zh": "Dercum 山"
+     },
+     "image": "https://live9.brownrice.com/cam-images/keystonedercum.jpg",
+     "live": "https://player.brownrice.com/embed/keystonedercum"
+    },
+    {
+     "name": {
+      "en": "North Peak",
+      "zh": "North Peak"
+     },
+     "image": "https://live9.brownrice.com/cam-images/keystonenorthpeak.jpg",
+     "live": "https://player.brownrice.com/embed/keystonenorthpeak"
+    },
+    {
+     "name": {
+      "en": "Bergman Bowl",
+      "zh": "Bergman 碗"
+     },
+     "image": "https://live8p.brownrice.com/cam-images/keystonebergman.jpg",
+     "live": "https://player.brownrice.com/embed/keystonebergman"
+    },
+    {
+     "name": {
+      "en": "River Run",
+      "zh": "River Run 村"
+     },
+     "image": "https://live9.brownrice.com/cam-images/keystoneriverrun.jpg",
+     "live": "https://player.brownrice.com/embed/keystoneriverrun"
+    }
+   ],
+   "intel": null,
+   "intelFrom": "catalog",
+   "parking": {
+    "lat": 39.605,
+    "lon": -105.95417
+   },
+   "summitLat": 39.5634,
+   "summitLon": -105.9147,
+   "summitSource": "Summit 12,408 ft / 3,782 m (Keystone Resort on Wikipedia); weather point = top of Bergman Express (OpenStreetMap aerialway), Copernicus DEM 3,735 m",
+   "baseSource": "Base 9,280 ft / 2,829 m (Wikipedia, Keystone Resort)",
+   "wxGroup": 1,
+   "photo": {
+    "src": "img/cat/keystone.jpg",
+    "credit": "Ahodges7",
+    "license": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:River_Run_Village_Fireworks,_Keystone,_CO.jpg",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+   }
+  },
+  {
+   "id": "vail",
+   "name": {
+    "en": "Vail",
+    "zh": "Vail（韦尔）"
+   },
+   "short": "Vail",
+   "passes": [
+    "epic"
+   ],
+   "region": "CO",
+   "lat": 39.639,
+   "lon": -106.374,
+   "baseElevM": 2475,
+   "summitElevM": 3527,
+   "driveMin": 149,
+   "driveSource": "OSRM route from DEN, no traffic (computed 2026-11-19)",
+   "routeNote": {
+    "en": "DEN → I-70 W through the Eisenhower-Johnson Tunnel and over Vail Pass → exit 176 Vail.",
+    "zh": "机场 → I-70 西，过艾森豪威尔-约翰逊隧道并翻越 Vail 山口 → 176 出口 Vail。"
+   },
+   "route": [
+    {
+     "seg": "den-metro",
+     "closure": "caution"
+    },
+    {
+     "seg": "i70-foothills",
+     "closure": "nogo"
+    },
+    {
+     "seg": "i70-tunnel",
+     "closure": "nogo"
+    },
+    {
+     "seg": "i70-summit",
+     "closure": "nogo"
+    },
+    {
+     "seg": "i70-vail",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.vail.com/",
+    "webcams": "https://www.vail.com/the-mountain/mountain-conditions/mountain-cams.aspx",
+    "report": "https://www.vail.com/the-mountain/mountain-conditions/snow-and-weather-report.aspx"
+   },
+   "webcams": [
+    {
+     "name": {
+      "en": "Snow Stake Summit",
+      "zh": "山顶量雪杆"
+     },
+     "image": "https://live9.brownrice.com/cam-images/vailsnowsummit.jpg",
+     "live": "https://player.brownrice.com/embed/vailsnowsummit"
+    },
+    {
+     "name": {
+      "en": "Eagle's Nest",
+      "zh": "Eagle's Nest"
+     },
+     "image": "https://live9.brownrice.com/cam-images/vaileaglesnest.jpg",
+     "live": "https://player.brownrice.com/embed/vaileaglesnest"
+    },
+    {
+     "name": {
+      "en": "Sun Up Bowl Overlook",
+      "zh": "Sun Up Bowl 观景"
+     },
+     "image": "https://live9.brownrice.com/cam-images/vailch11.jpg",
+     "live": "https://player.brownrice.com/embed/vailch11"
+    },
+    {
+     "name": {
+      "en": "The Back Bowls",
+      "zh": "后山碗"
+     },
+     "image": "https://live9.brownrice.com/cam-images/vailch21.jpg",
+     "live": "https://player.brownrice.com/embed/vailch21"
+    },
+    {
+     "name": {
+      "en": "Gore Range (live)",
+      "zh": "Gore 山脉（直播）"
+     },
+     "live": "https://player.brownrice.com/embed/vailch2"
+    }
+   ],
+   "intel": null,
+   "intelFrom": "catalog",
+   "parking": {
+    "lat": 39.639,
+    "lon": -106.374
+   },
+   "summitLat": 39.6,
+   "summitLon": -106.3098,
+   "summitSource": "Summit 11,572 ft / 3,527 m (Vail Ski Resort on Wikipedia); weather point = top of Mongolia (OpenStreetMap aerialway), Copernicus DEM 3,496 m",
+   "baseSource": "Base 8,120 ft / 2,475 m (Wikipedia, Vail Ski Resort)",
+   "wxGroup": 1,
+   "photo": {
+    "src": "img/cat/vail.jpg",
+    "credit": "Wikimedia Commons contributor",
+    "license": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Vail_front_side.jpg",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+   }
+  },
+  {
+   "id": "beaver-creek",
+   "name": {
+    "en": "Beaver Creek",
+    "zh": "Beaver Creek（海狸溪）"
+   },
+   "short": "Beaver Creek",
+   "passes": [
+    "epic"
+   ],
+   "region": "CO",
+   "lat": 39.604,
+   "lon": -106.516,
+   "baseElevM": 2469,
+   "summitElevM": 3487,
+   "driveMin": 159,
+   "driveSource": "OSRM route from DEN, no traffic (computed 2026-11-19)",
+   "routeNote": {
+    "en": "DEN → I-70 W over Vail Pass → exit 167 Avon → Village Rd up to Beaver Creek.",
+    "zh": "机场 → I-70 西，翻越 Vail 山口 → 167 出口 Avon → Village Rd 上山到 Beaver Creek。"
+   },
+   "route": [
+    {
+     "seg": "den-metro",
+     "closure": "caution"
+    },
+    {
+     "seg": "i70-foothills",
+     "closure": "nogo"
+    },
+    {
+     "seg": "i70-tunnel",
+     "closure": "nogo"
+    },
+    {
+     "seg": "i70-summit",
+     "closure": "nogo"
+    },
+    {
+     "seg": "i70-vail",
+     "closure": "nogo"
+    },
+    {
+     "seg": "i70-avon",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.beavercreek.com/",
+    "webcams": "https://www.beavercreek.com/the-mountain/mountain-conditions/mountain-cams.aspx",
+    "report": "https://www.beavercreek.com/the-mountain/mountain-conditions/snow-and-weather-report.aspx"
+   },
+   "webcams": [
+    {
+     "name": {
+      "en": "Snow Stake (live)",
+      "zh": "量雪杆（直播）"
+     },
+     "live": "https://player.brownrice.com/embed/bcsnowstake2"
+    },
+    {
+     "name": {
+      "en": "Spruce (live)",
+      "zh": "Spruce（直播）"
+     },
+     "live": "https://player.brownrice.com/embed/bcspruce"
+    },
+    {
+     "name": {
+      "en": "Red Buffalo (live)",
+      "zh": "Red Buffalo（直播）"
+     },
+     "live": "https://player.brownrice.com/embed/bcredbuffalo"
+    },
+    {
+     "name": {
+      "en": "McCoy Park (live)",
+      "zh": "McCoy Park（直播）"
+     },
+     "live": "https://player.brownrice.com/embed/bcmccoy"
+    },
+    {
+     "name": {
+      "en": "Village (live)",
+      "zh": "村庄（直播）"
+     },
+     "live": "https://player.brownrice.com/embed/bcvillage"
+    }
+   ],
+   "intel": null,
+   "intelFrom": "catalog",
+   "parking": {
+    "lat": 39.604,
+    "lon": -106.516
+   },
+   "summitLat": 39.5663,
+   "summitLon": -106.5085,
+   "summitSource": "Summit 11,440 ft / 3,487 m (Beaver Creek Resort on Wikipedia); weather point = top of Cinch Express Lift (OpenStreetMap aerialway), Copernicus DEM 3,477 m",
+   "baseSource": "Base 8,100 ft / 2,469 m (Wikipedia, Beaver Creek Resort); base point = Beaver Creek Village (Copernicus DEM ≈2,472 m)",
+   "wxGroup": 1
+  },
+  {
+   "id": "winter-park",
+   "name": {
+    "en": "Winter Park",
+    "zh": "Winter Park（冬季公园）"
+   },
+   "short": "Winter Park",
+   "passes": [
+    "ikon"
+   ],
+   "region": "CO",
+   "lat": 39.88694,
+   "lon": -105.7625,
+   "baseElevM": 2743,
+   "summitElevM": 3676,
+   "driveMin": 130,
+   "driveSource": "OSRM route from DEN, no traffic (computed 2026-11-19)",
+   "routeNote": {
+    "en": "DEN → I-70 W → exit 232 (US 40) at Empire → over Berthoud Pass → Winter Park.",
+    "zh": "机场 → I-70 西 → 232 出口（US 40，Empire）→ 翻越 Berthoud 山口 → Winter Park。"
+   },
+   "route": [
+    {
+     "seg": "den-metro",
+     "closure": "caution"
+    },
+    {
+     "seg": "i70-foothills",
+     "closure": "nogo"
+    },
+    {
+     "seg": "us40-winterpark",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.winterparkresort.com/",
+    "webcams": "https://www.winterparkresort.com/the-mountain/mountain-cams",
+    "report": "https://www.winterparkresort.com/the-mountain/mountain-report"
+   },
+   "webcams": [
+    {
+     "name": {
+      "en": "Snow Stake (live)",
+      "zh": "量雪杆（直播）"
+     },
+     "live": "https://camstreamer.com/embed/mXhcYGDptt4PPiSEJVwxPNmUZjj1CNAjSkrBdj3s"
+    },
+    {
+     "name": {
+      "en": "Lunch Rock (live)",
+      "zh": "Lunch Rock（直播）"
+     },
+     "live": "https://camstreamer.com/embed/FkuQtJjEJaLOpalZiTsiVrZUw5IG3fCjMS3Vcc8h"
+    },
+    {
+     "name": {
+      "en": "Town of Winter Park (Best Western)",
+      "zh": "Winter Park 镇（Best Western）"
+     },
+     "image": "https://cams.winterparkresort.com/best-western-cam.jpg"
+    }
+   ],
+   "intel": null,
+   "intelFrom": "catalog",
+   "parking": {
+    "lat": 39.88694,
+    "lon": -105.7625
+   },
+   "summitLat": 39.8443,
+   "summitLon": -105.7819,
+   "summitSource": "Summit 12,060 ft / 3,676 m (Winter Park Resort on Wikipedia); weather point = top of Panoramic Express (OpenStreetMap aerialway), Copernicus DEM 3,645 m",
+   "baseSource": "Base 9,000 ft / 2,743 m (Wikipedia, Winter Park Resort); base point = resort base area",
+   "wxGroup": 2,
+   "photo": {
+    "src": "img/cat/winter-park.jpg",
+    "credit": "Jameschipmunk at English Wikipedia",
+    "license": "Public domain",
+    "page": "https://commons.wikimedia.org/wiki/File:Winter_Park_Base_Area.JPG",
+    "licenseUrl": "https://en.wikipedia.org/wiki/Public_domain"
+   }
+  },
+  {
+   "id": "eldora",
+   "name": {
+    "en": "Eldora",
+    "zh": "Eldora（埃尔多拉）"
+   },
+   "short": "Eldora",
+   "passes": [
+    "ikon"
+   ],
+   "region": "CO",
+   "lat": 39.9375,
+   "lon": -105.58361,
+   "baseElevM": 2853,
+   "summitElevM": 3231,
+   "driveMin": 93,
+   "driveSource": "OSRM route from DEN, no traffic (computed 2026-11-19)",
+   "routeNote": {
+    "en": "DEN → E-470 / Northwest Pkwy → US 36 to Boulder → CO 119 up Boulder Canyon → Nederland → Eldora Rd.",
+    "zh": "机场 → E-470 / Northwest Pkwy → US 36 到 Boulder → CO 119 经 Boulder 峡谷 → Nederland → Eldora 路。"
+   },
+   "route": [
+    {
+     "seg": "den-boulder",
+     "closure": "caution"
+    },
+    {
+     "seg": "co119-nederland",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.eldora.com/",
+    "webcams": "https://www.eldora.com/the-mountain/current-conditions/webcams/",
+    "report": "https://www.eldora.com/the-mountain/current-conditions/snow-report-weather/"
+   },
+   "webcams": [
+    {
+     "name": {
+      "en": "Snow Stake",
+      "zh": "量雪杆"
+     },
+     "image": "https://watch.hdrelay.io/api/public/poster/cam_eldora___snow_stake_1792456287972",
+     "live": "https://www.eldora.com/the-mountain/current-conditions/webcams/"
+    },
+    {
+     "name": {
+      "en": "Alpenglow",
+      "zh": "Alpenglow 缆车"
+     },
+     "image": "https://watch.hdrelay.io/api/public/poster/cam_eldora___alpenglow_1792456287847",
+     "live": "https://www.eldora.com/the-mountain/current-conditions/webcams/"
+    },
+    {
+     "name": {
+      "en": "Lower Mountain",
+      "zh": "下山区"
+     },
+     "image": "https://watch.hdrelay.io/api/public/poster/cam_ipela_snc_wr630_1792456288119",
+     "live": "https://www.eldora.com/the-mountain/current-conditions/webcams/"
+    }
+   ],
+   "intel": null,
+   "intelFrom": "catalog",
+   "parking": {
+    "lat": 39.9375,
+    "lon": -105.58361
+   },
+   "summitLat": 39.9411,
+   "summitLon": -105.6077,
+   "summitSource": "Summit 10,600 ft / 3,231 m (Eldora Mountain Resort on Wikipedia); weather point = top of Corona (OpenStreetMap aerialway), Copernicus DEM 3,231 m",
+   "baseSource": "Base 9,360 ft / 2,853 m (Wikipedia, Eldora Mountain Resort)",
+   "wxGroup": 2,
+   "photo": {
+    "src": "img/cat/eldora.jpg",
+    "credit": "KamenG",
+    "license": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Eldora_Mountain_Ski_Resort_at_Top_of_International.jpg",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+   }
+  },
+  {
+   "id": "loveland",
+   "name": {
+    "en": "Loveland",
+    "zh": "Loveland（拉夫兰）"
+   },
+   "short": "Loveland",
+   "passes": [],
+   "region": "CO",
+   "lat": 39.68,
+   "lon": -105.897,
+   "baseElevM": 3292,
+   "summitElevM": 3965,
+   "driveMin": 103,
+   "driveSource": "OSRM route from DEN, no traffic (computed 2026-11-19)",
+   "routeNote": {
+    "en": "DEN → I-70 W past Georgetown → exit 216 Loveland, just before the Eisenhower-Johnson Tunnel.",
+    "zh": "机场 → I-70 西，过 Georgetown → 216 出口 Loveland（艾森豪威尔-约翰逊隧道东口前）。"
+   },
+   "route": [
+    {
+     "seg": "den-metro",
+     "closure": "caution"
+    },
+    {
+     "seg": "i70-foothills",
+     "closure": "nogo"
+    },
+    {
+     "seg": "i70-tunnel",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://skiloveland.com/",
+    "webcams": "https://skiloveland.com/webcams/",
+    "report": "https://skiloveland.com/snow-report/"
+   },
+   "webcams": [
+    {
+     "name": {
+      "en": "Snow Stake",
+      "zh": "量雪杆"
+     },
+     "image": "https://cams.skiloveland.com/snowcam/snowcam.jpg"
+    },
+    {
+     "name": {
+      "en": "Ptarmigan Roost",
+      "zh": "Ptarmigan Roost"
+     },
+     "image": "https://cams.skiloveland.com/lsacams/ptarmroost/ptarmroost.jpg"
+    },
+    {
+     "name": {
+      "en": "Top of Chet's",
+      "zh": "Chet's 缆车顶"
+     },
+     "image": "https://cams.skiloveland.com/lsacams/chetstop/chetstop.jpg"
+    }
+   ],
+   "intel": null,
+   "intelFrom": "catalog",
+   "parking": {
+    "lat": 39.68,
+    "lon": -105.897
+   },
+   "summitLat": 39.6735,
+   "summitLon": -105.9262,
+   "summitSource": "Summit 13,009 ft / 3,965 m (Loveland Ski Area on Wikipedia); weather point = top of Lift 9 (OpenStreetMap aerialway), Copernicus DEM 3,856 m",
+   "baseSource": "Base 10,800 ft / 3,292 m (Wikipedia, Loveland Ski Area)",
+   "wxGroup": 2,
+   "photo": {
+    "src": "img/cat/loveland.jpg",
+    "credit": "Mitch Bennett from Columbia, MO, USA",
+    "license": "CC BY 2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Loveland_Ski_Area,_north_view.jpg",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0"
+   }
+  },
+  {
+   "id": "aspen-snowmass",
+   "name": {
+    "en": "Aspen Snowmass (Snowmass)",
+    "zh": "Aspen Snowmass（阿斯本-雪马斯，Snowmass 山）"
+   },
+   "short": "Snowmass",
+   "passes": [
+    "ikon"
+   ],
+   "region": "CO",
+   "lat": 39.2093,
+   "lon": -106.9488,
+   "baseElevM": 2470,
+   "summitElevM": 3813,
+   "driveMin": 278,
+   "driveSource": "OSRM route from DEN, no traffic (computed 2026-11-19)",
+   "routeNote": {
+    "en": "DEN → I-70 W over Vail Pass and through Glenwood Canyon → exit 116 Glenwood Springs → CO 82 to Snowmass (Independence Pass is closed in winter). Weather is for Snowmass; the lift report covers all four mountains.",
+    "zh": "机场 → I-70 西，过 Vail 山口和 Glenwood 峡谷 → 116 出口 Glenwood Springs → CO 82 到 Snowmass（Independence 山口冬季封闭）。天气为 Snowmass 山；缆车报告含四座山。"
+   },
+   "route": [
+    {
+     "seg": "den-metro",
+     "closure": "caution"
+    },
+    {
+     "seg": "i70-foothills",
+     "closure": "nogo"
+    },
+    {
+     "seg": "i70-tunnel",
+     "closure": "nogo"
+    },
+    {
+     "seg": "i70-summit",
+     "closure": "nogo"
+    },
+    {
+     "seg": "i70-vail",
+     "closure": "nogo"
+    },
+    {
+     "seg": "i70-glenwood",
+     "closure": "nogo"
+    },
+    {
+     "seg": "co82-snowmass",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.aspensnowmass.com/",
+    "webcams": "https://www.aspensnowmass.com/four-mountains/mountain-cams",
+    "report": "https://www.aspensnowmass.com/four-mountains/snow-report"
+   },
+   "webcams": [
+    {
+     "name": {
+      "en": "Snowmass – Sam's Knob",
+      "zh": "Snowmass – Sam's Knob"
+     },
+     "image": "https://backend.roundshot.com/cams/d06c2257c923777ee36fee23722ea2c2/medium",
+     "live": "https://aspen.roundshot.com/snowmass-samsknob"
+    },
+    {
+     "name": {
+      "en": "Snowmass – Elk Camp",
+      "zh": "Snowmass – Elk Camp"
+     },
+     "image": "https://backend.roundshot.com/cams/88/medium",
+     "live": "http://aspen.roundshot.com/snowmass"
+    },
+    {
+     "name": {
+      "en": "Aspen Mountain",
+      "zh": "Aspen 山"
+     },
+     "image": "https://backend.roundshot.com/cams/91/medium",
+     "live": "https://aspen.roundshot.com/aspen/"
+    },
+    {
+     "name": {
+      "en": "Aspen Highlands",
+      "zh": "Aspen Highlands"
+     },
+     "image": "https://backend.roundshot.com/cams/89/medium",
+     "live": "https://aspen.roundshot.com/highlands/"
+    },
+    {
+     "name": {
+      "en": "Buttermilk",
+      "zh": "Buttermilk"
+     },
+     "image": "https://backend.roundshot.com/cams/87/medium",
+     "live": "http://aspen.roundshot.com/buttermilk/"
+    }
+   ],
+   "intel": null,
+   "intelFrom": "catalog",
+   "parking": {
+    "lat": 39.2093,
+    "lon": -106.9488
+   },
+   "summitLat": 39.16,
+   "summitLon": -106.9647,
+   "summitSource": "Summit 12,510 ft / 3,813 m (Snowmass (ski area) on Wikipedia); weather point = top of Cirque T-Bar (OpenStreetMap aerialway), Copernicus DEM 3,806 m",
+   "baseSource": "Base 8,104 ft / 2,470 m (Snowmass, Wikipedia); weather base point = Snowmass Base Village (Copernicus DEM ≈2,558 m)",
+   "wxGroup": 2,
+   "photo": {
+    "src": "img/cat/aspen-snowmass.jpg",
+    "credit": "Werdna",
+    "license": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Snowmass_Village.JPG",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+   }
+  },
+  {
+   "id": "crested-butte",
+   "name": {
+    "en": "Crested Butte",
+    "zh": "Crested Butte（克雷斯特德比尤特）"
+   },
+   "short": "Crested Butte",
+   "passes": [
+    "epic"
+   ],
+   "region": "CO",
+   "lat": 38.89972,
+   "lon": -106.965,
+   "baseElevM": 2858,
+   "summitElevM": 3707,
+   "driveMin": 341,
+   "driveSource": "OSRM route from DEN, no traffic (computed 2026-11-19)",
+   "routeNote": {
+    "en": "DEN → C-470 → US 285 over Kenosha Pass → Poncha Springs → US 50 over Monarch Pass → Gunnison → CO 135 to Crested Butte.",
+    "zh": "机场 → C-470 → US 285 翻越 Kenosha 山口 → Poncha Springs → US 50 翻越 Monarch 山口 → Gunnison → CO 135 到 Crested Butte。"
+   },
+   "route": [
+    {
+     "seg": "den-metro",
+     "closure": "caution"
+    },
+    {
+     "seg": "us285-southpark",
+     "closure": "nogo"
+    },
+    {
+     "seg": "us50-monarch",
+     "closure": "nogo"
+    },
+    {
+     "seg": "us50-gunnison",
+     "closure": "nogo"
+    },
+    {
+     "seg": "co135-cb",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.skicb.com/",
+    "webcams": "https://www.skicb.com/the-mountain/mountain-conditions/mountain-cams.aspx",
+    "report": "https://www.skicb.com/the-mountain/mountain-conditions/weather-report.aspx"
+   },
+   "webcams": [
+    {
+     "name": {
+      "en": "Base",
+      "zh": "山脚"
+     },
+     "image": "https://live6.brownrice.com/cam-images/crestedbuttebase.jpg",
+     "live": "https://player.brownrice.com/embed/Crestedbuttebase"
+    },
+    {
+     "name": {
+      "en": "Umbrella Bar at Ten Peaks",
+      "zh": "Ten Peaks 伞吧"
+     },
+     "image": "https://live9.brownrice.com/cam-images/crestedbuttebar.jpg",
+     "live": "https://player.brownrice.com/embed/Crestedbuttebar"
+    },
+    {
+     "name": {
+      "en": "Paradise Warming House",
+      "zh": "Paradise 休息屋"
+     },
+     "image": "https://live9.brownrice.com/cam-images/crestedbuttewarm.jpg",
+     "live": "https://player.brownrice.com/embed/Crestedbuttewarm"
+    }
+   ],
+   "intel": null,
+   "intelFrom": "catalog",
+   "parking": {
+    "lat": 38.89972,
+    "lon": -106.965
+   },
+   "summitLat": 38.8832,
+   "summitLon": -106.94,
+   "summitSource": "Summit 12,162 ft / 3,707 m (Crested Butte Mountain Resort on Wikipedia); weather point = top of The High Lift (OpenStreetMap aerialway), Copernicus DEM 3,622 m",
+   "baseSource": "Base 9,375 ft / 2,858 m (Wikipedia, Crested Butte Mountain Resort)",
+   "wxGroup": 3,
+   "photo": {
+    "src": "img/cat/crested-butte.jpg",
+    "credit": "Larry D. Moore",
+    "license": "CC BY 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Mount_crested_butte_1988.jpg",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0"
+   }
+  },
+  {
+   "id": "telluride",
+   "name": {
+    "en": "Telluride",
+    "zh": "Telluride（特柳赖德）"
+   },
+   "short": "Telluride",
+   "passes": [
+    "epic"
+   ],
+   "region": "CO",
+   "lat": 37.93639,
+   "lon": -107.82028,
+   "baseElevM": 2659,
+   "summitElevM": 4008,
+   "driveMin": 472,
+   "driveSource": "OSRM route from DEN, no traffic (computed 2026-11-19)",
+   "routeNote": {
+    "en": "DEN → I-70 W to Grand Junction → US 50 via Delta to Montrose → US 550 to Ridgway → CO 62 over Dallas Divide → CO 145 to Telluride (≈8 h; Montrose airport is closer).",
+    "zh": "机场 → I-70 西到 Grand Junction → US 50 经 Delta 到 Montrose → US 550 到 Ridgway → CO 62 翻越 Dallas Divide → CO 145 到 Telluride（约 8 小时；Montrose 机场更近）。"
+   },
+   "route": [
+    {
+     "seg": "den-metro",
+     "closure": "caution"
+    },
+    {
+     "seg": "i70-foothills",
+     "closure": "nogo"
+    },
+    {
+     "seg": "i70-tunnel",
+     "closure": "nogo"
+    },
+    {
+     "seg": "i70-summit",
+     "closure": "nogo"
+    },
+    {
+     "seg": "i70-vail",
+     "closure": "nogo"
+    },
+    {
+     "seg": "i70-glenwood",
+     "closure": "nogo"
+    },
+    {
+     "seg": "i70-gj",
+     "closure": "nogo"
+    },
+    {
+     "seg": "us50-delta",
+     "closure": "nogo"
+    },
+    {
+     "seg": "us550-telluride",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://tellurideskiresort.com/",
+    "webcams": "https://tellurideskiresort.com/webcams/",
+    "report": "https://tellurideskiresort.com/snow-report/"
+   },
+   "webcams": [
+    {
+     "name": {
+      "en": "Village",
+      "zh": "小镇"
+     },
+     "image": "https://g1.ipcamlive.com/player/snapshot.php?alias=plazacam",
+     "live": "https://tellurideskiresort.com/webcams/village-cam/"
+    },
+    {
+     "name": {
+      "en": "Black Iron Bowl",
+      "zh": "Black Iron 碗"
+     },
+     "image": "https://g1.ipcamlive.com/player/snapshot.php?alias=bonvivant",
+     "live": "https://tellurideskiresort.com/webcams/bon-vivant-cam/"
+    },
+    {
+     "name": {
+      "en": "See Forever",
+      "zh": "See Forever"
+     },
+     "image": "https://g1.ipcamlive.com/player/snapshot.php?alias=jointpoint",
+     "live": "https://tellurideskiresort.com/webcams/see-forever-webcam/"
+    },
+    {
+     "name": {
+      "en": "Pow Cam",
+      "zh": "量雪杆"
+     },
+     "image": "https://g1.ipcamlive.com/player/snapshot.php?alias=powcam",
+     "live": "https://tellurideskiresort.com/webcams/pow-cam-closeup/"
+    }
+   ],
+   "intel": null,
+   "intelFrom": "catalog",
+   "parking": {
+    "lat": 37.93639,
+    "lon": -107.82028
+   },
+   "summitLat": 37.8991,
+   "summitLon": -107.8226,
+   "summitSource": "Summit 13,150 ft / 4,008 m (Telluride Ski Resort on Wikipedia); weather point = top of Revelation Lift (OpenStreetMap aerialway), Copernicus DEM 3,780 m",
+   "baseSource": "Base 8,725 ft / 2,659 m (Wikipedia, Telluride Ski Resort; town base)",
+   "wxGroup": 3,
+   "photo": {
+    "src": "img/cat/telluride.jpg",
+    "credit": "Murray Foubister",
+    "license": "CC BY-SA 2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Telluride_Ski_Resort,_Col._(8645173834).jpg",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0"
+   }
+  },
+  {
+   "id": "monarch",
+   "name": {
+    "en": "Monarch Mountain",
+    "zh": "Monarch Mountain（莫纳克山）"
+   },
+   "short": "Monarch",
+   "passes": [],
+   "region": "CO",
+   "lat": 38.5125,
+   "lon": -106.3325,
+   "baseElevM": 3289,
+   "summitElevM": 3645,
+   "driveMin": 236,
+   "driveSource": "OSRM route from DEN, no traffic (computed 2026-11-19)",
+   "routeNote": {
+    "en": "DEN → C-470 → US 285 over Kenosha Pass → Fairplay → Poncha Springs → US 50 west toward Monarch Pass.",
+    "zh": "机场 → C-470 → US 285 翻越 Kenosha 山口 → Fairplay → Poncha Springs → US 50 西行往 Monarch 山口。"
+   },
+   "route": [
+    {
+     "seg": "den-metro",
+     "closure": "caution"
+    },
+    {
+     "seg": "us285-southpark",
+     "closure": "nogo"
+    },
+    {
+     "seg": "us50-monarch",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://skimonarch.com/",
+    "webcams": "https://skimonarch.com/conditions/cams/",
+    "report": "https://skimonarch.com/conditions/"
+   },
+   "webcams": [
+    {
+     "name": {
+      "en": "Powder Cam",
+      "zh": "量雪杆"
+     },
+     "image": "https://webcam.io/webcams/z7Arw9/latest.jpg"
+    },
+    {
+     "name": {
+      "en": "Storm Cam",
+      "zh": "Storm Cam"
+     },
+     "image": "https://webcam.io/webcams/9RmqeM/latest.jpg"
+    },
+    {
+     "name": {
+      "en": "Mountain Cam",
+      "zh": "山景"
+     },
+     "image": "https://webcam.io/webcams/MwKk2M/latest.jpg"
+    },
+    {
+     "name": {
+      "en": "Pioneer Top (live)",
+      "zh": "Pioneer 顶（直播）"
+     },
+     "live": "https://player.brownrice.com/embed/skimonarchgarfield"
+    }
+   ],
+   "intel": null,
+   "intelFrom": "catalog",
+   "parking": {
+    "lat": 38.5125,
+    "lon": -106.3325
+   },
+   "summitLat": 38.5062,
+   "summitLon": -106.3451,
+   "summitSource": "Summit 11,959 ft / 3,645 m (Monarch Mountain (ski area) on Wikipedia); weather point = top of Panorama (OpenStreetMap aerialway), Copernicus DEM 3,590 m",
+   "baseSource": "Base 10,790 ft / 3,289 m (Wikipedia, Monarch Ski Area)",
+   "wxGroup": 3,
+   "photo": {
+    "src": "img/cat/monarch.jpg",
+    "credit": "flickr user \"abkfenris\"",
+    "license": "CC BY 2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Snow_rafting_Monarch_Mountain_surroundings.jpg",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0"
+   }
+  },
+  {
+   "id": "wolf-creek",
+   "name": {
+    "en": "Wolf Creek",
+    "zh": "Wolf Creek（狼溪）"
+   },
+   "short": "Wolf Creek",
+   "passes": [],
+   "region": "CO",
+   "lat": 37.47222,
+   "lon": -106.79333,
+   "baseElevM": 3139,
+   "summitElevM": 3628,
+   "driveMin": 358,
+   "driveSource": "OSRM route from DEN, no traffic (computed 2026-11-19)",
+   "routeNote": {
+    "en": "DEN → C-470 → US 285 south over Kenosha and Poncha passes → Saguache → CO 112 → Del Norte → US 160 west over toward Wolf Creek Pass.",
+    "zh": "机场 → C-470 → US 285 南行翻越 Kenosha、Poncha 山口 → Saguache → CO 112 → Del Norte → US 160 西行往 Wolf Creek 山口。"
+   },
+   "route": [
+    {
+     "seg": "den-metro",
+     "closure": "caution"
+    },
+    {
+     "seg": "us285-southpark",
+     "closure": "nogo"
+    },
+    {
+     "seg": "us285-sanluis",
+     "closure": "nogo"
+    },
+    {
+     "seg": "us160-wolfcreek",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://wolfcreekski.com/",
+    "webcams": "https://wolfcreekski.com/webcams/",
+    "report": "https://wolfcreekski.com/wcs-snow-report/"
+   },
+   "webcams": [
+    {
+     "name": {
+      "en": "Base Area (live)",
+      "zh": "山脚（直播）"
+     },
+     "live": "https://live2.brownrice.com/embed/wolfcreektreasure"
+    },
+    {
+     "name": {
+      "en": "Summit (live)",
+      "zh": "山顶（直播）"
+     },
+     "live": "https://live2.brownrice.com/embed/wolfcreeksummit"
+    },
+    {
+     "name": {
+      "en": "Treasure Stoke lift line (live)",
+      "zh": "Treasure Stoke 缆车（直播）"
+     },
+     "live": "https://live2.brownrice.com/embed/wolfcreektresurlift"
+    }
+   ],
+   "intel": null,
+   "intelFrom": "catalog",
+   "parking": {
+    "lat": 37.47222,
+    "lon": -106.79333
+   },
+   "summitLat": 37.463,
+   "summitLon": -106.8038,
+   "summitSource": "Summit 11,903 ft / 3,628 m (Wolf Creek ski area on Wikipedia); weather point = top of D. Boyce Lift (OpenStreetMap aerialway), Copernicus DEM 3,577 m",
+   "baseSource": "Base 10,300 ft / 3,139 m (Wikipedia, Wolf Creek Ski Area)",
+   "wxGroup": 3,
+   "photo": {
+    "src": "img/cat/wolf-creek.jpg",
+    "credit": "Jeffrey Beall",
+    "license": "CC BY 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Wolf_Creek_Ski_Area.JPG",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0"
+   }
   }
  ],
  "cameras": [

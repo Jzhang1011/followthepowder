@@ -4,7 +4,7 @@
 // value and its own fetchedAt, and records the failure (status 'stale' = serving last good copy,
 // 'failed' = nothing to serve).
 import { fetchAllIntel } from '../js/intel.js';
-import { openMeteoUrl, splitOpenMeteo, carsUrl, slimEvents, EVENT_CLASSES, nwsUrl, slimAlerts } from '../js/core.js';
+import { openMeteoUrl, splitOpenMeteo, carsUrl, slimEvents, EVENT_CLASSES, nwsUrl, slimAlerts, wxGroupCfg } from '../js/core.js';
 
 export const UA = 'SkiDay ski dashboard (https://followthepowder.com/)';
 export const SOURCES = ['weather', 'roads', 'alerts', 'cameras', 'intel'];
@@ -32,7 +32,9 @@ export function makeHttp({ tries = 3, timeoutMs = 25000 } = {}) {
 
 /** Collectors: each returns data or throws. `keys` = optional provider keys (Worker secrets). */
 export const collectors = {
-  async weather(cfg, http, keys = {}) {
+  async weather(full, http, keys = {}) {
+    const cfg = wxGroupCfg(full, keys.wxGroup || 0); // one weather group per call (group 0 unless asked)
+    if (!cfg.resorts.length) throw new Error(`weather: group ${keys.wxGroup || 0} has no resorts`);
     // A commercial Open-Meteo key switches to the customer endpoint; same response format.
     const c = keys.openMeteoKey ? { ...cfg, sources: { ...cfg.sources, weather: 'https://customer-api.open-meteo.com/v1/forecast' } } : cfg;
     let url = openMeteoUrl(c);
@@ -51,7 +53,9 @@ export const collectors = {
     for (const r of cfg.resorts) {
       try { out[r.id] = slimAlerts(await http.getJson(nwsUrl(cfg, r))); } catch (e) { errs.push(`${r.id}: ${e.message || e}`); }
     }
-    if (errs.length) throw new Error(`alerts: ${errs.join('; ')}`);
+    // Partial is fine (a resort without a fresh answer shows 'alerts unavailable'); all failing is an outage.
+    if (errs.length === cfg.resorts.length) throw new Error(`alerts: ${errs.join('; ')}`);
+    if (errs.length) console.warn?.(`[ski] alerts partial: ${errs.join('; ')}`);
     return out;
   },
   /** Returns { route: fixed DEN-route cameras, all: statewide slim list } with per-view image timestamps. */

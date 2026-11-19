@@ -2,6 +2,7 @@
 // Each provider reads the same public, keyless feed the resort's own website loads, at most once an hour per resort
 // (one catalog slice per 15-min cron tick). Values are copied, never estimated: anything a feed does not report is
 // null ("Not reported"). Depths/snow are stored in cm. Config: catalog.json resorts[].report.
+import { localDow, parseClock, clockLabel } from '../../../js/intel.js';
 const UA = 'SkiDay ski-data (followthepowder.com; non-commercial family ski dashboard; hourly)';
 const HTML_UA = 'Mozilla/5.0 (compatible; SkiDay-dashboard; +https://followthepowder.com/)';
 const DAY = 864e5;
@@ -12,6 +13,14 @@ const iso = v => { if (!v) return null; const t = typeof v === 'number' ? v : Da
 const pair = (open, total) => (num(total) > 0 && num(open) != null) ? { open: num(open), total: num(total) } : null;
 const sumPairs = ps => { const ok = ps.filter(Boolean); return ok.length ? ok.reduce((a, p) => ({ open: a.open + p.open, total: a.total + p.total }), { open: 0, total: 0 }) : null; };
 const maxIso = (...xs) => xs.filter(Boolean).sort().pop() || null;
+const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const hhmm = s => { const m = String(s || '').match(/^(\d{1,2}):(\d{2})$/); return m ? +m[1] * 60 + +m[2] : parseClock(s); };
+/** Today's lift hours: earliest open to latest close across running lifts (or all lifts, marked scheduled, when none run). */
+function hoursSpan(all, open, pick) {
+  const src = open.length ? open : all;
+  const o = src.map(x => pick(x)[0]).filter(v => v != null), c = src.map(x => pick(x)[1]).filter(v => v != null);
+  return o.length && c.length ? { open: clockLabel(Math.min(...o)), close: clockLabel(Math.max(...c)), scheduled: !open.length } : null;
+}
 
 async function get(url, { type = 'json', headers = {} } = {}) {
   const r = await fetch(url, { headers: { 'User-Agent': type === 'json' ? UA : HTML_UA, Accept: type === 'json' ? 'application/json' : 'text/html', ...headers }, signal: AbortSignal.timeout(15000) });
@@ -23,7 +32,9 @@ async function get(url, { type = 'json', headers = {} } = {}) {
 export function finish(x, srcName, srcUrl) {
   const now = Date.now();
   const out = { at: x.at || null, snowAt: x.snowAt || null, fetchedAt: new Date(now).toISOString(), source: { name: srcName, url: srcUrl },
-    status: x.status || null, lifts: x.lifts || null, trails: x.trails || null, acres: x.acres || null, baseCm: x.baseCm ?? null, s24Cm: x.s24Cm ?? null, pct: null, basis: null };
+    status: x.status || null, lifts: x.lifts || null, trails: x.trails || null, acres: x.acres || null, baseCm: x.baseCm ?? null, s24Cm: x.s24Cm ?? null, pct: null, basis: null,
+    // Extra report fields shown on the full dashboards (null when a feed doesn't carry them).
+    s48Cm: x.s48Cm ?? null, s7dCm: x.s7dCm ?? null, seasonCm: x.seasonCm ?? null, hours: x.hours || null };
   // Lift counts are the most direct signal; a feed-level "Open" flag with 0 lifts running is not trusted.
   if (out.lifts) out.status = out.lifts.open > 0 ? 'open' : 'closed';
   // Terrain open: prefer acres when the feed reports open acres, else trails/runs.
@@ -34,7 +45,9 @@ export function finish(x, srcName, srcUrl) {
   // Snow numbers: only a dated report from the last 14 days (base) / 36 h (24 h snow) counts. Undated feeds are live pages.
   const age = out.snowAt ? now - Date.parse(out.snowAt) : 0;
   if (age > 14 * DAY) out.baseCm = null;
-  if (age > 1.5 * DAY) out.s24Cm = null;
+  if (age > 1.5 * DAY) { out.s24Cm = null; out.s48Cm = null; }
+  if (age > 8 * DAY) out.s7dCm = null;
+  if (out.status !== 'open' && out.seasonCm === 0) out.seasonCm = null; // pre-season placeholder
   // A 0 base at a resort that is not running is the feed's empty placeholder, not a measurement.
   if (out.baseCm === 0 && out.status !== 'open') out.baseCm = null;
   return out;
@@ -52,11 +65,16 @@ async function mtnpowder(c) {
     const acres = ta > 0 ? (oa != null ? { open: oa, total: ta } : (!running ? { open: 0, total: ta } : null)) : null;
     const range = num(sr.SnowBaseRangeIn) != null ? String(sr.SnowBaseRangeIn).split('-').map(num).filter(v => v != null).pop() : null;
     const pick = k => [mid, base, top].map(a => num(a[k])).find(v => v != null) ?? null;
-    return { lifts, trails, acres, baseIn: range ?? (running ? pick('BaseIn') : null), s24In: pick('Last24HoursIn'), at: iso(sr.LastUpdatedLift) || iso(d.LastUpdate), snowAt: iso(sr.LastUpdate) };
+    const L = (d.MountainAreas || []).flatMap(a => a.Lifts || []), dow = DAYS[localDow(c.tz || 'America/Denver')];
+    const hours = hoursSpan(L, L.filter(l => /open/i.test(l.StatusEnglish || l.Status || '')), l => [parseClock(l.Hours?.[dow]?.Open), parseClock(l.Hours?.[dow]?.Close)]);
+    return { lifts, trails, acres, baseIn: range ?? (running ? pick('BaseIn') : null), s24In: pick('Last24HoursIn'), s48In: pick('Last48HoursIn'), s7dIn: pick('Last7DaysIn'),
+      seasonIn: num(sr.SeasonTotalIn), hours, at: iso(sr.LastUpdatedLift) || iso(d.LastUpdate), snowAt: iso(sr.LastUpdate) };
   });
   const allAcres = parts.every(p => p.acres);
   return finish({ lifts: sumPairs(parts.map(p => p.lifts)), trails: sumPairs(parts.map(p => p.trails)), acres: allAcres ? sumPairs(parts.map(p => p.acres)) : null,
     baseCm: inCm(parts.map(p => p.baseIn).find(v => v != null)), s24Cm: inCm(parts.map(p => p.s24In).find(v => v != null)),
+    s48Cm: inCm(parts.map(p => p.s48In).find(v => v != null)), s7dCm: inCm(parts.map(p => p.s7dIn).find(v => v != null)), seasonCm: inCm(parts.map(p => p.seasonIn).find(v => v != null)),
+    hours: parts.length === 1 ? parts[0].hours : null,
     at: maxIso(...parts.map(p => p.at)), snowAt: maxIso(...parts.map(p => p.snowAt)) }, 'Resort feed (MountainPowder)', `https://mtnpowder.com/feed?resortId=${c.ids[0]}`);
 }
 
@@ -80,6 +98,8 @@ async function vail(c) {
   return finish({ lifts: L.length ? { open: L.filter(l => isOpen(l.Status)).length, total: L.length } : null,
     trails: T.length ? { open: T.filter(x => x.IsOpen).length, total: T.length } : null,
     baseCm: num(s?.BaseDepth?.Centimeters), s24Cm: num(s?.TwentyFourHourSnowfall?.Centimeters),
+    s48Cm: num(s?.FortyEightHourSnowfall?.Centimeters), s7dCm: num(s?.SevenDaySnowfall?.Centimeters), seasonCm: num(s?.CurrentSeason?.Centimeters),
+    hours: hoursSpan(L, L.filter(l => isOpen(l.Status)), l => [hhmm(l.OpenTime), hhmm(l.CloseTime)]),
     at: iso(typeof t?.Date === 'string' && !t.Date.startsWith('/') ? t.Date : null), snowAt }, `${c.host.replace(/^www\./, '')} lift, terrain & snow report`, base + c.terrain);
 }
 
@@ -99,6 +119,8 @@ async function powdr(c) {
     trails: T.length ? { open: oT.length, total: T.length } : null,
     acres: area(T) > 0 ? { open: Math.round(area(oT)), total: Math.round(area(T)) } : null,
     baseCm: r ? k(r.base_depth) : null, s24Cm: r ? k(r.computed?.['24_hour']) : null,
+    s48Cm: r ? k(r.computed?.['48_hour']) : null, s7dCm: r ? k(r.computed?.['7_day']) : null, seasonCm: r ? k(r.computed?.total) : null,
+    hours: hoursSpan(L, L.filter(x => x.status === 'open'), x => String(x.hours || '').split('-').map(parseClock)),
     at: upd ? iso(upd * 1000) : null, snowAt: r?.updated ? iso(r.updated * 1000) : null }, `${new URL(c.origin).host.replace(/^www\./, '')} snow report API`, c.origin);
 }
 
@@ -132,7 +154,7 @@ async function aspen(c) {
   return finish({ lifts: sumPairs(ds.map(d => pair(d.lifts?.openCount, d.lifts?.totalCount))), trails: sumPairs(ds.map(d => pair(d.trails?.openCount, d.trails?.totalCount))),
     acres: sumPairs(ds.map(d => pair(d.acres?.openCount, d.acres?.totalCount))),
     status: ds.some(d => /open/i.test(d.status || '')) ? 'open' : null,
-    baseCm: num(b.snowBase?.centimeters), s24Cm: num(b.snow24Hours?.centimeters), at: maxIso(...ds.map(d => aspenTime(d.lastUpdated))), snowAt: aspenTime(b.lastUpdated) },
+    baseCm: num(b.snowBase?.centimeters), s24Cm: num(b.snow24Hours?.centimeters), s48Cm: num(b.snow48Hours?.centimeters), s7dCm: num(b.snow7Days?.centimeters), at: maxIso(...ds.map(d => aspenTime(d.lastUpdated))), snowAt: aspenTime(b.lastUpdated) },
   'aspensnowmass.com snow report (base: Snowmass)', 'https://www.aspensnowmass.com/four-mountains/snow-report');
 }
 

@@ -7,11 +7,15 @@ import { DurableObject } from 'cloudflare:workers';
 import bundledCfg from '../../../data/resorts.json';
 import STATS_HTML from './stats.html';
 import { SOURCES, runSources, toLatest, toIntel, toCameras } from '../../../scripts/collect.mjs';
+import { wxGroupCount } from '../../../js/core.js';
 import { fetchReport } from './reports.js';
 import { BATCHES, refreshCatalogBatch, serveCatalogConditions, fetchForecast, catalogIds } from './catalog.js';
 
 const CFG_URL = 'https://raw.githubusercontent.com/Jzhang1011/followthepowder/main/data/resorts.json';
-const KEYS = ['weather', 'roads', 'alerts', 'cameras', 'camsall', 'intel', 'cotrip'];
+// Weather group 0 is src:weather (served in latest.json); groups 1.. are src:weather:g<N> (api/weather.json?g=N).
+const WXG = Math.max(4, wxGroupCount(bundledCfg)); // key space; the live cfg decides how many groups are refreshed
+const wxKey = g => g > 0 ? `weather:g${g}` : 'weather';
+const KEYS = ['weather', ...Array.from({ length: WXG - 1 }, (_, i) => wxKey(i + 1)), 'roads', 'alerts', 'cameras', 'camsall', 'intel', 'cotrip'];
 /** What a cron tick (every 15 min, UTC) refreshes. */
 function plan(d) {
   const h = d.getUTCHours(), q = Math.floor(d.getUTCMinutes() / 15);
@@ -20,7 +24,7 @@ function plan(d) {
   if (q === 0) { out.push('weather'); if (h >= 12 && h <= 23) out.push('intel'); } // hourly; intel 5 AM–4 PM MST
   return out;
 }
-const PLAN = { cron: '*/15 * * * *', every15min: ['roads', 'alerts', 'cameras', 'catalog (1 of 4 slices: Open-Meteo + resort lift/terrain/snow feeds; each resort hourly)'], hourly: ['weather'], hourly_12_23_utc: ['intel'], daily_12_30_utc: SOURCES };
+const PLAN = { cron: '*/15 * * * *', every15min: ['roads', 'alerts', 'cameras', 'catalog (1 of 4 slices: Open-Meteo + resort lift/terrain/snow feeds; each resort hourly)'], hourly: ['weather (group 0 here; groups 1.. fanned out, one self-request each)'], hourly_12_23_utc: ['intel'], daily_12_30_utc: SOURCES };
 const TTL = 60; // seconds: browsers and the edge re-check every minute; data itself changes every 15–60 min
 
 async function loadCfg() {
@@ -48,9 +52,18 @@ async function collectCotrip(env) {
   return out;
 }
 
-async function refresh(env, names) {
+async function refresh(env, names, { wxGroup = 0 } = {}) {
   const started = Date.now();
   const cfg = await loadCfg();
+  if (wxGroup > 0) { // fan-out invocation: one weather group only, stored under its own key
+    const k = wxKey(wxGroup);
+    const prev = await env.SKI_DATA.get(`src:${k}`, 'json');
+    const { rec, failures } = await runSources(['weather'], cfg, { weather: prev }, { openMeteoKey: env.OPEN_METEO_KEY, wxGroup });
+    await env.SKI_DATA.put(`src:${k}`, JSON.stringify(rec.weather));
+    const summary = { ms: Date.now() - started, sources: { [k]: { status: rec.weather.status, fetchedAt: rec.weather.fetchedAt, error: rec.weather.error || null } }, failures };
+    (failures.length ? console.error : console.log)('[ski-data] weather group', wxGroup, JSON.stringify(summary));
+    return summary;
+  }
   const want = names.filter(n => n !== 'cotrip');
   const prev = await readAll(env, [...new Set([...want, ...(want.includes('cameras') ? ['camsall'] : [])])]);
   const { rec, failures } = await runSources(want, cfg, prev, { openMeteoKey: env.OPEN_METEO_KEY });
@@ -66,6 +79,15 @@ async function refresh(env, names) {
   return summary;
 }
 
+/** Hourly: each extra weather group in its own invocation (own CPU budget), like the catalog report fan-out. */
+async function fanWeather(env) {
+  if (!env.REFRESH_TOKEN) return;
+  const self = env.SELF_RUN_URL || 'https://ski-data.wealthlanding001.workers.dev/api/run';
+  const n = wxGroupCount(await loadCfg());
+  await Promise.all(Array.from({ length: n - 1 }, (_, i) => fetch(`${self}?sources=weather&group=${i + 1}`, { method: 'POST', headers: { Authorization: `Bearer ${env.REFRESH_TOKEN}` } })
+    .then(r => r.body?.cancel()).catch(e => console.error('[ski-data] weather fan-out', i + 1, String(e.message || e)))));
+}
+
 const json = (body, status = 200, extra = {}) => new Response(JSON.stringify(body), {
   status,
   headers: {
@@ -77,11 +99,17 @@ const json = (body, status = 200, extra = {}) => new Response(JSON.stringify(bod
   }
 });
 
-async function serve(name, env) {
+async function serve(name, env, opt = {}) {
   if (name === 'latest') {
     const rec = await readAll(env, ['weather', 'roads', 'alerts', 'cameras']);
     if (!Object.values(rec).some(Boolean)) return json({ error: 'no data yet' }, 503);
     return json(toLatest(rec, 'ski-data-worker'));
+  }
+  if (name === 'weather') { // one weather group: { generatedAt, group, source, weather: {resortId: {base, summit}} }
+    const g = Math.min(WXG - 1, Math.max(0, parseInt(opt.g, 10) || 0));
+    const r = await env.SKI_DATA.get(`src:${wxKey(g)}`, 'json');
+    if (!r?.data) return json({ error: 'no data yet', group: g }, 503);
+    return json({ generatedAt: r.fetchedAt, group: g, servedBy: 'ski-data-worker', source: { ok: !!r.ok, status: r.status, fetchedAt: r.fetchedAt, attemptAt: r.attemptAt, error: r.error || null }, weather: r.data });
   }
   if (name === 'intel') {
     const r = await env.SKI_DATA.get('src:intel', 'json');
@@ -181,7 +209,7 @@ export default {
       return new Response(STATS_HTML, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex', 'Referrer-Policy': 'no-referrer' } });
     }
     const m = url.pathname.match(/^\/(?:ski\/)?api\/([a-z-]+)(?:\.json)?$/);
-    if (!m) return json({ error: 'not found', endpoints: ['/api/latest.json', '/api/intel.json', '/api/cameras.json', '/api/status.json', '/api/catalog-conditions.json'] }, 404);
+    if (!m) return json({ error: 'not found', endpoints: ['/api/latest.json', '/api/weather.json?g=N', '/api/intel.json', '/api/cameras.json', '/api/status.json', '/api/catalog-conditions.json'] }, 404);
     const name = m[1];
     if (name === 'event') return request.method === 'POST' ? handleEvent(request, env) : json({ error: 'POST only' }, 405);
     if (name === 'stats') {
@@ -207,6 +235,8 @@ export default {
         const list = Array.isArray(body?.resorts) ? body.resorts.slice(0, 8) : [];
         return json({ reports: await Promise.all(list.map(async r => [r.id, await fetchReport(r, null)])) }, 200, { 'Cache-Control': 'no-store' });
       }
+      const grp = parseInt(url.searchParams.get('group') || '0', 10) || 0;
+      if (grp > 0 && grp < WXG && want.includes('weather')) return json(await refresh(env, ['weather'], { wxGroup: grp }), 200, { 'Cache-Control': 'no-store' });
       const names = want.filter(n => SOURCES.includes(n) || n === 'cotrip');
       if (names.length) Object.assign(out, await refresh(env, names));
       return json(out, 200, { 'Cache-Control': 'no-store' });
@@ -227,20 +257,23 @@ export default {
         return json(body, 200, { 'Cache-Control': 'public, max-age=600' });
       } catch (e) { return json({ error: String(e.message || e) }, 502); }
     }
-    const key = new Request(`https://ski-data.cache/${name}`);
+    const g = name === 'weather' ? String(Math.min(WXG - 1, Math.max(0, parseInt(url.searchParams.get('g') || '0', 10) || 0))) : '';
+    const key = new Request(`https://ski-data.cache/${name}${g ? `/g${g}` : ''}`);
     if (name !== 'status') {
       const hit = await cache.match(key);
       // Re-wrap: a cache-API hit carries cf-cache-status, and the zone's 4 h Browser Cache TTL would
       // then rewrite our 60 s Cache-Control. A fresh Response keeps the short TTL.
       if (hit) return new Response(hit.body, { status: 200, headers: { ...Object.fromEntries(json({}).headers), 'X-Ski-Cache': 'edge' } });
     }
-    const res = name === 'catalog-conditions' ? json(await serveCatalogConditions(env)) : await serve(name, env);
+    const res = name === 'catalog-conditions' ? json(await serveCatalogConditions(env)) : await serve(name, env, { g });
     if (res.status === 200 && name !== 'status') ctx.waitUntil(cache.put(key, res.clone()));
     return res;
   },
   async scheduled(event, env, ctx) {
     const d = new Date(event.scheduledTime);
-    ctx.waitUntil(refresh(env, plan(d)));
+    const names = plan(d);
+    ctx.waitUntil(refresh(env, names));
+    if (names.includes('weather')) ctx.waitUntil(fanWeather(env)); // hourly, incl. the 12:30 UTC full run
     // Catalog conditions: one slice per quarter-hour -> every resort hourly, small requests.
     ctx.waitUntil(refreshCatalogBatch(env, Math.floor(d.getUTCMinutes() / 15) % BATCHES));
   }

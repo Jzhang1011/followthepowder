@@ -56,7 +56,7 @@ async function fetchSliceReports(env, list, prev) {
     let got = null, error = null;
     try {
       const r = await fetch(`${self}?sources=reports`, { method: 'POST', headers: { Authorization: `Bearer ${env.REFRESH_TOKEN}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resorts: g.map(x => ({ id: x.id, report: x.report })) }), signal: AbortSignal.timeout(25000) });
+        body: JSON.stringify({ resorts: g.map(x => ({ id: x.id, report: { ...x.report, tz: x.tz } })) }), signal: AbortSignal.timeout(25000) });
       if (!r.ok) throw new Error(`fan-out HTTP ${r.status}`);
       got = new Map((await r.json()).reports || []);
     } catch (e) { error = String(e.message || e); console.error('[ski-data] report fan-out failed', g.map(x => x.id).join(','), error); }
