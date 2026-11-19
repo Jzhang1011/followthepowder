@@ -110,6 +110,8 @@ export function dailyRows(wx, resort) {
       // Snow line is typically ~300 m below the freezing level.
       snowLineMin: fz.length ? Math.max(0, Math.min(...fz) - 300) : null,
       snowLineMax: fz.length ? Math.max(0, Math.max(...fz) - 300) : null,
+      // Lowest model visibility at the summit during lift hours (9 AM–4 PM local), metres.
+      visMin: (() => { const v = ss.filter(r => { const h = +r.time.slice(11, 13); return h >= 9 && h <= 16; }).map(r => r.vis).filter(x => x != null); return v.length ? Math.min(...v) : null; })(),
       swe, snowEst: est,
       ratio: swe > 0.2 ? est * 10 / swe : null,
       ratioModel: swe > 0.2 && summit.daily.snowfall_sum?.[d] != null ? summit.daily.snowfall_sum[d] * 10 / swe : null
@@ -217,6 +219,9 @@ export function worst(levels) {
   return w;
 }
 
+/** Visibility (m, Open-Meteo model) -> level: under 1 km caution (fog / whiteout possible), under 3 km info. */
+export const visLevel = m => m < 1000 ? 'caution' : m < 3000 ? 'info' : 'go';
+
 /**
  * Build itemized reasons for a resort. Each reason: {level, kind, text:{key, args}, seg?, ev?}.
  * `roads` = {ok, events[]}, `alerts` = {ok, list[]}, `days` = dailyRows or null.
@@ -285,6 +290,10 @@ export function verdictFor(cfg, resort, { roads, alerts, days, intel = null, now
     const g = d.summit.gust ?? 0;
     if (g >= rules.gustCautionKmh) reasons.push({ level: 'caution', kind: 'wind', key: 'r_wind', val: g });
     else reasons.push({ level: 'go', kind: 'wind', key: 'r_wind_ok', val: g });
+    if (d.visMin != null) {
+      const vl = visLevel(d.visMin);
+      reasons.push({ level: vl, kind: 'vis', key: vl === 'caution' ? 'r_vis_low' : vl === 'info' ? 'r_vis_some' : 'r_vis_ok', val: d.visMin });
+    }
     const f = d.summit.feelsMin;
     if (f != null && f <= rules.feelsLikeCautionC) reasons.push({ level: 'caution', kind: 'cold', key: 'r_cold', val: f });
   }
@@ -360,6 +369,7 @@ export const fmt = {
     if (u === 'imperial') { const k = m => (m * 3.28084 / 1000).toFixed(1); return `${k(a)}–${k(b)}k ft`; }
     return `${Math.round(a / 10) * 10}–${Math.round(b / 10) * 10} m`;
   },
+  vis: (m, u) => { if (m == null) return '—'; if (m >= 16000) return u === 'imperial' ? '10+ mi' : '16+ km'; if (u === 'imperial') { const mi = m / 1609.34; return mi < 3 ? `${mi.toFixed(1)} mi` : `${Math.round(mi)} mi`; } const k = m / 1000; return k < 3 ? `${k.toFixed(1)} km` : `${Math.round(k)} km`; },
   wind: (k, u) => k == null ? '—' : (u === 'imperial' ? `${Math.round(k / 1.609)} mph` : `${Math.round(k)} km/h`),
   ratio: r => r == null ? '—' : `${Math.round(r)}:1`
 };

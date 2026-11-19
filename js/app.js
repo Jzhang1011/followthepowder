@@ -1,9 +1,9 @@
 import { openMeteoUrl, splitOpenMeteo, dailyRows, hourlyRows, weatherEmoji, carsUrl, slimEvents, EVENT_CLASSES,
-  nwsUrl, slimAlerts, verdictFor, outfitFor, recommendFrom, fmt } from './core.js?v=5deb313c41';
-import { STR, PACK_DEFAULT } from './i18n.js?v=5deb313c41';
-import { selectCameras, routeSegments, inCO } from './route.js?v=5deb313c41';
-import { loadStart, saveStart, isDefaultStart, getRoute, mountStartUI } from './start.js?v=5deb313c41';
-import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts } from './discover.js?v=5deb313c41';
+  nwsUrl, slimAlerts, verdictFor, outfitFor, recommendFrom, fmt } from './core.js?v=4a32a8f6b0';
+import { STR, PACK_DEFAULT } from './i18n.js?v=4a32a8f6b0';
+import { selectCameras, routeSegments, inCO } from './route.js?v=4a32a8f6b0';
+import { loadStart, saveStart, isDefaultStart, getRoute, mountStartUI } from './start.js?v=4a32a8f6b0';
+import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts } from './discover.js?v=4a32a8f6b0';
 
 const LS = {
   get: (k, d) => { try { const v = localStorage.getItem('ski.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -236,6 +236,7 @@ function reasonText(x) {
     case 'r_heavy_snow': case 'r_snow_ok': return t(x.key, fmt.snow(x.val, u));
     case 'r_wind': case 'r_wind_ok': return t(x.key, fmt.wind(x.val, u));
     case 'r_cold': return t(x.key, fmt.temp(x.val, u));
+    case 'r_vis_low': case 'r_vis_some': case 'r_vis_ok': return t(x.key, fmt.vis(x.val, u));
     case 'r_nws': return t(x.key, x.alert.event);
     case 'r_resort_closed': return t(x.key, x.note ? ` · ${x.note}` : '');
     case 'r_limited': { const pc = intelFor(resort())?.terrain?.pct; return pc != null ? t('r_limited_t', `${x.val.open}/${x.val.total}`, `${pc}%`) : t(x.key, `${x.val.open}/${x.val.total}`); }
@@ -247,7 +248,7 @@ function reasonText(x) {
 /** Plain-language recommendation, derived only from data on the page (resort report + the existing verdict). */
 function recommend(r, v, i) { return recommendFrom(i, v.level); }
 const SEV = { nogo: 0, caution: 1, unknown: 2, info: 3, go: 4 };
-const GROUP = { resort: 'mountain', chain: 'road', closure: 'road', incident: 'road', conditions: 'road', roads: 'road', nws: 'weather', snow: 'weather', wind: 'weather', cold: 'weather', weather: 'weather' };
+const GROUP = { resort: 'mountain', chain: 'road', closure: 'road', incident: 'road', conditions: 'road', roads: 'road', nws: 'weather', snow: 'weather', wind: 'weather', cold: 'weather', vis: 'weather', weather: 'weather' };
 function srcOf(x, r) {
   if (x.kind === 'resort') return intelFor(r)?.source?.name || r.short;
   if (GROUP[x.kind] === 'road') return t('src_cdot');
@@ -331,7 +332,7 @@ function renderVerdict() {
     empty: g === 'mountain' ? t('intel_unavailable') : t('unavailable'), note: g === 'weather' ? weatherNote() : '' }));
   $$('#why').innerHTML = UI.know(groups, v.reasons.some(x => x.kind === 'chain') ? `<details class="more"><summary>ⓘ ${esc(t('more_info'))}</summary><p class="small muted">${esc(t('traction_help'))}</p></details>` : '');
 }
-const weatherNote = () => t('no_vis');
+const weatherNote = () => t('vis_note');
 /** Count CDOT reasons of some kinds on the route: main vs minor/other-direction. */
 function roadCount(reasons, kinds, roadsOk) {
   const l = reasons.filter(x => kinds.includes(x.kind) && x.seg); const main = l.filter(x => x.level !== 'info');

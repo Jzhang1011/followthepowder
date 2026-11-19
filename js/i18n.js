@@ -209,6 +209,8 @@ const V4 = {
     src_cdot: 'CDOT COtrip', src_nws: 'National Weather Service', src_om: 'Open-Meteo forecast', r_limited_t: 'Limited terrain: {0} lifts open, {1} of terrain', no_vis: 'Visibility isn’t in SkiDay’s forecast data yet.',
     i_lifts: '{0} of {1} lifts operating', i_runs: '{0} of {1} runs open', i_terrain_ac: '{0} of {1} acres', i_hours_today: 'today', i_season_h: 'Season status',
     i_by: 'Reported by {0} · {1}', snow_rep_h: 'Resort-reported snowfall', p24: 'Last 24 hours', p48: 'Last 48 hours', p7: 'Last 7 days', pseason: 'Season total',
+    r_vis_low: 'Low visibility on the mountain: down to {0} (9 AM–4 PM)', r_vis_some: 'Reduced visibility at times: down to {0} (9 AM–4 PM)', r_vis_ok: 'Visibility: at least {0} (9 AM–4 PM)',
+    vis_note: 'Visibility is the Open-Meteo model at the summit grid point, lowest value between 9 AM and 4 PM. Fog and whiteouts can be very local, so treat it as a guide.',
     snow_rep_note: 'Measured and published by the resort ({0}, {1}). Not a weather-model estimate.', outlook_src: 'Forecast: Open-Meteo weather model, summit grid point (not resort-reported).', last24_rep: 'Last 24h · resort'
   },
   zh: {
@@ -229,6 +231,8 @@ const V4 = {
     src_cdot: 'CDOT COtrip', src_nws: '美国国家气象局', src_om: 'Open-Meteo 预报', r_limited_t: '开放地形有限：缆车 {0}，地形 {1}', no_vis: 'SkiDay 的预报数据暂不含能见度。',
     i_lifts: '缆车运行 {0}/{1}', i_runs: '雪道开放 {0}/{1}', i_terrain_ac: '{0}/{1} 英亩', i_hours_today: '今天', i_season_h: '雪季状态',
     i_by: '来源 {0} · {1}', snow_rep_h: '雪场公布的降雪', p24: '过去 24 小时', p48: '过去 48 小时', p7: '过去 7 天', pseason: '本季累计',
+    r_vis_low: '山上能见度低：最低 {0}（上午9点–下午4点）', r_vis_some: '能见度有时下降：最低 {0}（上午9点–下午4点）', r_vis_ok: '能见度：至少 {0}（上午9点–下午4点）',
+    vis_note: '能见度为 Open-Meteo 模型在山顶格点的数值，取上午9点到下午4点的最低值。雾和白化天气可能非常局部，仅供参考。',
     snow_rep_note: '由雪场测量并公布（{0}，{1}），不是天气模型估算。', outlook_src: '预报：Open-Meteo 天气模型，山顶格点（非雪场公布）。', last24_rep: '过去24h · 雪场'
   }
 };

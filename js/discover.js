@@ -1,8 +1,8 @@
 // Resort discovery (default home) + basic resort view for catalog resorts without a full dashboard.
 // Data: data/catalog.json (static, verified) + api/catalog-conditions.json (Open-Meteo model, refreshed hourly by
 // the ski-data Worker; resort-published base depth / terrain open / lifts / 24 h snow where SkiDay reads a public feed) + api/forecast.json?r=<id> (basic view).
-import { fmt, weatherEmoji, chainLevel, recommendFrom } from './core.js?v=5deb313c41';
-import { getRoute, getTable } from './start.js?v=5deb313c41';
+import { fmt, weatherEmoji, chainLevel, recommendFrom, visLevel } from './core.js?v=4a32a8f6b0';
+import { getRoute, getTable } from './start.js?v=4a32a8f6b0';
 
 const S = {
   en: {
@@ -724,6 +724,8 @@ function basicWeather(fc) {
   const g = d.wind_gusts_10m_max?.[0];
   if (g != null) out.push(g >= rules.gustCautionKmh ? { level: 'caution', text: T('r_wind', fmt.wind(g, u)), src } : { level: 'go', text: T('r_wind_ok', fmt.wind(g, u)), src });
   const feels = (h?.time || []).map((t, k) => t.startsWith(day) ? h.apparent_temperature?.[k] : null).filter(v => v != null);
+  const vis = (h?.time || []).map((t, k) => t.startsWith(day) && +t.slice(11, 13) >= 9 && +t.slice(11, 13) <= 16 ? h.visibility?.[k] : null).filter(v => v != null);
+  if (vis.length) { const m = Math.min(...vis), vl = visLevel(m); out.push({ level: vl, text: T(vl === 'caution' ? 'r_vis_low' : vl === 'info' ? 'r_vis_some' : 'r_vis_ok', fmt.vis(m, u)), src }); }
   if (feels.length && Math.min(...feels) <= rules.feelsLikeCautionC) out.push({ level: 'caution', text: T('r_cold', fmt.temp(Math.min(...feels), u)), src });
   return out;
 }
@@ -814,7 +816,7 @@ export function renderBasic() {
   drawBasicMap(r);
   renderAlts(r.id, document.getElementById('b-alts'));
 }
-const basicWeatherNote = () => X.t('no_vis');
+const basicWeatherNote = () => (D.basic.fc?.summit?.hourly?.visibility ? X.t('vis_note') : X.t('no_vis'));
 /** Drive estimate for the current start (re-fetched when the start changes; cached by start.js). */
 function ensureBasicRoute(r) {
   const B = D.basic, s = startPt(), sk = `${s.lat.toFixed(3)},${s.lon.toFixed(3)}`;

@@ -145,7 +145,7 @@ export async function fetchForecast(env, id) {
   const cat = await loadCatalog();
   const r = cat.resorts.find(x => x.id === id); if (!r) return null;
   const res = await fetch(omUrl(env, [r], {
-    hourly: 'temperature_2m,apparent_temperature,snowfall,wind_speed_10m,wind_gusts_10m,weather_code',
+    hourly: 'temperature_2m,apparent_temperature,snowfall,wind_speed_10m,wind_gusts_10m,weather_code,visibility',
     daily: 'temperature_2m_max,temperature_2m_min,snowfall_sum,wind_speed_10m_max,wind_gusts_10m_max,weather_code',
     forecast_days: '7', timezone: 'auto'
   }), { headers: { 'User-Agent': 'SkiDay ski-data (followthepowder.com; non-commercial family dashboard)' } });

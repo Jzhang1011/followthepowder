@@ -217,7 +217,7 @@ export default {
     if (name === 'forecast') {
       const id = url.searchParams.get('r') || '';
       if (!catalogIds().includes(id)) return json({ error: 'unknown resort' }, 404);
-      const fkey = new Request(`https://ski-data.cache/forecast/${id}`);
+      const fkey = new Request(`https://ski-data.cache/forecast/v2/${id}`);
       const hit = await cache.match(fkey);
       if (hit) return new Response(hit.body, { status: 200, headers: { ...Object.fromEntries(json({}, 200, { 'Cache-Control': 'public, max-age=600' }).headers), 'X-Ski-Cache': 'edge' } });
       try {
