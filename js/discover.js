@@ -1,13 +1,14 @@
 // Resort discovery (default home) + basic resort view for catalog resorts without a full dashboard.
 // Data: data/catalog.json (static, verified) + api/catalog-conditions.json (Open-Meteo model, refreshed hourly by
 // the ski-data Worker; resort-published base depth / terrain open / lifts / 24 h snow where SkiDay reads a public feed) + api/forecast.json?r=<id> (basic view).
-import { fmt, weatherEmoji } from './core.js?v=0e0897c875';
-import { getRoute } from './start.js?v=0e0897c875';
+import { fmt, weatherEmoji } from './core.js?v=011555dd97';
+import { getRoute } from './start.js?v=011555dd97';
 
 const S = {
   en: {
-    d_title: 'Where do you want to ski?', d_sub: 'Find your mountain and check today’s conditions.',
-    d_search: 'Search resort, town, state, range or pass…', d_near: 'Near Me', d_fav: 'Favorites', d_best: 'Best Conditions', d_explore: 'Explore',
+    d_title: 'Find your next great ski day.', d_sub: 'Compare ski resorts, discover where conditions are best, and plan your next mountain trip.',
+    d_plan: 'Plan a Ski Trip', d_plan_nav: 'Plan a Trip',
+    d_search: 'Search resort, town, state, range or pass…', d_near: 'Near Me', d_fav: 'Favorites', d_best: 'Best Conditions', d_explore: 'Explore Resorts',
     d_recent: 'Recently viewed', d_from: 'Distances from', d_useloc: 'Use my location', d_locating: 'Finding you…', d_loc_fail: 'Location unavailable; using your starting point.',
     d_filters: 'Filters', d_region: 'Region', d_pass: 'Pass', d_status: 'Status', d_dist: 'Distance', d_sort: 'Sort', d_all: 'All', d_allr: 'All regions', d_allp: 'All passes', d_other: 'Other', d_any: 'Any',
     d_open_only: 'Open (reported)', d_hide_closed: 'Hide reported closed', d_within: 'Within {0}', d_list: 'List', d_map: 'Map',
@@ -28,11 +29,21 @@ const S = {
     b_get: 'Getting there', b_links: 'Official links', b_site: 'Resort website', b_report: 'Snow report, lifts & webcams (official site)', b_dir: 'Directions (Google Maps)',
     b_loading: 'Loading forecast…', b_fc_fail: 'Forecast unavailable right now.', b_route_loading: 'Estimating drive…', b_route_fail: 'Drive estimate unavailable.',
     b_elev: 'Elevation', b_pass: 'Pass', b_range: 'Range', b_src: 'Coordinates/elevation source', b_fc_src: 'Forecast: Open-Meteo, {0} grid point at {1}.', b_drive_from: 'from {0}',
-    b_snow_bars: 'Snow (bars)', b_temp_line: 'Temperature (line)'
+    b_snow_bars: 'Snow (bars)', b_temp_line: 'Temperature (line)',
+    c_open: 'Open', c_limited: 'Limited', c_closed: 'Closed', c_nr: 'Status not reported', c_lifts: '{0} of {1} lifts running', c_lifts_s: 'lifts', c_new_rep: 'new 24 h · resort', c_new_mod: 'new 24 h · model',
+    c_season_open: 'Season open', c_season_rep: 'Resort report updated {0}', c_season_old: 'No resort update since {0}', c_season_nr: 'Season status not reported',
+    c_score_of: '/100', c_score_why: 'Why this score?', c_lt1: '<1%',
+    x_snow: 'Snow (new 24 h + next 72 h)', x_base: 'Base depth', x_terrain: 'Terrain open', x_weather: 'Summit wind + temperature', x_dist: 'Distance from your start',
+    x_half: 'not reported, neutral half points', x_closed: 'Resort reports itself closed: score ×0.3', x_season: 'Base and terrain are compared with the deepest base and most terrain any resort reports today, so early-season numbers aren’t judged by mid-winter standards. Crowds are not included: SkiDay has no reliable crowd data.',
+    x_pos: 'Helping', x_neg: 'Holding it back', x_mid: 'Neutral',
+    p_title: 'Plan a Ski Trip', p_soon: 'Coming soon', p_lead: 'Trip planning is the next part of SkiDay: choose dates, where you start and which passes you hold, and compare destinations for a multi-day trip.',
+    p_now: 'You can already:', p_now1: 'See where conditions are best today', p_now2: 'Explore resorts by region and pass', p_now3: 'Compare up to four resorts side by side (tick “Compare” on any card)', p_now4: 'Open a resort for drive estimates from your starting point',
+    p_note: 'Nothing here is booked or saved for you. When planning launches it will use the same live data as the rest of SkiDay.', p_back: '← Back to Best Conditions'
   },
   zh: {
-    d_title: '你想去哪里滑雪？', d_sub: '找到你的雪场，查看今天的雪况。',
-    d_search: '搜索雪场、城镇、州、山脉或雪票…', d_near: '附近', d_fav: '收藏', d_best: '最佳雪况', d_explore: '探索',
+    d_title: '找到你的下一个好雪天。', d_sub: '对比雪场，看看哪里雪况最好，规划你的下一次进山之旅。',
+    d_plan: '规划滑雪旅行', d_plan_nav: '规划行程',
+    d_search: '搜索雪场、城镇、州、山脉或雪票…', d_near: '附近', d_fav: '收藏', d_best: '最佳雪况', d_explore: '探索雪场',
     d_recent: '最近浏览', d_from: '距离起点', d_useloc: '使用我的位置', d_locating: '定位中…', d_loc_fail: '无法定位，改用你的出发地。',
     d_filters: '筛选', d_region: '地区', d_pass: '雪票', d_status: '状态', d_dist: '距离', d_sort: '排序', d_all: '全部', d_allr: '全部地区', d_allp: '全部雪票', d_other: '其他', d_any: '不限',
     d_open_only: '营业中（雪场公布）', d_hide_closed: '隐藏已公布关闭', d_within: '{0} 以内', d_list: '列表', d_map: '地图',
@@ -53,7 +64,16 @@ const S = {
     b_get: '怎么去', b_links: '官方链接', b_site: '雪场官网', b_report: '雪况、缆车和摄像头（官网）', b_dir: '导航（Google 地图）',
     b_loading: '正在加载预报…', b_fc_fail: '暂时无法获取预报。', b_route_loading: '正在估算车程…', b_route_fail: '无法估算车程。',
     b_elev: '海拔', b_pass: '雪票', b_range: '山脉', b_src: '坐标/海拔来源', b_fc_src: '预报：Open-Meteo，{0}格点，海拔 {1}。', b_drive_from: '从 {0} 出发',
-    b_snow_bars: '降雪（柱）', b_temp_line: '气温（线）'
+    b_snow_bars: '降雪（柱）', b_temp_line: '气温（线）',
+    c_open: '营业中', c_limited: '部分开放', c_closed: '未开放', c_nr: '状态未公布', c_lifts: '缆车运行 {0}/{1}', c_lifts_s: '缆车', c_new_rep: '24小时新雪 · 雪场', c_new_mod: '24小时新雪 · 模型',
+    c_season_open: '雪季已开放', c_season_rep: '雪场报告更新于 {0}', c_season_old: '自 {0} 起雪场未更新报告', c_season_nr: '雪季状态未公布',
+    c_score_of: '/100', c_score_why: '为什么是这个分数？', c_lt1: '<1%',
+    x_snow: '降雪（24小时新雪 + 未来72小时）', x_base: '雪底深度', x_terrain: '雪道开放', x_weather: '山顶风速 + 气温', x_dist: '距出发地',
+    x_half: '未公布，按中性一半分计', x_closed: '雪场公布关闭：分数 ×0.3', x_season: '雪底和雪道开放与今天所有雪场公布的最好数值相比，所以初雪季的数字不会按隆冬标准评判。不含人流：SkiDay 没有可靠的人流数据。',
+    x_pos: '加分', x_neg: '减分', x_mid: '中性',
+    p_title: '规划滑雪旅行', p_soon: '即将推出', p_lead: '行程规划是 SkiDay 的下一步：选择日期、出发地和你持有的雪票，对比多日旅行的目的地。',
+    p_now: '现在已经可以：', p_now1: '查看今天哪里雪况最好', p_now2: '按地区和雪票浏览雪场', p_now3: '最多对比四个雪场（在卡片上勾选“对比”）', p_now4: '打开雪场查看从出发地的车程估算',
+    p_note: '这里不会为你预订或保存任何内容。上线后将使用与 SkiDay 其他部分相同的实时数据。', p_back: '← 返回最佳雪况'
   }
 };
 const STATE_NAMES = { CO: 'Colorado', UT: 'Utah', CA: 'California', NV: 'Nevada', 'CA/NV': 'California Nevada', WA: 'Washington', OR: 'Oregon', AK: 'Alaska', WY: 'Wyoming', MT: 'Montana', ID: 'Idaho', NM: 'New Mexico', AB: 'Alberta', BC: 'British Columbia', QC: 'Quebec', ON: 'Ontario', VT: 'Vermont', ME: 'Maine', NH: 'New Hampshire', NY: 'New York' };
@@ -200,12 +220,28 @@ function updTime(iso) {
 const passTxt = r => r.passes.length ? r.passes.map(p => p[0].toUpperCase() + p.slice(1)).join(' · ') : tr('d_other');
 const stateTxt = r => X.state.lang === 'zh' ? (STATE_ZH[r.state] || r.state) : (STATE_NAMES[r.state] ? r.state : r.state);
 const regionName = id => { const g = D.cat.regions.find(x => x.id === id); return g ? (g[X.state.lang] || g.en) : id; };
-function statusHtml(r) {
+/** Operating status from the resort's own report (lift counts), kept apart from the season line below.
+ *  green = open, amber = open but limited (<25% of lifts, same threshold as the full dashboards), red = closed, gray = not reported. */
+function opStatus(r) {
   const p = report(r);
-  const lifts = p?.lifts ? ` · ${esc(tr('d_lifts', p.lifts.open, p.lifts.total))}` : '';
-  if (p?.status === 'open') return `<span class="dst open">● ${esc(tr('d_open'))}${lifts}</span>`;
-  if (p?.status === 'closed') return `<span class="dst closed">● ${esc(tr('d_closed'))}${lifts}</span>`;
-  return `<span class="dst na">${esc(tr('d_nolift'))}</span>`;
+  if (!p?.status) return { cls: 'na', label: tr('c_nr') };
+  if (p.status === 'closed') return { cls: 'nogo', label: tr('c_closed') };
+  const lim = p.lifts?.total && p.lifts.open / p.lifts.total < 0.25;
+  return { cls: lim ? 'caution' : 'go', label: tr(lim ? 'c_limited' : 'c_open') };
+}
+function statusHtml(r) {
+  const p = report(r), o = opStatus(r);
+  const lifts = p?.lifts?.total ? ` · ${esc(tr('c_lifts', p.lifts.open, p.lifts.total))}` : '';
+  return `<span class="dst s-${o.cls}"><i aria-hidden="true"></i>${esc(o.label)}${lifts}</span>`;
+}
+/** Season line: what the report says about the season, separate from how many lifts run today. */
+function seasonTxt(r) {
+  const p = report(r);
+  if (!p?.status) return tr('c_season_nr');
+  if (p.status === 'open') return tr('c_season_open');
+  const at = p.at ? new Date(p.at) : null;
+  if (at && !isNaN(at) && Date.now() - at > 21 * 864e5) return tr('c_season_old', new Intl.DateTimeFormat(X.state.lang === 'zh' ? 'zh-CN' : 'en-US', { month: 'short', day: 'numeric', year: at.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined }).format(at));
+  return tr('c_season_rep', updTime(p.at || p.fetchedAt));
 }
 const baseTxt = (cm, u) => cm == null ? null : u === 'imperial' ? `${Math.round(cm / 2.54)}″` : `${Math.round(cm)} cm`;
 const nf0 = n => Number(n).toLocaleString(X.state.lang === 'zh' ? 'zh-CN' : 'en-US');
@@ -220,29 +256,45 @@ function cardUpd(r) {
   const t = p ? ([p.at, p.snowAt].filter(Boolean).sort().pop() || p.fetchedAt) : c?.at;
   return t ? tr('d_upd', updTime(t)) : '';
 }
+const pctTxt = p => p?.pct == null ? null : p.pct === 0 && p.trails?.open > 0 ? tr('c_lt1') : `${p.pct}%`;
 function statsHtml(r, u) {
-  const c = cond(r), p = report(r), s24 = snow24(r), rep = rep24(p) != null, b = baseCm(r), pc = pctOpen(r);
-  return `<span><b>${s24 != null ? fmt.snow(s24, u) : '—'}</b><small>${esc(tr('d_new'))}${rep ? ' ✓' : ''}</small></span>
-        <span title="${esc(b != null ? tr('d_rep') : '')}">${b != null ? `<b>${baseTxt(b, u)}</b>` : nr()}<small>${esc(tr('d_base'))}</small></span>
-        <span title="${esc(terrainTip(p))}">${pc != null ? `<b>${pc}%</b>` : nr()}<small>${esc(tr('d_terrain'))}</small></span>
-        <span><b>${c ? fmt.snow(c.summit.s72, u) : '—'}</b><small>${esc(tr('d_fc72'))}</small></span>`;
+  const c = cond(r), p = report(r), s24 = snow24(r), rep = rep24(p) != null, b = baseCm(r), pt = pctTxt(p);
+  const cell = (val, label, title = '') => `<span${title ? ` title="${esc(title)}"` : ''}>${val != null ? `<b>${val}</b>` : nr()}<small>${esc(label)}</small></span>`;
+  return cell(s24 != null ? fmt.snow(s24, u) : null, tr(rep ? 'c_new_rep' : 'c_new_mod'))
+    + cell(b != null ? baseTxt(b, u) : null, tr('d_base'), b != null ? tr('d_rep') : '')
+    + cell(pt, tr('d_terrain'), terrainTip(p))
+    + cell(c?.summit?.s72 != null ? fmt.snow(c.summit.s72, u) : null, tr('d_fc72'))
+    + cell(p?.lifts?.total ? `${p.lifts.open}<small>/${p.lifts.total}</small>` : null, tr('c_lifts_s'));
+}
+/** Score breakdown (ⓘ): what lifts the score and what holds it back. Scoring itself is unchanged (see score()). */
+const SCORE_MAX = { snow: 35, base: 15, terrain: 20, weather: 15, dist: 15 };
+function scoreWhy(r, sc) {
+  const halfB = baseCm(r) == null, halfT = pctOpen(r) == null;
+  const rows = [['snow', sc.snow], ['base', sc.base, halfB], ['terrain', sc.terrain, halfT], ['weather', sc.weather], ['dist', sc.dist]].map(([k, v, half]) => {
+    const f = v / SCORE_MAX[k], cls = half ? 'mid' : f >= 0.6 ? 'pos' : f <= 0.35 ? 'neg' : 'mid';
+    return { cls, html: `<li class="x-${cls}"><span>${cls === 'pos' ? '+' : cls === 'neg' ? '−' : '•'}</span>${esc(tr('x_' + k))} <b>${v}/${SCORE_MAX[k]}</b>${half ? ` <small>(${esc(tr('x_half'))})</small>` : ''}</li>` };
+  });
+  const grp = (cls, k) => { const l = rows.filter(x => x.cls === cls); return l.length ? `<p class="x-h">${esc(tr(k))}</p><ul>${l.map(x => x.html).join('')}</ul>` : ''; };
+  return `<details class="dsx"><summary aria-label="${esc(tr('c_score_why'))}" title="${esc(tr('c_score_why'))}">ⓘ</summary><div class="dsx-p" role="note">
+    <b>${sc.total}/100 · ${esc(tr('d_score'))}</b>${grp('pos', 'x_pos')}${grp('neg', 'x_neg')}${grp('mid', 'x_mid')}
+    ${report(r)?.status === 'closed' ? `<p class="x-cl">${esc(tr('x_closed'))}</p>` : ''}<p class="small muted">${esc(tr('x_season'))}</p></div></details>`;
 }
 const photoStyle = r => r.photo?.src ? ` style="background-image:url('${esc(r.photo.src)}')"` : '';
 
 function card(r, { rank } = {}) {
   const c = cond(r), u = U(), f = favs().includes(r.id), sc = score(r);
-  return `<article class="dcard" data-open="${r.id}">
+  return `<article class="dcard" data-open="${r.id}" data-id="${r.id}">
     <div class="dph${r.photo ? '' : ' ph0'}"${photoStyle(r)}>${rank ? `<span class="drank">${rank}</span>` : ''}${r.detail === 'full' ? `<span class="dfull">${esc(tr('d_full'))}</span>` : ''}</div>
     <div class="dbody">
-      <div class="dhead"><h3>${esc(r.name)}</h3>
+      <div class="dhead"><div class="dtt"><h3>${esc(r.name)}</h3>
+        <div class="dmeta">${esc(regionName(r.region))} · ${esc(stateTxt(r))} · <span class="dpass">${esc(passTxt(r))}</span></div></div>
+        ${sc ? `<div class="dscore"><b>${sc.total}</b><small>${esc(tr('d_score'))}</small>${scoreWhy(r, sc)}</div>` : ''}
         <button type="button" class="dfav${f ? ' on' : ''}" data-fav="${r.id}" aria-pressed="${f}" aria-label="${esc(tr(f ? 'd_remfav' : 'd_addfav'))}" title="${esc(tr(f ? 'd_remfav' : 'd_addfav'))}">${f ? '★' : '☆'}</button></div>
-      <div class="dmeta">${esc(stateTxt(r))} · ${esc(passTxt(r))}${sc ? ` · <span class="dsc" title="${esc(tr('d_score_help'))}">${sc.total} ${esc(tr('d_score_s'))}</span>` : ''}</div>
-      <div class="dstats">
-        ${statsHtml(r, u)}
-      </div>
-      <div class="dfoot">${statusHtml(r)}<span class="dupd">${c || report(r) ? esc(cardUpd(r)) : ''}</span></div>
+      <div class="dfoot">${statusHtml(r)}<span class="dseason">${esc(seasonTxt(r))}</span></div>
+      <div class="dstats">${statsHtml(r, u)}</div>
       <div class="dact"><button type="button" class="dgo" data-open="${r.id}">${esc(tr('d_view'))} →</button>
-        <label class="dcmp"><input type="checkbox" data-cmp="${r.id}"${D.cmp.includes(r.id) ? ' checked' : ''}${!D.cmp.includes(r.id) && D.cmp.length >= 4 ? ' disabled' : ''}> ${esc(tr('d_compare'))}</label></div>
+        <label class="dcmp"><input type="checkbox" data-cmp="${r.id}"${D.cmp.includes(r.id) ? ' checked' : ''}${!D.cmp.includes(r.id) && D.cmp.length >= 4 ? ' disabled' : ''}> ${esc(tr('d_compare'))}</label>
+        <span class="dupd">${c || report(r) ? esc(cardUpd(r)) : ''}</span></div>
     </div>
   </article>`;
 }
@@ -284,8 +336,8 @@ function renderShell() {
     el.innerHTML = `<div class="disc-hero"><div class="wrap">
         <h1 class="q" id="d-title"></h1><p class="dsub" id="d-sub"></p>
         <div class="dsearch"><span aria-hidden="true">🔎</span><input id="dq" type="search" autocomplete="off" enterkeyhint="search" aria-autocomplete="list" aria-controls="dq-ac"><button type="button" class="dqx" id="dq-x" hidden aria-label="Clear">✕</button><ul class="ac" id="dq-ac" role="listbox" hidden></ul></div>
-        <p class="dfrom" id="d-from"></p>
-        <div class="dtabs" id="d-tabs" role="tablist"></div>
+        <div class="dhero-a"><p class="dfrom" id="d-from"></p><a class="dplan" id="d-plan" href="?plan=1" data-plan></a></div>
+        <div class="dtabs-row"><div class="dtabs" id="d-tabs" role="tablist"></div><a class="dplan-nav" id="d-plan-nav" href="?plan=1" data-plan></a></div>
       </div></div>
       <div class="wrap dwrap">
         <div class="drecent" id="d-recent"></div>
@@ -308,7 +360,10 @@ function renderShell() {
   $('#dq-x').hidden = !D.q;
   const s = startPt();
   $('#d-from').innerHTML = `📍 ${esc(tr('d_from'))} <b>${esc(X.L(s.name) || '')}</b> · <button type="button" class="dlink" id="d-loc">${esc(tr('d_useloc'))}</button> <span id="d-locmsg" class="muted"></span>`;
-  const tabs = [['near', '📍', 'd_near'], ['fav', '⭐', 'd_fav'], ['best', '❄️', 'd_best'], ['explore', '🗺️', 'd_explore']];
+  // Best Conditions first (the default), then Explore, Near Me, Favorites. Plan a Trip sits apart from the tabs.
+  const tabs = [['best', '❄️', 'd_best'], ['explore', '🗺️', 'd_explore'], ['near', '📍', 'd_near'], ['fav', '⭐', 'd_fav']];
+  $('#d-plan').textContent = `🧭 ${tr('d_plan')} →`;
+  $('#d-plan-nav').textContent = `🧭 ${tr('d_plan_nav')}`;
   $('#d-tabs').innerHTML = tabs.map(([id, ic, k]) => `<button type="button" role="tab" data-tab="${id}" aria-selected="${D.tab === id && !D.q}" class="${D.tab === id && !D.q ? 'on' : ''}"><i aria-hidden="true">${ic}</i>${esc(tr(k))}${id === 'fav' && favs().length ? ` <small>${favs().length}</small>` : ''}</button>`).join('');
   $('#d-mapx').textContent = `☰ ${tr('d_list')}`;
   const ph = D.cat.resorts.filter(r => r.photo);
@@ -371,10 +426,10 @@ function renderCompare() {
     ${row(tr('d_region'), r => `${esc(regionName(r.region))} · ${esc(r.state)}`)}
     ${row(tr('d_pass'), r => esc(passTxt(r)))}
     ${row(tr('d_score'), r => { const s = score(r); return s ? `<b>${s.total}</b>/100` : '—'; })}
-    ${row(tr('d_status'), r => statusHtml(r))}
+    ${row(tr('d_status'), r => `${statusHtml(r)}<br><small class="muted">${esc(seasonTxt(r))}</small>`)}
     ${row(tr('d_new'), r => { const v = snow24(r); return v == null ? '—' : `${fmt.snow(v, u)}${rep24(report(r)) != null ? ' ✓' : ''}`; })}
     ${row(tr('d_base'), r => baseCm(r) != null ? `<b>${baseTxt(baseCm(r), u)}</b>` : `<span class="muted">${esc(tr('d_nr'))}</span>`)}
-    ${row(tr('d_terrain'), r => pctOpen(r) != null ? `<b>${pctOpen(r)}%</b> <small class="muted">${esc(terrainTip(report(r)))}</small>` : `<span class="muted">${esc(tr('d_nr'))}</span>`)}
+    ${row(tr('d_terrain'), r => pctOpen(r) != null ? `<b>${pctTxt(report(r))}</b> <small class="muted">${esc(terrainTip(report(r)))}</small>` : `<span class="muted">${esc(tr('d_nr'))}</span>`)}
     ${row(tr('d_fc72'), r => cond(r) ? fmt.snow(cond(r).summit.s72, u) : '—')}
     ${row(tr('d_temp'), r => cond(r) ? fmt.temp(cond(r).summit.t, u) : '—')}
     ${row(tr('d_wind'), r => cond(r) ? `${fmt.wind(cond(r).summit.wind, u)} <small class="muted">(${fmt.wind(cond(r).summit.gust, u)})</small>` : '—')}
@@ -388,11 +443,11 @@ function renderCompare() {
 
 /* ---------- map ---------- */
 function miniCard(r) {
-  const c = cond(r), u = U(), f = favs().includes(r.id), p = report(r), s24 = snow24(r), b = baseCm(r), pc = pctOpen(r);
-  return `<div class="dmini"><b>${esc(r.name)}</b><span class="muted">${esc(stateTxt(r))} · ${esc(passTxt(r))}</span>
+  const u = U(), f = favs().includes(r.id), p = report(r), s24 = snow24(r), b = baseCm(r), pt = pctTxt(p), sc = score(r);
+  const bits = [s24 != null ? `❄️ ${fmt.snow(s24, u)} ${esc(tr(rep24(p) != null ? 'c_new_rep' : 'c_new_mod'))}` : null, b != null ? `${baseTxt(b, u)} ${esc(tr('d_base'))}` : null, pt ? `${pt} ${esc(tr('d_terrain'))}` : null].filter(Boolean);
+  return `<div class="dmini"><span class="dmini-h"><b>${esc(r.name)}</b>${sc ? `<em class="dmini-sc">${sc.total}</em>` : ''}</span><span class="muted">${esc(regionName(r.region))} · ${esc(stateTxt(r))} · ${esc(passTxt(r))}</span>
     ${statusHtml(r)}
-    <span>❄️ ${s24 != null ? fmt.snow(s24, u) : '—'}${rep24(p) != null ? ' ✓' : ''} ${esc(tr('d_new'))} · ${c ? fmt.snow(c.summit.s72, u) : '—'} ${esc(tr('d_fc72'))}</span>
-    <span>${esc(tr('d_base'))}: ${b != null ? `<b>${baseTxt(b, u)}</b>` : `<span class="muted">${esc(tr('d_nr'))}</span>`} · ${esc(tr('d_terrain'))}: ${pc != null ? `<b>${pc}%</b>` : `<span class="muted">${esc(tr('d_nr'))}</span>`}</span>
+    <span>${bits.join(' · ') || `<span class="muted">${esc(tr('d_nr'))}</span>`}</span>
     <span class="muted small">${esc(cardUpd(r))}</span>
     <span class="dmini-a"><button type="button" class="dgo" data-open="${r.id}">${esc(tr('d_view'))}</button><button type="button" class="dlink" data-fav="${r.id}">${f ? '★ ' + esc(tr('d_remfav')) : '☆ ' + esc(tr('d_addfav'))}</button></span></div>`;
 }
@@ -402,28 +457,68 @@ function drawMarkers(list, force) {
   const key = list.map(r => r.id).sort().join(',') + '|' + favs().join(',') + '|' + (D.cond ? D.condAt : 0) + '|' + startPt().lat + ',' + startPt().lon;
   if (!force && key === D.mkKey) return;
   const refit = !force && key.split('|')[0] !== (D.mkKey || '').split('|')[0];
-  D.mkKey = key;
-  D.markers.clearLayers();
-  const fv = favs();
-  list.forEach(r => {
-    const sc = score(r)?.total;
-    const cls = sc == null ? '' : sc >= 60 ? ' hi' : sc >= 40 ? ' mid' : '';
-    const m = Lf.marker([r.lat, r.lon], { icon: Lf.divIcon({ className: 'dpin-w', html: `<span class="dpin${cls}${fv.includes(r.id) ? ' fav' : ''}">${fv.includes(r.id) ? '★' : '⛷️'}</span>`, iconSize: [26, 26], iconAnchor: [13, 13] }), title: r.name, keyboard: true });
-    m.bindPopup(() => miniCard(r), { maxWidth: 260, minWidth: 220 });
-    D.markers.addLayer(m);
-  });
-  const s = startPt();
-  Lf.circleMarker([s.lat, s.lon], { radius: 7, color: '#fff', weight: 2, fillColor: '#25845A', fillOpacity: 1 }).bindTooltip(X.L(s.name) || '').addTo(D.markers);
+  D.mkKey = key; D.mkList = list;
   if (refit && list.length) {
     // Ranked tabs: frame the top of the list (and the start point); otherwise everything shown.
+    const s = startPt();
     const ranked = !D.q.trim() && (D.tab === 'best' || D.tab === 'near');
     let sel = ranked ? list.slice(0, 10) : list;
     const near = sel.filter(r => distKm(r) < 1500);       // keep a far outlier (e.g. Alaska) from zooming the map out to a continent
     if (near.length >= 2) sel = near;
     const pts = sel.map(r => [r.lat, r.lon]);
     if (ranked) pts.push([s.lat, s.lon]);
-    try { D.map.fitBounds(Lf.latLngBounds(pts), { padding: [30, 30], maxZoom: 9 }); } catch {}
+    try { D.map.fitBounds(Lf.latLngBounds(pts), { padding: [30, 30], maxZoom: 9, animate: false }); } catch {}
   }
+  clusterDraw();
+}
+/** Simple screen-space clustering (no plugin): pins closer than ~40 px merge into a numbered bubble; tap it to zoom in.
+ *  Re-run on every zoom. From zoom 9 up every resort gets its own pin. */
+function clusterDraw() {
+  const Lf = window.L; if (!Lf || !D.map || !D.mkList) return;
+  D.markers.clearLayers(); D.pinOf = new Map();
+  const fv = favs(), z = D.map.getZoom(), R = z >= 9 ? 0 : 40;
+  const pts = D.mkList.map(r => ({ r, sc: score(r)?.total ?? -1, p: D.map.latLngToLayerPoint([r.lat, r.lon]) })).sort((a, b) => b.sc - a.sc);
+  const used = new Set(), groups = [];
+  pts.forEach((a, i) => {
+    if (used.has(i)) return; used.add(i); const g = [a];
+    if (R) pts.forEach((b, j) => { if (!used.has(j) && a.p.distanceTo(b.p) < R) { used.add(j); g.push(b); } });
+    groups.push(g);
+  });
+  for (const g of groups) {
+    if (g.length === 1) {
+      const r = g[0].r, sc = g[0].sc;
+      const cls = sc < 0 ? '' : sc >= 60 ? ' hi' : sc >= 40 ? ' mid' : '';
+      const m = Lf.marker([r.lat, r.lon], { icon: Lf.divIcon({ className: 'dpin-w', html: `<span class="dpin${cls}${fv.includes(r.id) ? ' fav' : ''}">${fv.includes(r.id) ? '★' : '⛷️'}</span>`, iconSize: [28, 28], iconAnchor: [14, 14] }), title: r.name, keyboard: true });
+      m.bindPopup(() => miniCard(r), { maxWidth: 270, minWidth: 220 });
+      m.on('click', () => hlCard(r.id));
+      D.markers.addLayer(m); D.pinOf.set(r.id, m);
+    } else {
+      const ll = Lf.latLngBounds(g.map(x => [x.r.lat, x.r.lon]));
+      const m = Lf.marker(ll.getCenter(), { icon: Lf.divIcon({ className: 'dpin-w', html: `<span class="dclu">${g.length}</span>`, iconSize: [36, 36], iconAnchor: [18, 18] }), title: g.map(x => x.r.name).join(', '), keyboard: true });
+      m.on('click', () => D.map.fitBounds(ll, { padding: [50, 50], maxZoom: Math.max(z + 2, 9) }));
+      D.markers.addLayer(m); g.forEach(x => D.pinOf.set(x.r.id, m));
+    }
+  }
+  const s = startPt();
+  Lf.circleMarker([s.lat, s.lon], { radius: 7, color: '#fff', weight: 2, fillColor: '#25845A', fillOpacity: 1 }).bindTooltip(X.L(s.name) || '').addTo(D.markers);
+  if (D.hl) hlPin(D.hl);
+}
+function hlPin(id) {
+  D.hl = id;
+  document.querySelectorAll('#d-map .dpin.on, #d-map .dclu.on').forEach(x => x.classList.remove('on'));
+  const m = id && D.pinOf?.get(id); if (!m) return;
+  m.getElement()?.firstElementChild?.classList.add('on'); m.setZIndexOffset(1000);
+}
+function hlCard(id) {
+  document.querySelectorAll('.dcard.hl').forEach(x => x.classList.remove('hl'));
+  const c = document.querySelector(`#d-list .dcard[data-id="${id}"]`); if (!c) return;
+  c.classList.add('hl'); hlPin(id);
+  if (window.matchMedia('(min-width: 980px)').matches) c.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+function zoomRegion(id) {
+  const Lf = window.L; if (!Lf || !D.map) return;
+  const rs = D.cat.resorts.filter(r => r.region === id); if (!rs.length) return;
+  try { D.map.fitBounds(Lf.latLngBounds(rs.map(r => [r.lat, r.lon])), { padding: [36, 36], maxZoom: 9 }); } catch {}
 }
 function ensureMap() {
   const wide = window.matchMedia('(min-width: 980px)').matches;
@@ -437,6 +532,7 @@ function ensureMap() {
     Lf.tileLayer(X.state.cfg.sources.tiles || 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 15, attribution: (X.state.cfg.sources.tilesAttribution || '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors') + fix }).addTo(D.map);
     D.markers = Lf.layerGroup().addTo(D.map);
     D.map.setView([44, -105], 4);
+    D.map.on('zoomend', clusterDraw);
     drawMarkers(currentList().list);
   }).catch(() => { const el = $('#d-map'); if (el) el.innerHTML = `<p class="muted small" style="padding:16px">Map unavailable</p>`; });
 }
@@ -489,13 +585,14 @@ function bindShell() {
     if (c) { const id = c.dataset.cmp; D.cmp = c.checked ? [...new Set([...D.cmp, id])].slice(0, 4) : D.cmp.filter(x => x !== id); renderList(); }
   });
   el.addEventListener('click', e => {
-    if (e.target.closest('input[data-cmp], label.dcmp, select, summary, .dhelp p')) return;
+    if (e.target.closest('input[data-cmp], label.dcmp, select, summary, .dhelp p, .dsx-p')) return;
+    if (e.target.closest('[data-plan]')) { e.preventDefault(); X.plan(); return; }
     const fav = e.target.closest('[data-fav]');
     if (fav) { e.preventDefault(); e.stopPropagation(); toggleFav(fav.dataset.fav); renderShell(); renderList(); renderRecent(); if (D.map) D.map.closePopup(); return; }
     const tab = e.target.closest('[data-tab]');
     if (tab) { D.tab = tab.dataset.tab; D.q = ''; $('#dq').value = ''; if (D.tab === 'best') D.sort = D.sort || 'score'; X.track('disc_tab', D.tab); renderShell(); renderList(); return; }
     const reg = e.target.closest('[data-region]');
-    if (reg) { const g = $(`#dg-${reg.dataset.region}`); if (g) g.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+    if (reg) { zoomRegion(reg.dataset.region); const g = $(`#dg-${reg.dataset.region}`); if (g) g.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     if (e.target.closest('[data-ftog]')) { D.fopen = !D.fopen; renderBar(currentList()); return; }
     const vt = e.target.closest('[data-vt]');
     if (vt) { setView(vt.dataset.vt); return; }
@@ -508,6 +605,9 @@ function bindShell() {
     const op = e.target.closest('[data-open]');
     if (op) { e.preventDefault(); $('#d-modal').hidden = true; document.body.classList.remove('dmap-full'); D.view = 'list'; X.open(op.dataset.open); }
   });
+  // Card <-> map: hovering or focusing a card highlights its pin (or the cluster holding it).
+  const hov = e => { const c = e.target.closest('.dcard[data-id]'); hlPin(c && e.type !== 'mouseout' && e.type !== 'focusout' ? c.dataset.id : null); };
+  ['mouseover', 'mouseout', 'focusin', 'focusout'].forEach(t => $('#d-list').addEventListener(t, hov));
   // Leaflet popups live inside the map pane (still inside #discover), handled above.
   window.addEventListener('resize', () => { if (X.view() === 'disc') { if (window.matchMedia('(min-width: 980px)').matches) document.body.classList.remove('dmap-full'); ensureMap(); } });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#d-modal').hidden) $('#d-modal').hidden = true; });
@@ -634,4 +734,20 @@ export async function showBasic(id) {
   if (!B.fc) jobs.push(X.getJson(`api/forecast.json?r=${encodeURIComponent(id)}`, 20000).then(j => { if (D.basic.id === id) B.fc = j; }).catch(() => { if (D.basic.id === id) B.fcErr = true; }).finally(() => { if (D.basic.id === id && X.view() === 'basic') renderBasic(); }));
   if (!B.route) jobs.push(getRoute(X.state.cfg, startPt(), r).then(rt => { if (D.basic.id === id) B.route = rt; }).catch(() => { if (D.basic.id === id) B.routeErr = true; }).finally(() => { if (D.basic.id === id && X.view() === 'basic') renderBasic(); }));
   await Promise.allSettled(jobs);
+}
+
+/* ================= Plan a Ski Trip (placeholder for the coming trip planner) ================= */
+export function renderPlan() {
+  const el = document.getElementById('plan'); if (!el) return;
+  el.innerHTML = `<div class="disc-hero plan-hero"><div class="wrap"><span class="psoon">${esc(tr('p_soon'))}</span><h1 class="q">${esc(tr('p_title'))}</h1><p class="dsub">${esc(tr('p_lead'))}</p></div></div>
+    <div class="wrap"><div class="card pcard"><h2>${esc(tr('p_now'))}</h2><ul class="plist">
+      <li><a href="./" data-home data-ptab="best">❄️ ${esc(tr('p_now1'))}</a></li>
+      <li><a href="./" data-home data-ptab="explore">🗺️ ${esc(tr('p_now2'))}</a></li>
+      <li><a href="./" data-home data-ptab="best">⚖️ ${esc(tr('p_now3'))}</a></li>
+      <li><a href="./" data-home data-ptab="near">🚗 ${esc(tr('p_now4'))}</a></li></ul>
+      <p class="small muted">${esc(tr('p_note'))}</p><p><a class="dgo" href="./" data-home data-ptab="best">${esc(tr('p_back'))}</a></p></div></div>`;
+  if (!el.dataset.bound) {
+    el.dataset.bound = '1';
+    el.addEventListener('click', e => { const a = e.target.closest('[data-home]'); if (!a) return; e.preventDefault(); D.tab = a.dataset.ptab || 'best'; D.q = ''; X.home(); });
+  }
 }

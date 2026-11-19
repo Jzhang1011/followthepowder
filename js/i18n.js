@@ -188,3 +188,48 @@ const V3 = {
     route_src: '路线', outside_tag: '科罗拉多州外 · 无 CDOT 数据', route_est: '路线估算，未含拥堵', why_h: '判断依据' }
 };
 Object.assign(STR.en, V3.en); Object.assign(STR.zh, V3.zh);
+
+// ---- v4: resort page (recommendation, mountain vs getting there, grouped alerts) ----
+const V4 = {
+  en: {
+    q_dyn: 'Is {0} worth skiing today?',
+    rec_great: 'Great conditions today', rec_good: 'Good conditions today', rec_some: 'Good skiing, some limitations', rec_limited: 'Limited terrain today',
+    rec_other: 'Consider another mountain', rec_closed: 'Resort currently closed', rec_noreport: 'No resort report right now',
+    rec_basis: 'Based on {0}.', rec_src_rep: 'the resort’s report ({0})', rec_src_rest: 'CDOT road data, National Weather Service alerts and the Open-Meteo forecast',
+    rec_noreport_sub: 'SkiDay can’t read the resort’s lift and terrain report at the moment, so it can’t judge the mountain. Check the official snow report.',
+    mtn_h: 'Mountain conditions', get_h: 'Getting there',
+    m_new_rep: 'New snow 24 h · resort', m_new_fc: 'Snow today · forecast', m_temp: 'Base temp now · forecast', m_lifts: 'Lifts operating', m_runs: 'Runs open', m_terrain: 'Terrain open', m_base: 'Base depth · resort',
+    m_src: 'Lifts, runs, terrain, base and new snow: {0}, updated {1}. Temperature: Open-Meteo model at the base ({2}).', m_src_fc: 'New snow and temperature: Open-Meteo model (not resort-reported).',
+    g_dist: 'Distance', g_time: 'Estimated drive', g_time_note: 'Road-network estimate (OSRM), no live traffic', g_time_static: 'Typical drive from Denver Airport, no live traffic',
+    g_traffic: 'Live traffic', g_traffic_na: 'Not available in SkiDay', g_traffic_link: 'Check COtrip travel times',
+    g_chain: 'Chain / traction laws', g_closure: 'Closures', g_incident: 'Incidents & road conditions', g_none: 'None reported', g_n: '{0} on your route', g_info: '{0} minor / other direction',
+    g_roads_na: 'Road data unavailable', g_more: 'Road details & cameras', g_src: 'CDOT COtrip · {0}',
+    know_h: 'What you should know before heading out', grp_mountain: 'Mountain', grp_road: 'Road', grp_weather: 'Weather',
+    sev_nogo: 'Serious', sev_caution: 'Caution', sev_info: 'Info', sev_unknown: 'No data', sev_go: 'Clear', checked: 'Checked', no_issues: 'Nothing to flag',
+    src_cdot: 'CDOT COtrip', src_nws: 'National Weather Service', src_om: 'Open-Meteo forecast', r_limited_t: 'Limited terrain: {0} lifts open, {1} of terrain', no_vis: 'Visibility isn’t in SkiDay’s forecast data yet.',
+    i_lifts: '{0} of {1} lifts operating', i_runs: '{0} of {1} runs open', i_terrain_ac: '{0} of {1} acres', i_hours_today: 'today', i_season_h: 'Season status',
+    i_by: 'Reported by {0} · {1}', snow_rep_h: 'Resort-reported snowfall', p24: 'Last 24 hours', p48: 'Last 48 hours', p7: 'Last 7 days', pseason: 'Season total',
+    snow_rep_note: 'Measured and published by the resort ({0}, {1}). Not a weather-model estimate.', outlook_src: 'Forecast: Open-Meteo weather model, summit grid point (not resort-reported).', last24_rep: 'Last 24h · resort'
+  },
+  zh: {
+    q_dyn: '今天值得去{0}滑雪吗？',
+    rec_great: '今天雪况很好', rec_good: '今天雪况不错', rec_some: '可以滑，但有一些限制', rec_limited: '今天开放地形有限',
+    rec_other: '考虑换一座雪山', rec_closed: '雪场目前未开放', rec_noreport: '暂时没有雪场报告',
+    rec_basis: '依据：{0}。', rec_src_rep: '雪场报告（{0}）', rec_src_rest: 'CDOT 路况、美国国家气象局预警和 Open-Meteo 预报',
+    rec_noreport_sub: 'SkiDay 暂时读取不到雪场的缆车和地形报告，无法判断山上情况。请查看官方雪况报告。',
+    mtn_h: '山上情况', get_h: '怎么去',
+    m_new_rep: '24小时新雪 · 雪场', m_new_fc: '今日降雪 · 预报', m_temp: '山脚现在 · 预报', m_lifts: '缆车运行', m_runs: '雪道开放', m_terrain: '地形开放', m_base: '雪底深度 · 雪场',
+    m_src: '缆车、雪道、地形、雪底和新雪：{0}，更新于 {1}。气温：Open-Meteo 模型（山脚，{2}）。', m_src_fc: '新雪和气温：Open-Meteo 模型（非雪场公布）。',
+    g_dist: '距离', g_time: '预计车程', g_time_note: '按道路网络估算（OSRM），不含实时路况', g_time_static: '从丹佛机场出发的常见车程，不含实时路况',
+    g_traffic: '实时路况', g_traffic_na: 'SkiDay 暂无', g_traffic_link: '查看 COtrip 行程时间',
+    g_chain: '链条/牵引力法规', g_closure: '封路', g_incident: '事故和路面状况', g_none: '无', g_n: '路线上 {0} 条', g_info: '{0} 条次要/对向',
+    g_roads_na: '路况数据暂不可用', g_more: '路况详情和摄像头', g_src: 'CDOT COtrip · {0}',
+    know_h: '出发前需要知道的', grp_mountain: '山上', grp_road: '道路', grp_weather: '天气',
+    sev_nogo: '严重', sev_caution: '注意', sev_info: '提示', sev_unknown: '无数据', sev_go: '正常', checked: '已检查', no_issues: '没有需要注意的',
+    src_cdot: 'CDOT COtrip', src_nws: '美国国家气象局', src_om: 'Open-Meteo 预报', r_limited_t: '开放地形有限：缆车 {0}，地形 {1}', no_vis: 'SkiDay 的预报数据暂不含能见度。',
+    i_lifts: '缆车运行 {0}/{1}', i_runs: '雪道开放 {0}/{1}', i_terrain_ac: '{0}/{1} 英亩', i_hours_today: '今天', i_season_h: '雪季状态',
+    i_by: '来源 {0} · {1}', snow_rep_h: '雪场公布的降雪', p24: '过去 24 小时', p48: '过去 48 小时', p7: '过去 7 天', pseason: '本季累计',
+    snow_rep_note: '由雪场测量并公布（{0}，{1}），不是天气模型估算。', outlook_src: '预报：Open-Meteo 天气模型，山顶格点（非雪场公布）。', last24_rep: '过去24h · 雪场'
+  }
+};
+Object.assign(STR.en, V4.en); Object.assign(STR.zh, V4.zh);

@@ -1,9 +1,9 @@
 import { openMeteoUrl, splitOpenMeteo, dailyRows, hourlyRows, weatherEmoji, carsUrl, slimEvents, EVENT_CLASSES,
-  nwsUrl, slimAlerts, verdictFor, outfitFor, fmt } from './core.js?v=0e0897c875';
-import { STR, PACK_DEFAULT } from './i18n.js?v=0e0897c875';
-import { selectCameras, routeSegments, inCO } from './route.js?v=0e0897c875';
-import { loadStart, saveStart, isDefaultStart, getRoute, mountStartUI } from './start.js?v=0e0897c875';
-import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic } from './discover.js?v=0e0897c875';
+  nwsUrl, slimAlerts, verdictFor, outfitFor, fmt } from './core.js?v=011555dd97';
+import { STR, PACK_DEFAULT } from './i18n.js?v=011555dd97';
+import { selectCameras, routeSegments, inCO } from './route.js?v=011555dd97';
+import { loadStart, saveStart, isDefaultStart, getRoute, mountStartUI } from './start.js?v=011555dd97';
+import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan } from './discover.js?v=011555dd97';
 
 const LS = {
   get: (k, d) => { try { const v = localStorage.getItem('ski.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -219,7 +219,8 @@ const PILL = { go: 'pass', caution: 'watch', nogo: 'fail', unknown: 'unk', info:
 function renderChrome() {
   document.documentElement.lang = state.lang === 'zh' ? 'zh-CN' : 'en';
   document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
-  document.title = `SkiDay · ${t('q_title')}`;
+  document.title = state.view === 'dash' && state.cfg ? `SkiDay · ${t('q_dyn', L(resort().name))}` : 'SkiDay';
+  $$('#get-h').textContent = `🚗 ${t('get_h')}`;
   $('#btn-lang').textContent = t('lang');
   $('#btn-units').textContent = U() === 'imperial' ? '°F · in' : '°C · cm';
   const items = [['verdict', 'nav_verdict'], ['intel', 'nav_intel'], ['outlook', 'nav_outlook'], ['weather', 'nav_weather'], ['roads', 'nav_roads'], ['wear', 'nav_wear'], ['resorts', 'nav_resorts'], ['pack', 'nav_pack']];
@@ -237,45 +238,99 @@ function reasonText(x) {
     case 'r_cold': return t(x.key, fmt.temp(x.val, u));
     case 'r_nws': return t(x.key, x.alert.event);
     case 'r_resort_closed': return t(x.key, x.note ? ` · ${x.note}` : '');
-    case 'r_limited': case 'r_lifts_ok': return t(x.key, `${x.val.open}/${x.val.total}`);
+    case 'r_limited': { const pc = intelFor(resort())?.terrain?.pct; return pc != null ? t('r_limited_t', `${x.val.open}/${x.val.total}`, `${pc}%`) : t(x.key, `${x.val.open}/${x.val.total}`); }
+    case 'r_lifts_ok': return t(x.key, `${x.val.open}/${x.val.total}`);
     default: return t(x.key, ev) + (x.ev?.oppDir ? ` (${t('opp_dir')})` : '');
   }
 }
 
+/** Plain-language recommendation, derived only from data on the page (resort report + the existing verdict). */
+function recommend(r, v, i) {
+  if (!i || !i.ok) return { cls: 'unknown', key: 'rec_noreport' };
+  if (i.status === 'closed') return { cls: 'nogo', key: 'rec_closed' };
+  if (v.level === 'nogo') return { cls: 'nogo', key: 'rec_other' };
+  const lim = i.status === 'open' && ((i.lifts?.total && i.lifts.open / i.lifts.total < 0.25) || (i.terrain?.pct != null && i.terrain.pct < 25));
+  if (lim) return { cls: 'caution', key: 'rec_limited' };
+  if (v.level === 'caution') return { cls: 'caution', key: 'rec_some' };
+  // "Great" only with fresh snow reported by the resort (15 cm ≈ 6″) and at least half the terrain open.
+  if ((i.snow?.h24 ?? 0) >= 15 && (i.terrain?.pct ?? 0) >= 50) return { cls: 'go', key: 'rec_great' };
+  return { cls: 'go', key: 'rec_good' };
+}
+const SEV = { nogo: 0, caution: 1, unknown: 2, info: 3, go: 4 };
+const GROUP = { resort: 'mountain', chain: 'road', closure: 'road', incident: 'road', conditions: 'road', roads: 'road', nws: 'weather', snow: 'weather', wind: 'weather', cold: 'weather', weather: 'weather' };
+function srcOf(x, r) {
+  if (x.kind === 'resort') return intelFor(r)?.source?.name || r.short;
+  if (GROUP[x.kind] === 'road') return t('src_cdot');
+  return x.kind === 'nws' ? t('src_nws') : t('src_om');
+}
 function renderVerdict() {
   const r = resort(); const v = verdict(r); const u = U();
-  const intel = intelFor(r); const days = daysFor(r); const now = nowRow(r, 'base');
-  const order = { nogo: 0, caution: 1, unknown: 2, info: 3, go: 4 };
-  const reasons = [...v.reasons].sort((a, b) => order[a.level] - order[b.level]);
-  const snow24 = intel?.ok && intel.snow?.h24 != null ? { v: fmt.snow(intel.snow.h24, u), k: 'st_newsnow' }
-    : { v: days ? fmt.snow(days[0].summit.snow, u) : '—', k: 'st_newsnow_fc' };
-  const lifts = intel?.ok && intel.lifts ? `${intel.lifts.open}<small>/${intel.lifts.total}</small>` : '—';
-  const dm = driveMin(r);
-  const drive = dm == null ? '—' : `${Math.floor(dm / 60)}h${String(dm % 60).padStart(2, '0')}`;
+  const i = intelFor(r); const days = daysFor(r); const now = nowRow(r, 'base');
+  const rec = recommend(r, v, i);
+  $$('#dash-q').textContent = t('q_dyn', L(r.name));
   const today = new Intl.DateTimeFormat(locale(), { timeZone: tz(), weekday: 'long', month: 'short', day: 'numeric' }).format(new Date());
-  const row = x => `<li class="rrow">
-      <span class="pill-s p-${PILL[x.level]}">${esc(t(PILL[x.level]))}</span>
-      ${x.ev?.detail || x.seg ? `<details><summary>${esc(reasonText(x))}</summary><p>${x.seg ? `<b>${esc(segName(r, x.seg))}</b><br>` : ''}${esc(x.ev?.detail || '')}</p></details>` : `<span>${esc(reasonText(x))}</span>`}
-    </li>`;
-  const bad = reasons.filter(x => x.level !== 'go'), good = reasons.filter(x => x.level === 'go');
   const hero = $$('#hero'); if (r.photo?.src) hero.style.setProperty('--hero-img', `url('${new URL(r.photo.src, location.href).href}')`);
   $$('#hero-credit').innerHTML = r.photo ? `📷 ${esc(r.photo.credit)} · <a href="${esc(r.photo.page)}" target="_blank" rel="noopener">${esc(r.photo.license)}</a>` : '';
-  $('#verdict').innerHTML = `
-    <div class="vpanel">
-    <div class="banner">
-      <span class="vbadge b-${v.level}">${esc(t(v.level))}</span>
-      <div class="bmeta"><b>${esc(L(r.name))}</b><span>${esc(today)}</span></div>
-    </div>
-    <div class="tiles">
-      <div class="tile"><span class="ti">❄️</span><b>${snow24.v}</b><span>${esc(t(snow24.k))}</span></div>
-      <div class="tile"><span class="ti">🌡️</span><b>${now ? fmt.temp(now.t, u) : '—'}</b><span>${esc(t('st_basetemp'))}</span></div>
-      <div class="tile"><span class="ti">🚡</span><b>${lifts}</b><span>${esc(t('st_lifts'))}</span>${intel?.ok && freshness('intel', r).cls === 'stale' ? `<small class="dnote stale">${esc(freshness('intel', r).text)}</small>` : ''}</div>
-      <div class="tile"><span class="ti">🚗</span><b>${drive}</b><span>${esc(driveLabel(r))}</span><small class="dnote">${esc(t('drive_note'))} · <a href="https://www.cotrip.org/trip-planner" target="_blank" rel="noopener">COtrip ↗</a></small></div>
-    </div>
-    </div>
-    <div class="why"><h3 class="ov">${esc(t('why_h'))}</h3>
-    <ul class="rlist">${bad.map(row).join('')}${good.length ? `<li class="rrow"><span class="pill-s p-pass">${good.length}× ${esc(t('pass'))}</span><details><summary>${good.map(x => esc(t('k_' + x.kind) !== 'k_' + x.kind ? t('k_' + x.kind) : reasonText(x))).join(' · ')}</summary><ul class="evs">${good.map(x => `<li>✓ ${esc(reasonText(x))}</li>`).join('')}</ul></details></li>` : ''}</ul>
-    ${reasons.some(x => x.kind === 'chain') ? `<details class="more"><summary>ⓘ ${esc(t('more_info'))}</summary><p class="small muted">${esc(t('traction_help'))}</p></details>` : ''}</div>`;
+  const bad = [...v.reasons].filter(x => x.level !== 'go').sort((a, b) => SEV[a.level] - SEV[b.level]);
+  const when = i?.ok ? fmtTime([i.asOf, i.snowAsOf].filter(Boolean).sort((a, b) => ageMin(a) - ageMin(b))[0] || i.fetchedAt) : '';
+  const basis = rec.key === 'rec_noreport' ? t('rec_noreport_sub') : t('rec_basis', `${t('rec_src_rep', `${i.source?.name || r.short}, ${when}`)}, ${t('rec_src_rest')}`);
+  $('#verdict').innerHTML = `<div class="rec rec-${rec.cls}"><div class="rec-main"><span class="rec-dot" aria-hidden="true"></span><b>${esc(t(rec.key))}</b></div>
+    ${bad.some(x => x.level === 'nogo' || x.level === 'caution') && rec.cls !== 'go' ? `<ul class="rec-why">${bad.filter(x => x.level === 'nogo' || x.level === 'caution').slice(0, 3).map(x => `<li>${esc(reasonText(x))}</li>`).join('')}</ul>` : ''}
+    <p class="rec-basis">${esc(today)} · ${esc(basis)}</p></div>`;
+
+  // A. Mountain conditions
+  const na = `<b class="nr">${esc(t('unavailable_short'))}</b>`;
+  const rep = i?.ok;
+  const newSnow = rep && i.snow?.h24 != null ? { v: fmt.snow(i.snow.h24, u), k: 'm_new_rep' } : { v: days ? fmt.snow(days[0].summit.snow, u) : null, k: 'm_new_fc' };
+  const frac = o => o?.total ? `${o.open}<small>/${o.total}</small>` : null;
+  const tile = (ic, val, k, sub = '') => `<div class="tile"><span class="ti">${ic}</span>${val != null ? `<b>${val}</b>` : na}<span>${esc(t(k))}</span>${sub ? `<small class="dnote">${sub}</small>` : ''}</div>`;
+  const ter = i?.terrain;
+  $$('#mtn-now').innerHTML = `<h2 class="hp-h">🏔️ ${esc(t('mtn_h'))}</h2><div class="tiles t6">
+      ${tile('❄️', newSnow.v, newSnow.k)}
+      ${tile('🌡️', now ? fmt.temp(now.t, u) : null, 'm_temp')}
+      ${tile('🚡', rep ? frac(i.lifts) : null, 'm_lifts', rep && freshness('intel', r).cls === 'stale' ? esc(freshness('intel', r).text) : '')}
+      ${tile('⛷️', rep ? frac(i.trails) : null, 'm_runs')}
+      ${tile('🗺️', rep && ter?.pct != null ? `${ter.pct}<small>%</small>` : null, 'm_terrain', ter?.totalAcres ? esc(t('i_terrain_ac', ter.openAcres ?? '—', ter.totalAcres.toLocaleString(locale()))) : '')}
+      ${tile('📏', rep && i.baseCm != null ? fmt.snow(i.baseCm, u) : null, 'm_base')}
+    </div><p class="hp-src">${esc(rep ? t('m_src', i.source?.name || r.short, when, fmt.elev(r.baseElevM, u)) : t('m_src_fc'))}</p>`;
+
+  // B. Getting there (start-location UI lives in #start, above this)
+  const rs = state.routes[r.id]; const dm = driveMin(r);
+  const dur = dm == null ? null : `${Math.floor(dm / 60)}h${String(dm % 60).padStart(2, '0')}`;
+  const roadsOk = !!state.roads.data;
+  const cnt = kinds => { const l = v.reasons.filter(x => kinds.includes(x.kind) && x.seg); const main = l.filter(x => x.level !== 'info');
+    if (!roadsOk) return { cls: 'unknown', txt: t('g_roads_na') };
+    if (!l.length) return { cls: 'go', txt: t('g_none') };
+    const lv = main.some(x => x.level === 'nogo') ? 'nogo' : main.length ? 'caution' : 'info';
+    return { cls: lv, txt: [main.length ? t('g_n', main.length) : '', l.length - main.length ? t('g_info', l.length - main.length) : ''].filter(Boolean).join(' · ') }; };
+  const grow = (k, val, cls = '', note = '') => `<li class="grow"><span class="gk">${esc(t(k))}</span><span class="gv${cls ? ` g-${cls}` : ''}">${val}${note ? `<small>${note}</small>` : ''}</span></li>`;
+  const ch = cnt(['chain']), cl = cnt(['closure']), inc = cnt(['incident', 'conditions']);
+  $$('#getthere').innerHTML = `<ul class="glist">
+      ${grow('g_dist', rs?.status === 'ok' ? esc(km(rs.route.distM)) : rs?.status === 'loading' ? `<span class="muted">${esc(t('route_loading'))}</span>` : '—')}
+      ${grow('g_time', dur ? `~${esc(dur)}` : '—', '', esc(rs?.status === 'ok' ? t('g_time_note') : dur ? t('g_time_static') : ''))}
+      ${grow('g_traffic', `<span class="muted">${esc(t('g_traffic_na'))}</span>`, '', `<a href="https://www.cotrip.org/trip-planner" target="_blank" rel="noopener">${esc(t('g_traffic_link'))} ↗</a>`)}
+      ${grow('g_chain', esc(ch.txt), ch.cls)}
+      ${grow('g_closure', esc(cl.txt), cl.cls)}
+      ${grow('g_incident', esc(inc.txt), inc.cls)}
+    </ul><p class="hp-src">${esc(t('g_src', roadsOk ? ago(state.roads.at) : t('unavailable')))} · <a href="#roads">${esc(t('g_more'))} ↓</a></p>`;
+
+  // What you should know before heading out: Mountain / Road / Weather
+  const sevPill = lv => `<span class="pill-s p-${PILL[lv]}">${esc(t('sev_' + lv))}</span>`;
+  const row = x => {
+    const det = [x.seg ? `<b>${esc(segName(r, x.seg))}</b>` : '', x.ev?.detail ? esc(x.ev.detail) : '', x.alert?.headline ? esc(x.alert.headline) : '', x.kind === 'resort' && x.note ? esc(x.note) : ''].filter(Boolean).join('<br>');
+    const src = `<small class="rsrc">${esc(srcOf(x, r))}</small>`;
+    return `<li class="rrow">${sevPill(x.level)}${det ? `<details><summary>${esc(reasonText(x))} ${src}</summary><p>${det}</p></details>` : `<span>${esc(reasonText(x))} ${src}</span>`}</li>`;
+  };
+  const groups = ['mountain', 'road', 'weather'].map(g => {
+    const l = v.reasons.filter(x => (GROUP[x.kind] || 'weather') === g).sort((a, b) => SEV[a.level] - SEV[b.level]);
+    const issues = l.filter(x => x.level !== 'go'), ok = l.filter(x => x.level === 'go');
+    const srcs = [...new Set(l.map(x => srcOf(x, r)))].join(' · ');
+    const checks = ok.length ? `<li class="rrow rok">${sevPill('go')}<span><b>${esc(t('checked'))}:</b> ${ok.map(x => esc(reasonText(x))).join(' · ')} <small class="rsrc">${esc([...new Set(ok.map(x => srcOf(x, r)))].join(' · '))}</small></span></li>` : '';
+    const empty = !l.length ? `<li class="rrow">${sevPill('unknown')}<span>${esc(g === 'mountain' ? t('intel_unavailable') : t('unavailable'))}</span></li>` : '';
+    return `<div class="kgrp"><h3>${esc(t('grp_' + g))}${srcs ? ` <small class="muted">· ${esc(srcs)}</small>` : ''}</h3><ul class="rlist">${issues.map(row).join('')}${checks}${empty}</ul>${g === 'weather' ? `<p class="small muted">${esc(t('no_vis'))}</p>` : ''}</div>`;
+  }).join('');
+  $$('#why').innerHTML = `<h2 class="know-h">${esc(t('know_h'))}</h2>${groups}
+    ${v.reasons.some(x => x.kind === 'chain') ? `<details class="more"><summary>ⓘ ${esc(t('more_info'))}</summary><p class="small muted">${esc(t('traction_help'))}</p></details>` : ''}`;
 }
 
 function renderResortCards() {
@@ -311,24 +366,28 @@ function renderIntel() {
     return;
   }
   const na = `<span class="na">${esc(t('unavailable_short'))}</span>`;
-  const frac = o => o ? `${o.open}<small>/${o.total}</small>` : na;
+  const frac = o => o?.total ? `${o.open}<small> / ${o.total}</small>` : na;
   const status = i.status ? `<span class="pill-s p-${i.status === 'open' ? 'pass' : 'fail'}">${esc(t('status_' + i.status))}</span>` : na;
   const sn = i.snow || {};
-  const snowTiles = [['h24', sn.h24], ['h48', sn.h48], ['d7', sn.d7], ['season_total', sn.season]];
+  const snowTiles = [['p24', sn.h24], ['p48', sn.h48], ['p7', sn.d7], ['pseason', sn.season]];
   const smax = Math.max(0.1, ...snowTiles.map(x => x[1] ?? 0));
+  const src = `<a href="${esc(i.source?.url || r.links.report)}" target="_blank" rel="noopener">${esc(i.source?.name || r.short)}</a>`;
   const when = i.asOf ? t('as_of', fmtTime(i.asOf)) : t('checked', fmtTime(i.fetchedAt));
-  el.innerHTML = `${head}
+  const snowWhen = i.snowAsOf ? t('as_of', fmtTime(i.snowAsOf)) : when;
+  const hrs = i.hours ? esc(`${i.hours.open}–${i.hours.close}`.replace(/:00/g, '').replace(/ ?([AP])\.?M\.?/gi, (m, a) => a.toLowerCase() + 'm')) : null;
+  const ter = i.terrain;
+  el.innerHTML = `${head}<p class="small muted isrc">${t('i_by', src, esc(when))}</p>
     <div class="igrid">
-      <div class="itile"><span class="il">🚡 ${esc(t('lifts'))}</span><b>${frac(i.lifts)}</b>${i.lifts ? meter(i.lifts.open, i.lifts.total) : ''}</div>
-      <div class="itile"><span class="il">⛷️ ${esc(t('runs'))}</span><b>${frac(i.trails)}</b>${i.trails ? meter(i.trails.open, i.trails.total) : ''}</div>
-      <div class="itile"><span class="il">🗺️ ${esc(t('terrain'))}</span><b>${i.terrain?.pct != null ? `${i.terrain.pct}<small>%</small>` : na}</b>${i.terrain?.pct != null ? meter(i.terrain.pct, 100) : ''}${i.terrain?.totalAcres ? `<span class="sub">${i.terrain.openAcres ?? '—'} / ${i.terrain.totalAcres} ac</span>` : ''}</div>
-      <div class="itile"><span class="il">🕘 ${esc(t('hours'))}</span><b class="sm">${i.hours ? esc(`${i.hours.open}–${i.hours.close}`.replace(/:00/g, '').replace(/ ?([AP])\.?M\.?/gi, (m, a) => a.toLowerCase() + 'm')) : na}</b>${i.hours?.scheduled ? `<span class="sub">${esc(t('hours_sched'))}</span>` : ''}</div>
-      <div class="itile"><span class="il">📅 ${esc(t('season'))}</span><b class="sm">${status}</b>${i.note ? `<span class="sub">${esc(i.note)}</span>` : ''}</div>
-      <div class="itile"><span class="il">📏 ${esc(t('base_depth'))}</span><b>${i.baseCm != null ? esc(fmt.snow(i.baseCm, u)) : na}</b>${i.surface ? `<span class="sub">${esc(t('surface'))}: ${esc(i.surface)}</span>` : ''}</div>
+      <div class="itile"><span class="il">🚡 ${esc(t('lifts'))}</span><b>${frac(i.lifts)}</b>${i.lifts?.total ? `${meter(i.lifts.open, i.lifts.total)}<span class="sub">${esc(t('i_lifts', i.lifts.open, i.lifts.total))}</span>` : ''}</div>
+      <div class="itile"><span class="il">⛷️ ${esc(t('runs'))}</span><b>${frac(i.trails)}</b>${i.trails?.total ? `${meter(i.trails.open, i.trails.total)}<span class="sub">${esc(t('i_runs', i.trails.open, i.trails.total))}</span>` : ''}</div>
+      <div class="itile"><span class="il">🗺️ ${esc(t('m_terrain'))}</span><b>${ter?.pct != null ? `${ter.pct}<small>%</small>` : na}</b>${ter?.pct != null ? meter(ter.pct, 100) : ''}${ter?.totalAcres ? `<span class="sub">${esc(t('i_terrain_ac', ter.openAcres ?? '—', ter.totalAcres.toLocaleString(locale())))}</span>` : ''}</div>
+      <div class="itile"><span class="il">📏 ${esc(t('base_depth'))}</span><b>${i.baseCm != null ? esc(fmt.snow(i.baseCm, u)) : na}</b><span class="sub">${esc(t('source'))}: ${src}${i.surface ? ` · ${esc(t('surface'))}: ${esc(i.surface)}` : ''}</span></div>
+      <div class="itile"><span class="il">📅 ${esc(t('i_season_h'))}</span><b class="sm">${status}</b>${i.note ? `<span class="sub">${esc(i.note)}</span>` : ''}</div>
+      <div class="itile"><span class="il">🕘 ${esc(t('hours'))}</span><b class="sm">${hrs || na}</b>${hrs ? `<span class="sub">${esc(i.hours.scheduled ? t('hours_sched') : t('i_hours_today'))}</span>` : ''}</div>
     </div>
-    <h3>${esc(t('reported'))}</h3>
+    <h3>${esc(t('snow_rep_h'))}</h3>
     <div class="sbars">${snowTiles.map(([k, v]) => `<div class="sbar"><div class="sb"><span style="height:${v ? Math.max(4, v / smax * 100) : 0}%"></span></div><b>${v != null ? esc(fmt.snow(v, u)) : na}</b><span>${esc(t(k))}</span></div>`).join('')}</div>
-    <p class="note">${esc(t('source'))}: <a href="${esc(i.source?.url || r.links.report)}" target="_blank" rel="noopener">${esc(i.source?.name || r.short)}</a> · ${esc(when)}${i.snowAsOf ? ` · ❄️ ${esc(t('as_of', fmtTime(i.snowAsOf)))}` : ''}${!i.surface ? ` · ${esc(t('surface'))}: ${esc(t('unavailable'))}` : ''}</p>`;
+    <p class="note">${t('snow_rep_note', src, esc(snowWhen))}</p>`;
 }
 
 function renderOutlook() {
@@ -344,12 +403,12 @@ function renderOutlook() {
     const mx = Math.max(...sv, 0.1);
     const mini = (arr, labs) => `<div class="mini">${arr.map((v, k) => `<span title="${f(v)}"><i style="height:${v ? Math.max(6, v / mx * 100) : 0}%"></i><em>${esc(labs[k])}</em></span>`).join('')}</div>`;
     return `<div class="orow" data-resort="${r.id}">
-      <div class="oname"><b>${esc(r.short)}</b><span class="small muted">${esc(t('last24'))}</span><b class="big">${i?.ok && i.snow?.h24 != null ? esc(fmt.snow(i.snow.h24, u)) : '—'}</b></div>
+      <div class="oname"><b>${esc(r.short)}</b><span class="small muted">${esc(t('last24_rep'))}</span><b class="big">${i?.ok && i.snow?.h24 != null ? esc(fmt.snow(i.snow.h24, u)) : '—'}</b></div>
       <div class="oblk"><span class="small muted">${esc(t('next15'))} · <b>${f(sum(a))}</b></span>${mini(a, lab.slice(0, 5))}</div>
       <div class="oblk"><span class="small muted">${esc(t('next610'))} · <b>${f(sum(b))}</b></span>${mini(b, lab.slice(5, 10))}</div>
     </div>`;
   }).join('');
-  $('#outlook').innerHTML = `<h2>${esc(t('outlook_h'))}</h2>${rows}<p class="note">Open-Meteo · ${esc(t('summit'))}</p>`;
+  $('#outlook').innerHTML = `<h2>${esc(t('outlook_h'))}</h2>${rows}<p class="note">${esc(t('outlook_src'))}</p>`;
 }
 
 function segCtl(name, opts, cur) {
@@ -552,8 +611,7 @@ function updateStartMsg() {
   if (!state.startUI) return;
   const r = resort(); const rs = state.routes[r.id];
   let h = '';
-  if (rs?.status === 'ok') { const dm = Math.round(rs.route.durS / 60); h = `→ <b>${esc(r.short)}</b> · ${km(rs.route.distM)} · ~${Math.floor(dm / 60)}h${String(dm % 60).padStart(2, '0')} <span class="muted">${esc(t('route_est'))}</span>`; }
-  else if (rs?.status === 'loading') h = `<span class="muted">${esc(t('route_loading'))}</span>`;
+  if (rs?.status === 'loading') h = `<span class="muted">${esc(t('route_loading'))}</span>`;
   else if (rs?.status === 'fail') h = `<span class="warn">⚠️ ${esc(t('route_fail'))}</span>`;
   state.startUI.setMsg(h);
 }
@@ -706,7 +764,7 @@ function bind() {
 let dashLoaded = false;
 function setBodyView(v) {
   state.view = v;
-  document.body.classList.remove('v-disc', 'v-dash', 'v-basic');
+  document.body.classList.remove('v-disc', 'v-dash', 'v-basic', 'v-plan');
   document.body.classList.add(`v-${v}`);
   if (v !== 'disc') document.body.classList.remove('dmap-full');
 }
@@ -714,6 +772,7 @@ function renderView() {
   safe('nav', renderChrome);
   if (state.view === 'dash') renderAll();
   else if (state.view === 'basic') safe('basic', renderBasic);
+  else if (state.view === 'plan') safe('plan', renderPlan);
   else safe('discover', renderDiscover);
 }
 async function showDash(id) {
@@ -739,11 +798,17 @@ async function route(push) {
   window.scrollTo(0, 0);
   if (full || cr?.detail === 'full') { const id = full ? full.id : cr.id; addRecent(id); await showDash(id); }
   else if (cr) { addRecent(cr.id); setBodyView('basic'); safe('nav', renderChrome); await showBasic(cr.id); }
+  else if (new URLSearchParams(location.search).has('plan')) { setBodyView('plan'); safe('nav', renderChrome); safe('plan', renderPlan); }
   else { setBodyView('disc'); safe('nav', renderChrome); renderDiscover(); }
 }
 function openResort(id) {
   track('resort_select', id);
   try { history.pushState({ resort: id }, '', `?resort=${encodeURIComponent(id)}`); } catch { location.search = `?resort=${encodeURIComponent(id)}`; return; }
+  route();
+}
+function openPlan() {
+  track('disc_tab', 'plan');
+  try { history.pushState({ plan: 1 }, '', '?plan=1'); } catch { location.search = '?plan=1'; return; }
   route();
 }
 function goHome() {
@@ -758,7 +823,7 @@ function goHome() {
   try { state.start = loadStart(state.cfg); } catch { state.start = { ...state.cfg.trip.origin, kind: 'preset' }; }
   try { if ($('#start')) state.startUI = mountStartUI($('#start'), { cfg: state.cfg, t, L, getStart: () => state.start, onChange: setStart }); }
   catch (e) { console.warn('[ski] start UI failed:', e); }
-  initDiscover({ state, L, getJson, track, loadLeaflet, getStart: () => state.start, setStart, open: openResort, home: goHome, view: () => state.view });
+  initDiscover({ state, L, getJson, track, loadLeaflet, getStart: () => state.start, setStart, open: openResort, home: goHome, plan: openPlan, view: () => state.view });
   try { bind(); } catch (e) { console.warn('[ski] bind failed:', e); }
   document.querySelector('.brand')?.addEventListener('click', e => { e.preventDefault(); goHome(); });
   $$('#dash-back').addEventListener('click', e => { e.preventDefault(); goHome(); });

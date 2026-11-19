@@ -9,16 +9,16 @@
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="SkiDay" />
   <meta property="og:title" content="SkiDay" />
-  <meta property="og:description" content="Where do you want to ski? Today's snow, base depth and terrain open for 75+ North American resorts." />
+  <meta property="og:description" content="Find your next great ski day. Today's snow, base depth and terrain open for 75+ North American resorts." />
   <meta property="og:url" content="https://followthepowder.com/" />
   <meta name="twitter:card" content="summary" />
   <meta name="theme-color" content="#14283F" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛷️</text></svg>" />
   <link rel="preload" href="fonts/inter-latin-wght.woff2" as="font" type="font/woff2" crossorigin />
-  <link rel="stylesheet" href="css/ski.css?v=0e0897c875" />
+  <link rel="stylesheet" href="css/ski.css?v=011555dd97" />
 </head>
 <body>
-  <script>document.body.className = 'v-' + (/[?&]resort=/.test(location.search) ? 'dash' : 'disc');</script>
+  <script>document.body.className = 'v-' + (/[?&]resort=/.test(location.search) ? 'dash' : /[?&]plan\b/.test(location.search) ? 'plan' : 'disc');</script>
   <header class="top">
     <div class="wrap top-row">
       <a class="brand" href="./"><span class="logo" aria-hidden="true">⛷️</span><b data-i18n="title">SkiDay</b></a>
@@ -33,13 +33,18 @@
 
   <section id="discover" class="disc" aria-label="Find a resort"><div class="disc-hero"><div class="wrap"><div class="skeleton" style="height:180px;margin:24px 0"></div></div></div></section>
   <section id="basic" class="basic"></section>
+  <section id="plan" class="plan" aria-label="Plan a Ski Trip"></section>
 
   <section class="hero-wrap" id="hero">
     <div class="wrap hero-in">
       <a class="dback" id="dash-back" href="./">← <span data-i18n="d_back_all">All resorts</span></a>
-      <h1 class="q" data-i18n="q_title">Should we go skiing today?</h1>
-      <div id="start" class="start"></div>
+      <h1 class="q" id="dash-q">Should we go skiing today?</h1>
       <div id="verdict" aria-live="polite"><div class="skeleton"></div></div>
+      <div class="hgrid">
+        <div class="vpanel hp" id="mtn-now"></div>
+        <div class="vpanel hp getthere"><h2 class="hp-h" id="get-h">Getting there</h2><div id="start" class="start"></div><div id="getthere"></div></div>
+      </div>
+      <div id="why" class="why"></div>
       <p class="hero-credit" id="hero-credit"></p>
     </div>
   </section>
@@ -70,7 +75,7 @@
   </div>
 
   <nav class="bnav" id="bnav" aria-label="Sections"></nav>
-  <script type="module" src="js/app.js?v=0e0897c875"></script>
+  <script type="module" src="js/app.js?v=011555dd97"></script>
   <script nomodule>document.getElementById('verdict').innerHTML='<p style="padding:16px">This browser is too old for SkiDay. Please update iOS / your browser.</p>';</script>
   <script>
     // Safety net: if the app has not started after 12 s (blocked script, network or a JS error), say so instead of a blank page.

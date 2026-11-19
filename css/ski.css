@@ -420,3 +420,97 @@ section{scroll-margin-top:70px}
 .tile b.nr{font-size:16px;color:#b7c7d8;font-weight:600;padding:6px 0 4px}
 @media (min-width:561px){.bhero .tiles{grid-template-columns:repeat(3,1fr)}.bhero .tile:nth-child(3n){border-right:0}.bhero .tile:nth-child(-n+3){border-bottom:1px solid rgba(255,255,255,.1)}}
 .bhero .blimit a{color:inherit;text-decoration:underline}
+
+/* ---------- v4 (UX stage 1): plan page, homepage hierarchy, map clustering, resort page ---------- */
+#plan{display:none} .v-plan #plan{display:block}
+.v-plan #hero,.v-plan #dash-main,.v-plan #discover,.v-plan #basic,.v-plan #bnav,.v-plan #nav,.v-plan #sources,.v-plan #credits,.v-plan .foot>[data-i18n=footer]{display:none}
+.plan-hero{padding-bottom:26px} .psoon{display:inline-block;background:var(--orange);color:#1b1206;font-size:11.5px;font-weight:750;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:3px 10px}
+.pcard{margin:22px 0} .pcard h2{margin-top:0} .plist{list-style:none;margin:0 0 14px;padding:0}
+.plist li{border-bottom:1px solid var(--line)} .plist li:last-child{border:0}
+.plist a{display:block;padding:12px 2px;color:var(--navy);font-weight:600;text-decoration:none} .plist a:hover{text-decoration:underline}
+.pcard .dgo{display:inline-block;text-decoration:none}
+
+/* hero: Plan a Ski Trip secondary entry */
+.dhero-a{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:10px 0 14px;max-width:720px}
+.dhero-a .dfrom{margin:0;flex:1 1 280px}
+.dplan{flex:none;color:#fff;text-decoration:none;font-weight:700;font-size:14px;border:1.5px solid rgba(255,255,255,.55);border-radius:10px;padding:8px 14px;min-height:40px;display:inline-flex;align-items:center}
+.dplan:hover{background:rgba(255,255,255,.1);border-color:#fff}
+.dtabs-row{display:flex;align-items:flex-end;gap:10px}
+.dtabs-row .dtabs{flex:1;min-width:0}
+.dplan-nav{flex:none;color:#c5d3e2;text-decoration:none;font-size:13.5px;font-weight:650;padding:10px 4px 13px;border-left:1px solid rgba(255,255,255,.2);padding-left:14px}
+.dplan-nav:hover{color:#fff}
+
+/* resort cards: score prominent, status chip + season line, five stats */
+.dhead{align-items:flex-start;gap:10px}
+.dtt{flex:1;min-width:0} .dtt h3{margin:0}
+.dmeta{margin-top:1px} .dpass{font-weight:600;color:var(--navy)}
+.dscore{flex:none;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:58px;background:var(--navy);color:#fff;border-radius:12px;padding:5px 8px 4px;line-height:1}
+.dscore>b{font-size:22px;font-weight:800;letter-spacing:-.02em}
+.dscore>small{font-size:9.5px;color:#c5d3e2;margin-top:2px;text-align:center;line-height:1.1;max-width:64px}
+.dsx{position:absolute;top:-7px;right:-7px}
+.dsx summary{list-style:none;cursor:pointer;width:20px;height:20px;border-radius:50%;background:#fff;color:var(--navy);border:1px solid #cfdbe5;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.dsx summary::-webkit-details-marker{display:none}
+.dsx-p{position:absolute;right:0;top:26px;z-index:20;width:280px;max-width:calc(100vw - 40px);background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 34px rgba(20,40,63,.2);padding:10px 12px;font-size:12.5px;line-height:1.4;text-align:left;cursor:default}
+.dsx-p>b{display:block;color:var(--navy);font-size:13.5px;margin-bottom:4px}
+.dsx-p ul{list-style:none;margin:0;padding:0} .dsx-p li{display:flex;gap:6px;padding:2px 0} .dsx-p li>span{width:12px;flex:none;font-weight:800}
+.x-h{margin:6px 0 2px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+.x-pos>span{color:var(--green)} .x-neg>span{color:var(--red)} .x-mid>span{color:var(--slate)} .x-cl{color:var(--red);margin:6px 0 0;font-weight:600}
+.dfoot{gap:4px 10px;margin-top:2px}
+.dst{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:12.5px;border-radius:999px;padding:2px 9px 2px 7px}
+.dst i{width:8px;height:8px;border-radius:50%;background:currentColor}
+.dst.s-go{color:#1d6b49;background:#e6f4ec} .dst.s-caution{color:#8a4a0c;background:#fdeedd} .dst.s-nogo{color:#a8322c;background:#fbe9e7} .dst.s-na{color:#55657a;background:#eef2f6;font-weight:600}
+.dseason{font-size:12px;color:var(--mut)}
+.dstats{grid-template-columns:repeat(5,minmax(0,1fr))}
+.dstats b small{font-size:11px;color:var(--mut);font-weight:600}
+.dact{flex-wrap:wrap} .dact .dupd{margin-left:auto;font-size:11.5px}
+.dcard.hl{border-color:var(--orange);box-shadow:0 0 0 2px var(--orange)}
+
+/* map: ~62% results / ~38% map on desktop, clustering, highlight */
+@media (min-width:980px){.dsplit,.dsplit:not(#x){grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}}
+.dpin{width:28px;height:28px}
+.dpin.on,.dclu.on{transform:scale(1.25);box-shadow:0 0 0 3px var(--orange),0 2px 8px rgba(20,40,63,.4)}
+.dclu{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:var(--navy);color:#fff;font-weight:800;font-size:13.5px;border:3px solid #fff;box-shadow:0 2px 8px rgba(20,40,63,.4);cursor:pointer}
+.dmini-h{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.dmini-sc{font-style:normal;background:var(--navy);color:#fff;border-radius:8px;padding:1px 7px;font-weight:800;font-size:13px}
+
+/* resort page: recommendation, Mountain conditions vs Getting there, grouped alerts */
+.rec{background:rgba(20,40,63,.86);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:14px 18px;margin-bottom:12px}
+.rec-main{display:flex;align-items:center;gap:10px} .rec-main b{font-size:24px;font-weight:800;letter-spacing:-.01em;line-height:1.2}
+.rec-dot{flex:none;width:14px;height:14px;border-radius:50%;background:var(--slate);box-shadow:0 0 0 3px rgba(255,255,255,.15)}
+.rec-go .rec-dot{background:#3fbf7f} .rec-caution .rec-dot{background:var(--orange)} .rec-nogo .rec-dot{background:#e5554d}
+.rec-why{margin:8px 0 0;padding-left:22px;font-size:14px;color:#e6eef6} .rec-why li{margin:2px 0}
+.rec-basis{margin:8px 0 0;font-size:12px;color:#b7c7d8}
+.hgrid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:12px;align-items:start}
+.hp{padding:0 0 2px} .getthere{overflow:visible;padding:0 16px 4px}
+.hp-h{font-size:13px;font-weight:750;letter-spacing:.06em;text-transform:uppercase;color:#d6e3ef;margin:0;padding:14px 16px 10px}
+.getthere .hp-h{padding-left:0;padding-right:0}
+.getthere .start{margin:0 0 6px;max-width:none}
+.getthere .start-l{display:none}
+.tiles.t6{grid-template-columns:repeat(3,1fr)}
+.tiles.t6 .tile{border-bottom:1px solid rgba(255,255,255,.1)} .tiles.t6 .tile:nth-child(3n){border-right:0} .tiles.t6 .tile:nth-child(n+4){border-bottom:0}
+.tiles.t6 .tile b{font-size:24px}
+.hp-src{font-size:11.5px;color:#9fb3c8;margin:8px 16px 10px;line-height:1.4} .getthere .hp-src{margin:8px 0 12px} .hp-src a{color:#ffd2a8}
+.glist{list-style:none;margin:6px 0 0;padding:0;font-size:14px}
+.grow{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.1)} .grow:last-child{border:0}
+.gk{color:#b7c7d8;flex:none} .gv{text-align:right;font-weight:650;color:#fff} .gv small{display:block;font-weight:400;font-size:11.5px;color:#9fb3c8} .gv a{color:#ffd2a8}
+.gv.g-go::before,.gv.g-caution::before,.gv.g-nogo::before,.gv.g-info::before,.gv.g-unknown::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:1px;background:var(--slate)}
+.gv.g-go::before{background:#3fbf7f} .gv.g-caution::before{background:var(--orange)} .gv.g-nogo::before{background:#e5554d} .gv.g-info::before{background:#8fb7dc}
+.know-h{font-size:18px;margin:2px 0 4px}
+.kgrp h3{margin:14px 0 4px;font-size:13px;letter-spacing:.04em;text-transform:uppercase} .kgrp h3 small{text-transform:none;letter-spacing:0;font-weight:500}
+.rsrc{color:var(--mut);font-size:11.5px;white-space:nowrap}
+.rrow.rok span b{font-weight:650}
+.isrc{margin:-6px 0 12px} .isrc a{color:#245e93}
+@media (max-width:860px){.hgrid{grid-template-columns:minmax(0,1fr)}}
+.tiles.t6 .tile{min-width:0} .tiles.t6 .tile>span:not(.ti){overflow-wrap:anywhere}
+@media (max-width:560px){
+  .dhero-a{margin:8px 0 12px} .dplan{width:100%;justify-content:center}
+  .dplan-nav{display:none}
+  .dstats{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:6px}
+  .dscore{min-width:50px} .dscore>b{font-size:19px}
+  .rec-main b{font-size:20px}
+  .tiles.t6{grid-template-columns:1fr 1fr}
+  .tiles.t6 .tile:nth-child(n){border-right:1px solid rgba(255,255,255,.1);border-bottom:1px solid rgba(255,255,255,.1)}
+  .tiles.t6 .tile:nth-child(2n){border-right:0} .tiles.t6 .tile:nth-child(n+5){border-bottom:0}
+  .tiles.t6 .tile b{font-size:22px}
+  .rsrc{white-space:normal}
+}
