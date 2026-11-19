@@ -1,15 +1,15 @@
 // Resort discovery (default home) + basic resort view for catalog resorts without a full dashboard.
 // Data: data/catalog.json (static, verified) + api/catalog-conditions.json (Open-Meteo model, refreshed hourly by
 // the ski-data Worker; resort-published base depth / terrain open / lifts / 24 h snow where SkiDay reads a public feed) + api/forecast.json?r=<id> (basic view).
-import { fmt, weatherEmoji, chainLevel, recommendFrom, visLevel } from './core.js?v=38f78c3347';
-import { getRoute, getTable } from './start.js?v=38f78c3347';
+import { fmt, weatherEmoji, chainLevel, recommendFrom, visLevel } from './core.js?v=5a7992fe5d';
+import { getRoute, getTable } from './start.js?v=5a7992fe5d';
 
 const S = {
   en: {
     d_title: 'Find your next great ski day.', d_sub: 'Compare ski resorts, discover where conditions are best, and plan your next mountain trip.',
     d_plan: 'Plan a Ski Trip', d_plan_nav: 'Plan a Trip',
     d_search: 'Search resort, town, state, range or pass…', d_near: 'Near Me', d_fav: 'Favorites', d_best: 'Best Conditions', d_explore: 'Explore Resorts',
-    d_recent: 'Recently viewed', d_from: 'Distances from', d_useloc: 'Use my location', d_locating: 'Finding you…', d_loc_fail: 'Location unavailable; using your starting point.',
+    d_recent: 'Recently viewed', d_from: 'Distances from', d_useloc: 'Use my location', d_approx: 'Approximate location (from your network)', d_locating: 'Finding you…', d_loc_fail: 'Location unavailable; using your starting point.',
     d_filters: 'Filters', d_region: 'Region', d_pass: 'Pass', d_status: 'Status', d_dist: 'Distance', d_sort: 'Sort', d_all: 'All', d_allr: 'All regions', d_allp: 'All passes', d_other: 'Other', d_any: 'Any',
     d_open_only: 'Open (reported)', d_hide_closed: 'Hide reported closed', d_within: 'Within {0}', d_list: 'List', d_map: 'Map',
     s_score: 'Best overall', s_snow: 'Most new snow (24 h)', s_close: 'Closest', s_fcst: 'Most snowfall (next 72 h)', s_base: 'Deepest base', s_terrain: 'Most terrain open', s_open: 'Open first',
@@ -44,7 +44,7 @@ const S = {
     d_title: '找到你的下一个好雪天。', d_sub: '对比雪场，看看哪里雪况最好，规划你的下一次进山之旅。',
     d_plan: '规划滑雪旅行', d_plan_nav: '规划行程',
     d_search: '搜索雪场、城镇、州、山脉或雪票…', d_near: '附近', d_fav: '收藏', d_best: '最佳雪况', d_explore: '探索雪场',
-    d_recent: '最近浏览', d_from: '距离起点', d_useloc: '使用我的位置', d_locating: '定位中…', d_loc_fail: '无法定位，改用你的出发地。',
+    d_recent: '最近浏览', d_from: '距离起点', d_useloc: '使用我的位置', d_approx: '大致位置（根据你的网络）', d_locating: '定位中…', d_loc_fail: '无法定位，改用你的出发地。',
     d_filters: '筛选', d_region: '地区', d_pass: '雪票', d_status: '状态', d_dist: '距离', d_sort: '排序', d_all: '全部', d_allr: '全部地区', d_allp: '全部雪票', d_other: '其他', d_any: '不限',
     d_open_only: '营业中（雪场公布）', d_hide_closed: '隐藏已公布关闭', d_within: '{0} 以内', d_list: '列表', d_map: '地图',
     s_score: '综合最佳', s_snow: '24小时新雪最多', s_close: '最近', s_fcst: '未来72小时降雪最多', s_base: '雪底最深', s_terrain: '开放雪道最多', s_open: '营业优先',
@@ -415,7 +415,8 @@ function renderShell() {
   if ($('#dq').value !== D.q) $('#dq').value = D.q;
   $('#dq-x').hidden = !D.q;
   const s = startPt();
-  $('#d-from').innerHTML = `📍 ${esc(tr('d_from'))} <b>${esc(X.L(s.name) || '')}</b> · <button type="button" class="dlink" id="d-loc">${esc(tr('d_useloc'))}</button> <span id="d-locmsg" class="muted"></span>`;
+  const ipLoc = s.kind === 'auto-ip' && s.where;
+  $('#d-from').innerHTML = `📍 ${esc(tr('d_from'))} <b>${esc(ipLoc ? s.where : (X.L(s.name) || ''))}</b>${ipLoc ? ` <span class="dapprox">${esc(tr('d_approx'))}</span>` : ''} · <button type="button" class="dlink" id="d-loc">${esc(tr('d_useloc'))}</button> <span id="d-locmsg" class="muted"></span>`;
   // Best Conditions first (the default), then Explore, Near Me, Favorites. Plan a Trip sits apart from the tabs.
   const tabs = [['best', '❄️', 'd_best'], ['explore', '🗺️', 'd_explore'], ['near', '📍', 'd_near'], ['fav', '⭐', 'd_fav']];
   $('#d-plan').textContent = `🧭 ${tr('d_plan')} →`;

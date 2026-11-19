@@ -1,5 +1,6 @@
 // followthepowder: SkiDay at the root of followthepowder.com.
 //   www.followthepowder.com/*  -> 301 https://followthepowder.com/* (query kept)
+//   /api/whereami              -> approximate visitor location from Cloudflare's request.cf (never logged or stored)
 //   /api/*                     -> ski-data Worker (service binding)
 //   everything else            -> GitHub Pages of Jzhang1011/followthepowder (repo root = site root)
 const APEX = 'followthepowder.com';
@@ -14,6 +15,7 @@ export default {
     if (url.hostname !== APEX) {
       return new Response(null, { status: 301, headers: { Location: `https://${APEX}${url.pathname}${url.search}`, 'Cache-Control': 'public, max-age=86400' } });
     }
+    if (url.pathname === '/api/whereami' || url.pathname === '/api/whereami.json') return whereami(request);
     if (url.pathname === '/api' || url.pathname.startsWith('/api/')) return env.SKI_DATA_SVC.fetch(request);
     if (BLOCKED.some(p => url.pathname === p || url.pathname.startsWith(p))) return new Response('Not found', { status: 404 });
     if (request.method !== 'GET' && request.method !== 'HEAD') return new Response('Method not allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
@@ -42,3 +44,15 @@ export default {
     return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
   }
 };
+
+/** Approximate location of the visitor's network (Cloudflare's own IP geolocation, request.cf): city-level,
+ *  rounded to 2 decimals (~1 km). Answered from memory per request; nothing is logged, stored or cached. */
+function whereami(request) {
+  const cf = request.cf || {};
+  const lat = parseFloat(cf.latitude), lon = parseFloat(cf.longitude);
+  const ok = isFinite(lat) && isFinite(lon);
+  const body = ok ? { source: 'ip', approximate: true, city: cf.city || null, region: cf.region || null, regionCode: cf.regionCode || null,
+    country: cf.country || null, lat: +lat.toFixed(2), lon: +lon.toFixed(2) } : { source: 'none' };
+  return new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8',
+    'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer' } });
+}

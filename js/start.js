@@ -1,5 +1,5 @@
 // Starting location: input with Photon autocomplete, presets, browser geolocation; OSRM routing with cache + throttle.
-import { buildRoute, osrmRouteUrl, osrmTableUrl } from './route.js?v=38f78c3347';
+import { buildRoute, osrmRouteUrl, osrmTableUrl } from './route.js?v=5a7992fe5d';
 
 const LSK = 'ski.start', RCK = 'ski.routes';
 const round = (v, n = 3) => +(+v).toFixed(n); // ~100 m: enough for routing, kinder to privacy
@@ -11,6 +11,50 @@ export function loadStart(cfg) {
 }
 export function saveStart(s) { try { localStorage.setItem(LSK, JSON.stringify(s)); } catch {} }
 export const isDefaultStart = (cfg, s) => s.id === (cfg.trip.presets?.[0]?.id || 'DEN');
+/** A start the visitor picked themselves (preset, search, "Use my location") is saved and wins over auto-location. */
+export const isAutoStart = s => !!s && String(s.kind || '').startsWith('auto');
+export function hasManualStart() {
+  try { const s = JSON.parse(localStorage.getItem(LSK)); return !!(s && isFinite(s.lat) && isFinite(s.lon) && !isAutoStart(s)); } catch { return false; }
+}
+
+const GEO_ASKED = 'ski.geoAsked';
+const kmBetween = (a, b) => { const R = 6371, r = Math.PI / 180, dLa = (b.lat - a.lat) * r, dLo = (b.lon - a.lon) * r;
+  return 2 * R * Math.asin(Math.sqrt(Math.sin(dLa / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(dLo / 2) ** 2)); };
+/**
+ * Location on open, in two steps, used only in this browser:
+ *  1. instant approximate default from the visitor's network (our /api/whereami reads Cloudflare's request.cf;
+ *     nothing is logged or stored server-side);
+ *  2. refine with the browser's geolocation: silent if permission was granted before; the browser asks at most once
+ *     on open; if it was declined or dismissed we keep the approximate location and never ask again on open.
+ * onUpdate(start) is called for each step; shouldStop() lets a manual pick in the meantime win.
+ */
+export async function autoLocate({ api, onUpdate, shouldStop = () => false }) {
+  let ip = null;
+  try {
+    const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 2500);
+    const r = await fetch(`${api}whereami`, { cache: 'no-store', signal: ctl.signal }); clearTimeout(tm);
+    const j = r.ok ? await r.json() : null;
+    if (j && isFinite(j.lat) && isFinite(j.lon)) {
+      const where = [j.city, j.country === 'US' ? (j.regionCode || j.region) : (j.region || j.country)].filter(Boolean).join(', ');
+      ip = { id: 'ip', lat: round(j.lat, 2), lon: round(j.lon, 2), kind: 'auto-ip', where,
+        name: { en: where ? `${where} (approx.)` : 'Approximate location', zh: where ? `${where}（大致）` : '大致位置' } };
+      if (!shouldStop()) onUpdate(ip);
+    }
+  } catch {}
+  if (!navigator.geolocation) return;
+  let state = 'prompt';
+  try { state = (await navigator.permissions.query({ name: 'geolocation' })).state; } catch {}
+  let asked = false; try { asked = !!localStorage.getItem(GEO_ASKED); } catch {}
+  if (state === 'denied' || (state !== 'granted' && asked)) return; // no nagging
+  if (state !== 'granted') { try { localStorage.setItem(GEO_ASKED, '1'); } catch {} }
+  navigator.geolocation.getCurrentPosition(pos => {
+    if (shouldStop()) return;
+    const lat = round(pos.coords.latitude), lon = round(pos.coords.longitude);
+    const near = ip?.where && kmBetween(ip, { lat, lon }) < 60 ? ip.where : '';
+    onUpdate({ id: 'geo', lat, lon, kind: 'auto-geo',
+      name: { en: near ? `My location · ${near}` : 'My location', zh: near ? `我的位置 · ${near}` : '我的位置' } });
+  }, () => {}, { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 });
+}
 
 /* ---------- routing (OSRM demo: ≤1 req/s, non-commercial; cached 3 days in localStorage) ---------- */
 let lastCall = 0;

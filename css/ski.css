@@ -1,10 +1,13 @@
-/* SkiDay design system: alpine navy / glacier blue / snow white / alpine orange / forest green, Inter. */
+/* Follow the Powder design system: night ink / warm paper / ink-blue accent; serif display, Inter body.
+   Status colors stay meaningful: green = go, amber = caution, red = no-go, slate = unknown. */
 @font-face{font-family:"Inter";src:url("../fonts/inter-latin-wght.woff2") format("woff2");font-weight:100 900;font-display:swap}
 :root{
-  --navy:#14283F;--navy-2:#1d3756;--glacier:#DCEAF3;--snow:#F7F9FB;--orange:#F28C38;--green:#25845A;--red:#C8423B;--slate:#6B7C8F;
-  --ink:#14283F;--mut:#5f7186;--line:#E3EAF0;--card:#fff;--r:14px;--r-s:12px;
-  --go:var(--green);--caution:var(--orange);--nogo:var(--red);--unk:var(--slate);--info:#3d7fb8;
-  --shadow:0 1px 2px rgba(20,40,63,.06),0 6px 20px rgba(20,40,63,.05);
+  --navy:#0F1B2A;--navy-2:#1A2A3C;--glacier:#E9EEF3;--snow:#F6F4EF;--paper-deep:#ECE8DF;--orange:#E08A2E;--green:#1F8A55;--red:#C23D3D;--slate:#6B7785;
+  --ink:#111B26;--ink-soft:#2E3843;--mut:#5d6874;--line:#E6E1D7;--card:#fff;--r:14px;--r-s:12px;
+  --accent:#2459C9;--accent-night:#9DBCF5;--on-night:#F3F1EC;--on-night-mut:#AEB9C6;--glass:rgba(10,18,29,.72);--glass-line:rgba(255,255,255,.14);
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Charter,"Bitstream Charter",Georgia,"Songti SC","PingFang SC",serif;
+  --go:var(--green);--caution:var(--orange);--nogo:var(--red);--unk:var(--slate);--info:#3d6fb8;
+  --shadow:0 1px 2px rgba(17,27,38,.04),0 4px 24px rgba(17,27,38,.06);
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
@@ -541,3 +544,61 @@ section{scroll-margin-top:70px}
 /* Official live-only stream (no still image published): navy tile with play button + label */
 .thumb.live{background:linear-gradient(135deg,#1d3a5c,#14283F)}
 .thumb.live .lv{position:absolute;top:8px;left:8px;font-style:normal;font-size:10.5px;background:rgba(242,140,56,.9);color:#fff;border-radius:6px;padding:1px 6px}
+
+/* ================= Night & paper theme (overrides; tokens above) ================= */
+a{color:var(--accent)} .dlink,.dhelp summary{color:var(--accent)}
+.top{background:rgba(12,21,32,.94);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.08)}
+.brand,.brand:visited,.brand:hover{font-family:var(--serif);font-size:19px;font-weight:600;letter-spacing:0}
+.tabs a{color:var(--on-night-mut)} .tabs a:hover{color:#fff}
+.pill{border-color:rgba(255,255,255,.2)}
+/* display type: serif headings, small caps eyebrows */
+.q,h2,.dlist-h h2,.rname,.dhead h3,.alt-h a{font-family:var(--serif);font-weight:600;letter-spacing:-.01em}
+.q{line-height:1.06;text-shadow:0 2px 24px rgba(0,0,0,.35)}
+@media (min-width:861px){.q{font-size:46px}}
+h2{font-size:22px} .dlist-h h2{font-size:22px} .dhead h3{font-size:17.5px;color:var(--ink)} .alt-h a{color:var(--ink);font-size:1.12rem}
+.ov,.start-l,.dbar label{letter-spacing:.14em;font-weight:650}
+/* night heroes */
+.disc-hero{background:radial-gradient(1200px 420px at 75% -10%,rgba(157,188,245,.18),transparent 60%),linear-gradient(180deg,#0C1520 0%,#13233A 100%);padding-top:34px}
+@media (min-width:861px){.disc-hero .q{font-size:44px;max-width:760px}}
+.dsub,.dfrom,.dplan-nav,.dtabs button{color:var(--on-night-mut)} .dfrom .dlink{color:var(--accent-night)}
+.hero-wrap::before{background:linear-gradient(180deg,rgba(12,21,32,.55) 0%,rgba(12,21,32,.35) 35%,rgba(12,21,32,.88) 72%,var(--navy) 100%)}
+.vpanel{background:var(--glass);border-color:var(--glass-line);border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.dsearch,.start-box{border-radius:999px;padding-left:18px;box-shadow:0 10px 40px rgba(0,0,0,.28)}
+.start-box{padding-right:5px} .geo{border-radius:999px;background:var(--navy);color:#fff} .geo:hover{background:var(--navy-2)}
+.dqx{background:var(--glacier);color:var(--ink)}
+.dplan{border-radius:999px;border-color:rgba(255,255,255,.35)}
+.presets button{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.22)}
+.presets button.on{background:var(--on-night);color:var(--ink);border-color:var(--on-night)}
+/* tabs: pill segmented control on night, active = light pill */
+.dtabs-row{padding-bottom:16px}
+.dtabs{gap:4px;background:rgba(255,255,255,.06);border:1px solid var(--glass-line);border-radius:999px;padding:4px;margin:0;width:max-content;max-width:100%}
+.dtabs button{border-radius:999px;padding:9px 16px;min-height:42px}
+.dtabs button.on{background:var(--on-night);color:var(--ink)}
+.dtabs button.on small{background:rgba(17,27,38,.1)}
+.dplan-nav{border-left:0;padding:10px 8px}
+/* paper body, white cards with warm hairlines */
+.card,.rcard,.dcard,.why,.alt,.rvchip,.dempty,.dhelp[open]{border-color:var(--line)}
+.card,.rcard{border-radius:18px}
+.dcard{border-radius:16px;box-shadow:0 1px 0 rgba(17,27,38,.03)} .dcard:hover{border-color:#cfc7b8;box-shadow:var(--shadow)}
+.dcard.hl{border-color:var(--ink);box-shadow:0 0 0 1.5px var(--ink)}
+.rcard.on{outline-color:var(--ink)}
+.itile,.alt-none{background:#FBFAF7;border-color:var(--line)} .alt-st{border-top-color:#EFEBE3}
+.dbar select,.dftog{border-color:#D9D2C5;border-radius:999px;padding-left:14px}
+.dsc,.tag,.elev,.p-info{background:var(--paper-deep);color:var(--ink)}
+/* light segmented controls: active = ink pill */
+.seg-ctl,.dvt{background:var(--paper-deep)} .seg-ctl button,.dvt button{color:var(--ink-soft)}
+.seg-ctl button.on,.dvt button.on{background:var(--ink);color:#fff}
+/* calls to action: ink + blue accent (orange is reserved for "caution") */
+.btn.primary,.dgo{background:var(--ink);color:#fff;border-color:var(--ink);border-radius:999px}
+.btn.primary:hover,.dgo:hover{background:var(--accent);border-color:var(--accent);filter:none}
+.drank{background:#fff;color:var(--ink);font-family:var(--serif);font-weight:700;font-size:14px;border:1px solid rgba(17,27,38,.12)}
+.dscore,.alt-sc{background:var(--ink)} .dscore>small{color:var(--on-night-mut)}
+.dfull{background:rgba(12,21,32,.85)}
+.dftog b{background:var(--accent);color:#fff}
+.psoon{background:var(--accent-night);color:var(--ink)}
+.dfav.on,.dfav.big.on,.dpin.fav{color:#D9A21B}
+.dpin{border-color:var(--ink)} .dpin.on,.dclu.on{box-shadow:0 0 0 3px var(--accent),0 2px 8px rgba(17,27,38,.4)}
+.foot{border-top:1px solid var(--line);margin-top:24px}
+@media (max-width:860px){.q,.disc-hero .q{font-size:32px}.bnav{background:rgba(12,21,32,.94);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-top:1px solid rgba(255,255,255,.08)}.bnav a{color:var(--on-night-mut)}}
+@media (max-width:560px){.dtabs{width:auto}.dtabs button{padding:8px 12px}}
+.dapprox{display:inline-block;font-size:11.5px;color:var(--on-night-mut);border:1px solid var(--glass-line);border-radius:999px;padding:0 8px;margin-left:2px}

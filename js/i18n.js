@@ -43,7 +43,8 @@ export const STR = {
     add_item: 'Add item', reset: 'Reset list', add: 'Add',
     d_back_all: 'All resorts',
     footer_disc: 'Data: Open-Meteo weather model (hourly, summit and mid-mountain estimates), resort snow reports where SkiDay has a feed (A-Basin, Copper, Steamboat), OpenStreetMap + OSRM drive estimates (no traffic), resort facts from Wikipedia and ikonpass.com / epicpass.com. Always confirm with the resort before driving. Built by MadeForMyKids.',
-    privacy_note: 'Privacy: we keep anonymous usage counts only (page views, resort and setting choices). No cookies, no tracking IDs, no addresses.',
+    privacy_note: 'Privacy: we keep anonymous usage counts only (page views, resort and setting choices). No cookies, no tracking IDs, no addresses. Your location (an approximate one from your network, refined by your browser if you allow it) is used only in your browser to measure distances and drive times; it is never stored or logged on our servers.',
+    approx_loc: 'Approximate location (from your network). Pick a start or use your location for exact drive times.',
     footer: 'Data: Open-Meteo, CDOT COtrip, National Weather Service, resort webcams. Always confirm with COtrip and the resort before driving. Built by MadeForMyKids.',
     lang: '中文', units_imperial: '°F · in', units_metric: '°C · cm', shop_soon: 'Gear shop — coming soon',
     more_days: 'Days 4–7', loading: 'Loading…', never: 'never', ago: '{0} ago', minutes: '{0} min', hours: '{0} h'
@@ -92,7 +93,8 @@ export const STR = {
     add_item: '添加物品', reset: '恢复默认', add: '添加',
     d_back_all: '全部雪场',
     footer_disc: '数据：Open-Meteo 天气模型（每小时更新，山顶和半山估算）、SkiDay 已接入的雪场官方雪况（A-Basin、Copper、Steamboat）、OpenStreetMap + OSRM 车程估算（未计路况）、维基百科及 ikonpass.com / epicpass.com 的雪场资料。出发前请向雪场确认。MadeForMyKids 出品。',
-    privacy_note: '隐私：我们只统计匿名使用次数（访问量、雪场和设置选择），不使用 Cookie，不记录追踪 ID 或地址。',
+    privacy_note: '隐私：我们只统计匿名使用次数（访问量、雪场和设置选择），不使用 Cookie，不记录追踪 ID 或地址。你的位置（根据网络得到的大致位置；若你允许，再由浏览器精确定位）只在你的浏览器里用于计算距离和车程，绝不会在我们的服务器上存储或记录。',
+    approx_loc: '大致位置（根据你的网络）。选择出发地或使用你的位置可获得更准确的车程。',
     footer: '数据来源：Open-Meteo、CDOT COtrip、美国国家气象局、雪场官方摄像头。开车前请再次确认 COtrip 和雪场官网。MadeForMyKids 出品。',
     lang: 'EN', units_imperial: '°F · in', units_metric: '°C · cm', shop_soon: '雪具商店——即将上线',
     more_days: '第 4–7 天', loading: '加载中…', never: '从未', ago: '{0}前', minutes: '{0} 分钟', hours: '{0} 小时'

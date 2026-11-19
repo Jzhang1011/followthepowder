@@ -1,9 +1,9 @@
 import { openMeteoUrl, splitOpenMeteo, dailyRows, hourlyRows, weatherEmoji, carsUrl, slimEvents, EVENT_CLASSES,
-  nwsUrl, slimAlerts, verdictFor, outfitFor, recommendFrom, fmt, wxGroupOf, wxGroupCfg, wxGroupCount } from './core.js?v=38f78c3347';
-import { STR, PACK_DEFAULT } from './i18n.js?v=38f78c3347';
-import { selectCameras, routeSegments, inCO } from './route.js?v=38f78c3347';
-import { loadStart, saveStart, isDefaultStart, getRoute, mountStartUI } from './start.js?v=38f78c3347';
-import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=38f78c3347';
+  nwsUrl, slimAlerts, verdictFor, outfitFor, recommendFrom, fmt, wxGroupOf, wxGroupCfg, wxGroupCount } from './core.js?v=5a7992fe5d';
+import { STR, PACK_DEFAULT } from './i18n.js?v=5a7992fe5d';
+import { selectCameras, routeSegments, inCO } from './route.js?v=5a7992fe5d';
+import { loadStart, saveStart, isDefaultStart, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=5a7992fe5d';
+import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=5a7992fe5d';
 
 const LS = {
   get: (k, d) => { try { const v = localStorage.getItem('ski.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -673,11 +673,19 @@ function updateStartMsg() {
   let h = '';
   if (rs?.status === 'loading') h = `<span class="muted">${esc(t('route_loading'))}</span>`;
   else if (rs?.status === 'fail') h = `<span class="warn">⚠️ ${esc(t('route_fail'))}</span>`;
+  else if (state.start?.kind === 'auto-ip') h = `<span class="muted">${esc(t('approx_loc'))}</span>`;
   state.startUI.setMsg(h);
 }
 function setStart(s) {
-  state.start = s; saveStart(s); track('start_select', s.kind === 'preset' ? s.id : 'custom'); /* never the address or coordinates */ state.routes = {}; ctxMemo.clear();
-  state.startUI?.relabel();
+  if (!isAutoStart(s)) state.manualStart = true; // a visitor's own pick wins over auto-location (and is remembered)
+  state.start = s; saveStart(s); if (isAutoStart(s)) { applyStart(); return; }
+  track('start_select', s.kind === 'preset' ? s.id : 'custom'); /* never the address or coordinates */ state.routes = {}; ctxMemo.clear();
+  applyStart();
+}
+function applyStart() {
+  state.routes = {}; ctxMemo.clear();
+  state.startUI?.relabel(); updateStartMsg();
+  if (!window.__skiReady) return; // first render picks it up
   if (state.view === 'dash') { renderAll(); routeAll(); } else renderView();
 }
 async function loadCams() {
@@ -883,6 +891,8 @@ function goHome() {
   catch { window.__skiReady = true; $$('#verdict').innerHTML = `<div class="why"><p>${esc(t('unavailable'))}: resorts.json · <a href="" onclick="location.reload();return false">↻</a></p></div>`; return; }
   if (!state.cfg.resorts.some(r => r.id === state.resort)) state.resort = state.cfg.resorts[0].id;
   try { state.start = loadStart(state.cfg); } catch { state.start = { ...state.cfg.trip.origin, kind: 'preset' }; }
+  state.manualStart = hasManualStart();
+  if (!state.manualStart) autoLocate({ api: API, onUpdate: setStart, shouldStop: () => state.manualStart }).catch(() => {});
   try { if ($('#start')) state.startUI = mountStartUI($('#start'), { cfg: state.cfg, t, L, getStart: () => state.start, onChange: setStart }); }
   catch (e) { console.warn('[ski] start UI failed:', e); }
   initDiscover({ state, L, t, ui: UI, roadCheck, roadCount, reasonText, getJson, track, loadLeaflet, getStart: () => state.start, setStart, open: openResort, loadRoads: async () => { if (!state.roads.data) { try { await loadServer(); } catch {} } return state.roads; }, home: goHome, plan: openPlan, view: () => state.view });
