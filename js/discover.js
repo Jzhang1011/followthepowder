@@ -1,8 +1,8 @@
 // Resort discovery (default home) + basic resort view for catalog resorts without a full dashboard.
 // Data: data/catalog.json (static, verified) + api/catalog-conditions.json (Open-Meteo model, refreshed hourly by
 // the ski-data Worker; resort-published base depth / terrain open / lifts / 24 h snow where SkiDay reads a public feed) + api/forecast.json?r=<id> (basic view).
-import { fmt, weatherEmoji, chainLevel, recommendFrom, visLevel } from './core.js?v=5a7992fe5d';
-import { getRoute, getTable } from './start.js?v=5a7992fe5d';
+import { fmt, weatherEmoji, chainLevel, recommendFrom, visLevel } from './core.js?v=0580a66e88';
+import { getRoute, getTable } from './start.js?v=0580a66e88';
 
 const S = {
   en: {
@@ -262,7 +262,7 @@ export function addRecent(id) { const r = [id, ...LSd.get('recent', []).filter(x
 function toggleFav(id) {
   const f = favs(); const on = f.includes(id);
   LSd.set('favs', on ? f.filter(x => x !== id) : [...f, id]);
-  X.track('disc_fav', on ? 'remove' : 'add');
+  X.track('disc_fav', on ? 'remove' : 'add', { resort_id: id });
 }
 
 /* ---------- formatting ---------- */
@@ -495,7 +495,7 @@ function renderCompare() {
     ${row(tr('d_upd', '').trim() || 'Updated', r => esc(cardUpd(r).replace(tr('d_upd', ''), '').trim() || '—'))}
     </tbody></table></div><p class="small muted">${esc(tr('d_model'))} ✓ = ${X.state.lang === 'zh' ? '雪场公布' : 'resort-reported'}</p></div>`;
   $('#d-modal').hidden = false;
-  X.track('disc_compare', 'open');
+  X.track('disc_compare', 'open', { resort_ids: D.cmp.join(','), count: D.cmp.length });
 }
 
 /* ---------- map ---------- */

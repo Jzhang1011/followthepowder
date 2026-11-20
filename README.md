@@ -51,7 +51,8 @@ After editing anything in `js/` or `css/`, run `node scripts/stamp.mjs` before c
 | ski-data Worker (optional) | `OPEN_METEO_KEY`, `COTRIP_API_KEY` | Not set (free tier). |
 | GitHub Actions | none | The data Action uses the automatic `GITHUB_TOKEN`. |
 
-Privacy: the event counter stores only allowlisted event names + labels and daily counts — no IPs, cookies or IDs;
+Analytics: Google Tag Manager container GTM-WQH2HB5M (index.html) gets dataLayer events (ids/labels only, never search text, addresses, coordinates or city).
+Privacy: our own event counter stores only allowlisted event names + labels and daily counts — no IPs, cookies or IDs;
 `start_select` records `preset id` or `custom`, never an address or coordinates.
 
 ## Sections

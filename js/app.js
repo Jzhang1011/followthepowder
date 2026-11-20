@@ -1,9 +1,9 @@
 import { openMeteoUrl, splitOpenMeteo, dailyRows, hourlyRows, weatherEmoji, carsUrl, slimEvents, EVENT_CLASSES,
-  nwsUrl, slimAlerts, verdictFor, outfitFor, recommendFrom, fmt, wxGroupOf, wxGroupCfg, wxGroupCount } from './core.js?v=5a7992fe5d';
-import { STR, PACK_DEFAULT } from './i18n.js?v=5a7992fe5d';
-import { selectCameras, routeSegments, inCO } from './route.js?v=5a7992fe5d';
-import { loadStart, saveStart, isDefaultStart, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=5a7992fe5d';
-import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=5a7992fe5d';
+  nwsUrl, slimAlerts, verdictFor, outfitFor, recommendFrom, fmt, wxGroupOf, wxGroupCfg, wxGroupCount } from './core.js?v=0580a66e88';
+import { STR, PACK_DEFAULT } from './i18n.js?v=0580a66e88';
+import { selectCameras, routeSegments, inCO } from './route.js?v=0580a66e88';
+import { loadStart, saveStart, isDefaultStart, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=0580a66e88';
+import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=0580a66e88';
 
 const LS = {
   get: (k, d) => { try { const v = localStorage.getItem('ski.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -20,12 +20,39 @@ const state = {
 };
 
 const $ = s => document.querySelector(s);
-/** Anonymous usage count (allowlisted event + label, no IDs/cookies). Production host only; never throws. */
-function track(e, v) {
+/** Anonymous usage count (allowlisted event + label, no IDs/cookies) on our own Worker, production host only,
+ *  plus the same interaction as a Google Tag Manager dataLayer event. Never throws.
+ *  dataLayer params are ids/labels only: never search text, addresses, coordinates or city names. */
+const GTM_EVENTS = {
+  resort_select: v => ({ event: 'resort_select', resort_id: v }),
+  disc_tab: v => ({ event: 'tab_change', tab: v }),
+  disc_search: () => ({ event: 'search' }),
+  disc_fav: (v, x) => ({ event: v === 'add' ? 'favorite_add' : 'favorite_remove', resort_id: x?.resort_id }),
+  disc_compare: (v, x) => ({ event: 'compare', resort_ids: x?.resort_ids, compare_count: x?.count }),
+  disc_view: v => ({ event: 'list_map_toggle', view: v }),
+  alt_open: v => ({ event: 'alternative_open', resort_id: v }),
+  lang_toggle: v => ({ event: 'language_change', language: v }),
+  unit_toggle: v => ({ event: 'unit_change', units: v })
+};
+function dl(o) { try { (window.dataLayer = window.dataLayer || []).push(o); } catch {} }
+function track(e, v, extra) {
+  try { const m = GTM_EVENTS[e]; if (m) dl(m(v, extra)); } catch {}
   try {
     if (!/^(www\.)?(followthepowder|madeformykids)\.com$/.test(location.hostname) || !navigator.sendBeacon) return;
     navigator.sendBeacon('api/event', new Blob([JSON.stringify({ e, v: String(v ?? '') })], { type: 'text/plain' }));
   } catch { /* stats are optional */ }
+}
+/** start_location_set: the kind of start only (manual / auto = browser location on open / ip = approximate). */
+function trackStart(s) {
+  const k = s.kind === 'auto-ip' ? 'ip' : s.kind === 'auto-geo' ? 'auto' : 'manual';
+  dl({ event: 'start_location_set', location_type: k, ...(s.kind === 'preset' ? { start_preset: s.id } : {}) });
+}
+let vpvReady = false; // first page_view comes from GTM's own page load trigger
+function virtualPageView(type, id) {
+  const o = { page_type: type, ...(id ? { resort_id: id } : {}) };
+  if (id) dl({ event: 'resort_view', ...o });
+  if (!vpvReady) { vpvReady = true; return; }
+  dl({ event: 'virtual_page_view', page_path: location.pathname + location.search, page_location: location.origin + location.pathname + location.search, page_title: document.title, ...o });
 }
 // Null-safe element lookup for optional page parts (an older cached index.html may lack them).
 const $$ = s => document.querySelector(s) || document.createElement('div');
@@ -678,7 +705,7 @@ function updateStartMsg() {
 }
 function setStart(s) {
   if (!isAutoStart(s)) state.manualStart = true; // a visitor's own pick wins over auto-location (and is remembered)
-  state.start = s; saveStart(s); if (isAutoStart(s)) { applyStart(); return; }
+  state.start = s; saveStart(s); trackStart(s); if (isAutoStart(s)) { applyStart(); return; }
   track('start_select', s.kind === 'preset' ? s.id : 'custom'); /* never the address or coordinates */ state.routes = {}; ctxMemo.clear();
   applyStart();
 }
@@ -866,10 +893,10 @@ async function route(push) {
   const full = q && state.cfg.resorts.find(r => r.id === q);
   const cr = !full && q ? resolveResort(q) : null;
   window.scrollTo(0, 0);
-  if (full || cr?.detail === 'full') { const id = full ? full.id : cr.id; addRecent(id); await showDash(id); }
-  else if (cr) { addRecent(cr.id); setBodyView('basic'); safe('nav', renderChrome); await showBasic(cr.id); }
-  else if (new URLSearchParams(location.search).has('plan')) { setBodyView('plan'); safe('nav', renderChrome); safe('plan', renderPlan); }
-  else { setBodyView('disc'); safe('nav', renderChrome); renderDiscover(); }
+  if (full || cr?.detail === 'full') { const id = full ? full.id : cr.id; addRecent(id); await showDash(id); virtualPageView('resort_full', id); }
+  else if (cr) { addRecent(cr.id); setBodyView('basic'); safe('nav', renderChrome); await showBasic(cr.id); virtualPageView('resort_basic', cr.id); }
+  else if (new URLSearchParams(location.search).has('plan')) { setBodyView('plan'); safe('nav', renderChrome); safe('plan', renderPlan); virtualPageView('plan'); }
+  else { setBodyView('disc'); safe('nav', renderChrome); renderDiscover(); virtualPageView('home'); }
 }
 function openResort(id) {
   track('resort_select', id);
