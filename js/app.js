@@ -1,9 +1,10 @@
 import { openMeteoUrl, splitOpenMeteo, dailyRows, hourlyRows, weatherEmoji, carsUrl, slimEvents, EVENT_CLASSES,
-  nwsUrl, slimAlerts, verdictFor, outfitFor, recommendFrom, fmt, wxGroupOf, wxGroupCfg, wxGroupCount } from './core.js?v=0580a66e88';
-import { STR, PACK_DEFAULT } from './i18n.js?v=0580a66e88';
-import { selectCameras, routeSegments, inCO } from './route.js?v=0580a66e88';
-import { loadStart, saveStart, isDefaultStart, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=0580a66e88';
-import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=0580a66e88';
+  nwsUrl, slimAlerts, verdictFor, outfitFor, recommendFrom, fmt, wxGroupOf, wxGroupCfg, wxGroupCount } from './core.js?v=0899ae94e1';
+import { STR, PACK_DEFAULT } from './i18n.js?v=0899ae94e1';
+import { selectCameras, routeSegments, inCO } from './route.js?v=0899ae94e1';
+import { dl, initAnalytics, selectResort, resortCompare, forecast, gear, startSet, pageView } from './analytics.js?v=0899ae94e1';
+import { loadStart, saveStart, isDefaultStart, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=0899ae94e1';
+import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=0899ae94e1';
 
 const LS = {
   get: (k, d) => { try { const v = localStorage.getItem('ski.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -24,35 +25,23 @@ const $ = s => document.querySelector(s);
  *  plus the same interaction as a Google Tag Manager dataLayer event. Never throws.
  *  dataLayer params are ids/labels only: never search text, addresses, coordinates or city names. */
 const GTM_EVENTS = {
-  resort_select: v => ({ event: 'resort_select', resort_id: v }),
   disc_tab: v => ({ event: 'tab_change', tab: v }),
   disc_search: () => ({ event: 'search' }),
-  disc_fav: (v, x) => ({ event: v === 'add' ? 'favorite_add' : 'favorite_remove', resort_id: x?.resort_id }),
-  disc_compare: (v, x) => ({ event: 'compare', resort_ids: x?.resort_ids, compare_count: x?.count }),
-  disc_view: v => ({ event: 'list_map_toggle', view: v }),
-  alt_open: v => ({ event: 'alternative_open', resort_id: v }),
-  lang_toggle: v => ({ event: 'language_change', language: v }),
-  unit_toggle: v => ({ event: 'unit_change', units: v })
+  disc_fav: (v, x) => ({ event: v === 'add' ? 'favorite_add' : 'favorite_remove', resort_id: x?.resort_id, resort_name: x?.resort_id ? nameOf(x.resort_id) : null }),
+  disc_view: v => ({ event: 'list_map_toggle', action: v }),
+  lang_toggle: v => ({ event: 'language_change', action: v })
 };
-function dl(o) { try { (window.dataLayer = window.dataLayer || []).push(o); } catch {} }
+function nameOf(id) {
+  const f = state.cfg?.resorts?.find(r => r.id === id); if (f) return typeof f.name === 'object' ? f.name.en : f.name;
+  try { const c = catalogResort(id); if (c) return c.name; } catch {}
+  return null;
+}
 function track(e, v, extra) {
   try { const m = GTM_EVENTS[e]; if (m) dl(m(v, extra)); } catch {}
   try {
     if (!/^(www\.)?(followthepowder|madeformykids)\.com$/.test(location.hostname) || !navigator.sendBeacon) return;
     navigator.sendBeacon('api/event', new Blob([JSON.stringify({ e, v: String(v ?? '') })], { type: 'text/plain' }));
   } catch { /* stats are optional */ }
-}
-/** start_location_set: the kind of start only (manual / auto = browser location on open / ip = approximate). */
-function trackStart(s) {
-  const k = s.kind === 'auto-ip' ? 'ip' : s.kind === 'auto-geo' ? 'auto' : 'manual';
-  dl({ event: 'start_location_set', location_type: k, ...(s.kind === 'preset' ? { start_preset: s.id } : {}) });
-}
-let vpvReady = false; // first page_view comes from GTM's own page load trigger
-function virtualPageView(type, id) {
-  const o = { page_type: type, ...(id ? { resort_id: id } : {}) };
-  if (id) dl({ event: 'resort_view', ...o });
-  if (!vpvReady) { vpvReady = true; return; }
-  dl({ event: 'virtual_page_view', page_path: location.pathname + location.search, page_location: location.origin + location.pathname + location.search, page_title: document.title, ...o });
 }
 // Null-safe element lookup for optional page parts (an older cached index.html may lack them).
 const $$ = s => document.querySelector(s) || document.createElement('div');
@@ -479,7 +468,7 @@ function renderOutlook() {
     const sum = arr => arr.reduce((x, y) => x + y, 0);
     const f = v => `${v.toFixed(v >= 10 ? 0 : 1)}${snowUnit()}`;
     const mx = Math.max(...sv, 0.1);
-    const mini = (arr, labs) => `<div class="mini">${arr.map((v, k) => `<span title="${f(v)}"><i style="height:${v ? Math.max(6, v / mx * 100) : 0}%"></i><em>${esc(labs[k])}</em></span>`).join('')}</div>`;
+    const mini = (arr, labs) => `<div class="mini" data-fc="snow_outlook">${arr.map((v, k) => `<span title="${f(v)}"><i style="height:${v ? Math.max(6, v / mx * 100) : 0}%"></i><em>${esc(labs[k])}</em></span>`).join('')}</div>`;
     return `<div class="orow" data-resort="${r.id}">
       <div class="oname"><b>${esc(r.short)}</b><span class="small muted">${esc(t('last24_rep'))}</span><b class="big">${i?.ok && i.snow?.h24 != null ? esc(fmt.snow(i.snow.h24, u)) : '—'}</b></div>
       <div class="oblk"><span class="small muted">${esc(t('next15'))} · <b>${f(sum(a))}</b></span>${mini(a, lab.slice(0, 5))}</div>
@@ -507,10 +496,10 @@ function renderWeather() {
   el.innerHTML = `<div class="sec-h"><h2>${esc(t('weather_h'))} · ${esc(r.short)}</h2>${badge('wx')}</div>
     <div class="row-sb"><h3>${esc(t('hourly_chart'))} · ${esc(elev)}</h3>${segCtl('point', [['summit', t('summit')], ['base', t('base')]], state.point)}</div>
     <div class="legend"><span class="lg-s"></span>${esc(t('legend_snow'))} <span class="lg-t"></span>${esc(t('legend_temp'))}</div>
-    <div class="scroll">${hourlyChart(hs)}</div>
+    <div class="scroll" data-fc="hourly">${hourlyChart(hs)}</div>
     <h3>${esc(t('daily_chart'))}</h3>
-    <div class="scroll">${barChart(sv, days.map(d => dayLabel(d.date, { weekday: 'short' })), { h: 110, barW: 34, gap: 8, fmtV: v => v.toFixed(v >= 10 ? 0 : 1) + snowUnit(), hi: i => i === 0 })}</div>
-    <div class="scroll"><div class="dchips">${days.map(d => `<div class="dchip"><b>${esc(dayLabel(d.date, { weekday: 'short' }))}</b><span>${weatherEmoji(d.code)}</span><span>${fmt.temp(d.summit.tMax, u)}</span><span class="muted">${fmt.temp(d.summit.tMin, u)}</span><span title="${esc(t('ratio'))}">${fmt.ratio(d.ratio)}</span><span class="muted" title="${esc(t('snowline'))}">⛰ ${fmt.elevRange(d.snowLineMin, d.snowLineMax, u)}</span></div>`).join('')}</div></div>
+    <div class="scroll" data-fc="daily">${barChart(sv, days.map(d => dayLabel(d.date, { weekday: 'short' })), { h: 110, barW: 34, gap: 8, fmtV: v => v.toFixed(v >= 10 ? 0 : 1) + snowUnit(), hi: i => i === 0 })}</div>
+    <div class="scroll" data-fc="daily"><div class="dchips">${days.map(d => `<div class="dchip"><b>${esc(dayLabel(d.date, { weekday: 'short' }))}</b><span>${weatherEmoji(d.code)}</span><span>${fmt.temp(d.summit.tMax, u)}</span><span class="muted">${fmt.temp(d.summit.tMin, u)}</span><span title="${esc(t('ratio'))}">${fmt.ratio(d.ratio)}</span><span class="muted" title="${esc(t('snowline'))}">⛰ ${fmt.elevRange(d.snowLineMin, d.snowLineMax, u)}</span></div>`).join('')}</div></div>
     <details class="more"><summary>ⓘ ${esc(t('more_info'))}</summary><p class="small muted">${esc(t('ratio_note'))}</p></details>`;
 }
 
@@ -705,7 +694,7 @@ function updateStartMsg() {
 }
 function setStart(s) {
   if (!isAutoStart(s)) state.manualStart = true; // a visitor's own pick wins over auto-location (and is remembered)
-  state.start = s; saveStart(s); trackStart(s); if (isAutoStart(s)) { applyStart(); return; }
+  state.start = s; saveStart(s); startSet(s); if (isAutoStart(s)) { applyStart(); return; }
   track('start_select', s.kind === 'preset' ? s.id : 'custom'); /* never the address or coordinates */ state.routes = {}; ctxMemo.clear();
   applyStart();
 }
@@ -737,13 +726,16 @@ const NICON = { n_kid_breaks: '☕', n_frostbite: '👃', n_wind: '💨', n_snow
 const BAND = { mild: '🙂', cold: '🥶', verycold: '❄️', extreme: '🧊', unknown: '?' };
 const LAYER = k => /^w_base/.test(k) ? 'base' : /^w_mid/.test(k) ? 'mid' : /^w_(shell|jacket)/.test(k) ? 'outer' : 'extra';
 
-function outfitCol(keys, who) {
+function outfitCol(keys, who, aud) {
   const g = { base: [], mid: [], outer: [], extra: [] };
   keys.forEach(k => g[LAYER(k)].push(k));
-  const chip = k => `<span class="wi" title="${esc(t(k))}"><i>${WICON[k] || '•'}</i>${esc(t('s_' + k))}</span>`;
-  return `<div class="wcol"><div class="who">${who}</div>
-    ${['base', 'mid', 'outer'].map(l => `<div class="layer l-${l}"><span class="ln">${esc(t('wear_layers_' + l))}</span>${g[l].map(chip).join('') || '<span class="muted small">—</span>'}</div>`).join('')}
-    <div class="extras">${g.extra.map(chip).join('')}</div></div>`;
+  const chip = k => `<button type="button" class="wi" data-k="${k}" title="${esc(t(k))}"><i>${WICON[k] || '•'}</i>${esc(t('s_' + k))}</button>`;
+  const CAT = { base: 'base_layer', mid: 'mid_layer', outer: 'outer_layer', extra: 'accessories' };
+  const det = l => g[l].length ? `<ul class="wdet" hidden>${g[l].map(k => `<li>${WICON[k] || '•'} ${esc(t(k))}</li>`).join('')}</ul>` : '';
+  const head = l => g[l].length ? `<button type="button" class="ln" data-wexp="${CAT[l]}" aria-expanded="false">${esc(t(l === 'extra' ? 'wear_extras' : 'wear_layers_' + l))} <span aria-hidden="true">▸</span></button>` : `<span class="ln">${esc(t(l === 'extra' ? 'wear_extras' : 'wear_layers_' + l))}</span>`;
+  return `<div class="wcol" data-aud="${aud}"><div class="who">${who}</div>
+    ${['base', 'mid', 'outer'].map(l => `<div class="layer l-${l}">${head(l)}${g[l].map(chip).join('') || '<span class="muted small">—</span>'}${det(l)}</div>`).join('')}
+    <div class="extras">${g.extra.length ? head('extra') : ''}${g.extra.map(chip).join('')}${det('extra')}</div></div>`;
 }
 
 function renderWear() {
@@ -751,10 +743,10 @@ function renderWear() {
   if (!days) { el.innerHTML = `<h2>${esc(t('wear_h'))}</h2><p class="muted">${esc(t('r_wx_unavailable'))}</p>`; return; }
   const card = (d, i) => {
     const o = outfitFor(d);
-    return `<article class="wcard band-${o.band}">
+    return `<article class="wcard band-${o.band}" data-day="${i === 0 ? 'today' : esc(d.date)}">
       <header><b>${i === 0 ? esc(t('wear_today')) : esc(dayLabel(d.date, { weekday: 'short', month: 'numeric', day: 'numeric' }))}</b>
         <span class="wtemp">${BAND[o.band]} ${fmt.temp(d.summit.feelsMin, u)}</span><span class="badge band-${o.band}">${esc(t('band_' + o.band))}</span></header>
-      <div class="wcols">${outfitCol(o.adult, '👩 ' + esc(t('adults')))}${outfitCol(o.kid, '🧒 ' + esc(t('kids')))}</div>
+      <div class="wcols">${outfitCol(o.adult, '👩 ' + esc(t('adults')), 'adult')}${outfitCol(o.kid, '🧒 ' + esc(t('kids')), 'kid')}</div>
       <div class="wnotes">${o.notes.map(k => `<span class="wi n" title="${esc(t(k))}"><i>${NICON[k] || '•'}</i>${esc(t('s_' + k))}</span>`).join('')}</div>
     </article>`;
   };
@@ -796,6 +788,7 @@ function bindPack() {
     if (e.target.type !== 'checkbox') return;
     const id = e.target.closest('li').dataset.id; const items = packItems();
     const it = items.find(x => x.id === id); if (it) it.done = e.target.checked; LS.set('pack', items); renderPack();
+    if (it) gear(it.def != null && PACK_DEFAULT[it.def] ? PACK_DEFAULT[it.def].en : 'custom_item', 'packing', e.target.checked ? 'check' : 'uncheck'); // never the user's own text
   });
   body.addEventListener('click', e => {
     if (e.target.classList.contains('x')) { const id = e.target.closest('li').dataset.id; LS.set('pack', packItems().filter(x => x.id !== id)); renderPack(); }
@@ -838,13 +831,15 @@ function renderAll() {
 
 function bind() {
   $('#btn-lang').onclick = () => { state.lang = state.lang === 'zh' ? 'en' : 'zh'; LS.set('lang', state.lang); renderView(); track('lang_toggle', state.lang); };
-  $('#btn-units').onclick = () => { state.units = U() === 'imperial' ? 'metric' : 'imperial'; LS.set('units', state.units); renderView(); track('unit_toggle', state.units); };
+  $('#btn-units').onclick = () => { state.units = U() === 'imperial' ? 'metric' : 'imperial'; LS.set('units', state.units); renderView(); track('unit_toggle', state.units); forecast('unit_toggle', state.units); };
   $('#btn-refresh').onclick = () => { if (state.view === 'dash') refresh(); else { const b = $('#btn-refresh'); b.classList.add('spin'); loadConditions(true).finally(() => { b.classList.remove('spin'); renderView(); }); } };
   document.addEventListener('click', e => {
     const rc = e.target.closest('[data-resort]');
-    if (rc && (!e.target.closest('details') || e.target.closest('.omore'))) { state.resort = rc.dataset.resort; LS.set('resort', state.resort); track('resort_select', state.resort); try { addRecent(state.resort); history.replaceState({ resort: state.resort }, '', `?resort=${encodeURIComponent(state.resort)}`); } catch {} syncWx(); renderAll(); routeAll(); if (state.view === 'dash') ensureWx(); if (rc.classList.contains('orow') || rc.classList.contains('rcard')) $('#verdict').scrollIntoView({ behavior: 'smooth' }); return; }
+    if (rc && (!e.target.closest('details') || e.target.closest('.omore'))) { state.resort = rc.dataset.resort; LS.set('resort', state.resort); track('resort_select', state.resort); selectResort(state.resort, 'card'); try { addRecent(state.resort); history.replaceState({ resort: state.resort }, '', `?resort=${encodeURIComponent(state.resort)}`); } catch {} syncWx(); renderAll(); routeAll(); if (state.view === 'dash') ensureWx(); if (rc.classList.contains('orow') || rc.classList.contains('rcard')) $('#verdict').scrollIntoView({ behavior: 'smooth' }); return; }
     const b = e.target.closest('.seg-ctl button');
-    if (b && !b.closest('#basic')) { if (b.parentElement.dataset.ctl === 'point') { state.point = b.dataset.v; LS.set('point', state.point); } renderWeather(); return; }
+    if (b && !b.closest('#basic')) { if (b.parentElement.dataset.ctl === 'point') { state.point = b.dataset.v; LS.set('point', state.point); forecast('summit_base', b.dataset.v); } renderWeather(); return; }
+    const wx = e.target.closest('[data-wexp]');
+    if (wx) { const open = wx.getAttribute('aria-expanded') !== 'true'; const det = wx.parentElement.querySelector('.wdet'); setTimeout(() => { wx.setAttribute('aria-expanded', String(open)); if (det) det.hidden = !open; }, 0); return; }
     const yt = e.target.closest('.yt[data-yt]');
     if (yt && !yt.querySelector('iframe')) yt.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(yt.dataset.yt)}?autoplay=1&mute=1&playsinline=1" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen title="live"></iframe>`;
   });
@@ -893,13 +888,13 @@ async function route(push) {
   const full = q && state.cfg.resorts.find(r => r.id === q);
   const cr = !full && q ? resolveResort(q) : null;
   window.scrollTo(0, 0);
-  if (full || cr?.detail === 'full') { const id = full ? full.id : cr.id; addRecent(id); await showDash(id); virtualPageView('resort_full', id); }
-  else if (cr) { addRecent(cr.id); setBodyView('basic'); safe('nav', renderChrome); await showBasic(cr.id); virtualPageView('resort_basic', cr.id); }
-  else if (new URLSearchParams(location.search).has('plan')) { setBodyView('plan'); safe('nav', renderChrome); safe('plan', renderPlan); virtualPageView('plan'); }
-  else { setBodyView('disc'); safe('nav', renderChrome); renderDiscover(); virtualPageView('home'); }
+  if (full || cr?.detail === 'full') { const id = full ? full.id : cr.id; addRecent(id); await showDash(id); pageView('resort_full', id); }
+  else if (cr) { addRecent(cr.id); setBodyView('basic'); safe('nav', renderChrome); await showBasic(cr.id); pageView('resort_basic', cr.id); }
+  else if (new URLSearchParams(location.search).has('plan')) { setBodyView('plan'); safe('nav', renderChrome); safe('plan', renderPlan); pageView('plan'); }
+  else { setBodyView('disc'); safe('nav', renderChrome); renderDiscover(); pageView('home'); }
 }
-function openResort(id) {
-  track('resort_select', id);
+function openResort(id, source = 'card') {
+  track('resort_select', id); selectResort(id, source);
   try { history.pushState({ resort: id }, '', `?resort=${encodeURIComponent(id)}`); } catch { location.search = `?resort=${encodeURIComponent(id)}`; return; }
   route();
 }
@@ -917,12 +912,13 @@ function goHome() {
   try { state.cfg = await getJson(`data/resorts.json?v=${Math.floor(Date.now() / 600000)}`); }
   catch { window.__skiReady = true; $$('#verdict').innerHTML = `<div class="why"><p>${esc(t('unavailable'))}: resorts.json · <a href="" onclick="location.reload();return false">↻</a></p></div>`; return; }
   if (!state.cfg.resorts.some(r => r.id === state.resort)) state.resort = state.cfg.resorts[0].id;
+  initAnalytics({ nameOf, currentId: () => (state.view === 'dash' || state.view === 'basic') ? new URLSearchParams(location.search).get('resort') : null });
   try { state.start = loadStart(state.cfg); } catch { state.start = { ...state.cfg.trip.origin, kind: 'preset' }; }
   state.manualStart = hasManualStart();
   if (!state.manualStart) autoLocate({ api: API, onUpdate: setStart, shouldStop: () => state.manualStart }).catch(() => {});
   try { if ($('#start')) state.startUI = mountStartUI($('#start'), { cfg: state.cfg, t, L, getStart: () => state.start, onChange: setStart }); }
   catch (e) { console.warn('[ski] start UI failed:', e); }
-  initDiscover({ state, L, t, ui: UI, roadCheck, roadCount, reasonText, getJson, track, loadLeaflet, getStart: () => state.start, setStart, open: openResort, loadRoads: async () => { if (!state.roads.data) { try { await loadServer(); } catch {} } return state.roads; }, home: goHome, plan: openPlan, view: () => state.view });
+  initDiscover({ compare: resortCompare, forecast, state, L, t, ui: UI, roadCheck, roadCount, reasonText, getJson, track, loadLeaflet, getStart: () => state.start, setStart, open: openResort, loadRoads: async () => { if (!state.roads.data) { try { await loadServer(); } catch {} } return state.roads; }, home: goHome, plan: openPlan, view: () => state.view });
   try { bind(); } catch (e) { console.warn('[ski] bind failed:', e); }
   document.querySelector('.brand')?.addEventListener('click', e => { e.preventDefault(); goHome(); });
   $$('#dash-back').addEventListener('click', e => { e.preventDefault(); goHome(); });
@@ -930,6 +926,7 @@ function goHome() {
   safe('nav', renderChrome);
   const q = new URLSearchParams(location.search).get('resort');
   const isFull = q && state.cfg.resorts.some(r => r.id === q);
+  if (q) selectResort(q, 'url');
   // Discovery needs the catalog; the full dashboard can start without it.
   const catP = loadCatalog().catch(e => { console.warn('[ski] catalog failed:', e); });
   const condP = loadConditions().catch(() => {});

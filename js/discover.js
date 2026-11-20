@@ -1,8 +1,8 @@
 // Resort discovery (default home) + basic resort view for catalog resorts without a full dashboard.
 // Data: data/catalog.json (static, verified) + api/catalog-conditions.json (Open-Meteo model, refreshed hourly by
 // the ski-data Worker; resort-published base depth / terrain open / lifts / 24 h snow where SkiDay reads a public feed) + api/forecast.json?r=<id> (basic view).
-import { fmt, weatherEmoji, chainLevel, recommendFrom, visLevel } from './core.js?v=0580a66e88';
-import { getRoute, getTable } from './start.js?v=0580a66e88';
+import { fmt, weatherEmoji, chainLevel, recommendFrom, visLevel } from './core.js?v=0899ae94e1';
+import { getRoute, getTable } from './start.js?v=0899ae94e1';
 
 const S = {
   en: {
@@ -495,7 +495,7 @@ function renderCompare() {
     ${row(tr('d_upd', '').trim() || 'Updated', r => esc(cardUpd(r).replace(tr('d_upd', ''), '').trim() || '—'))}
     </tbody></table></div><p class="small muted">${esc(tr('d_model'))} ✓ = ${X.state.lang === 'zh' ? '雪场公布' : 'resort-reported'}</p></div>`;
   $('#d-modal').hidden = false;
-  X.track('disc_compare', 'open', { resort_ids: D.cmp.join(','), count: D.cmp.length });
+  X.track('disc_compare', 'open'); X.compare?.(D.cmp);
 }
 
 /* ---------- map ---------- */
@@ -628,7 +628,7 @@ function bindShell() {
   q.addEventListener('keydown', e => {
     const ac = $('#dq-ac'); const items = ac._items || [];
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { if (!items.length) return; e.preventDefault(); D.acIdx = (D.acIdx + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length; renderAC(); }
-    else if (e.key === 'Enter') { e.preventDefault(); const it = items[D.acIdx >= 0 ? D.acIdx : 0]; if (it && !ac.hidden) { ac.hidden = true; X.open(it.r.id); } else { ac.hidden = true; q.blur(); } }
+    else if (e.key === 'Enter') { e.preventDefault(); const it = items[D.acIdx >= 0 ? D.acIdx : 0]; if (it && !ac.hidden) { ac.hidden = true; X.open(it.r.id, 'search'); } else { ac.hidden = true; q.blur(); } }
     else if (e.key === 'Escape') { ac.hidden = true; }
   });
   q.addEventListener('blur', () => setTimeout(() => { $('#dq-ac').hidden = true; }, 200));
@@ -660,7 +660,7 @@ function bindShell() {
     if (e.target.closest('[data-cmpclear]')) { D.cmp = []; renderList(); return; }
     if (e.target.closest('[data-cmpclose]') || e.target.id === 'd-modal') { $('#d-modal').hidden = true; return; }
     const op = e.target.closest('[data-open]');
-    if (op) { e.preventDefault(); $('#d-modal').hidden = true; document.body.classList.remove('dmap-full'); D.view = 'list'; X.open(op.dataset.open); }
+    if (op) { e.preventDefault(); $('#d-modal').hidden = true; document.body.classList.remove('dmap-full'); D.view = 'list'; X.open(op.dataset.open, op.closest('#dq-ac') ? 'search' : op.closest('#d-modal') ? 'compare' : op.closest('#d-map, .leaflet-container') ? 'map' : 'card'); }
   });
   // Card <-> map: hovering or focusing a card highlights its pin (or the cluster holding it).
   const hov = e => { const c = e.target.closest('.dcard[data-id]'); hlPin(c && e.type !== 'mouseout' && e.type !== 'focusout' ? c.dataset.id : null); };
@@ -800,10 +800,10 @@ export function renderBasic() {
   <main class="wrap">
     <section class="block card"><div class="sec-h"><h2>${esc(tr('b_48'))}</h2>
       <div class="seg-ctl" data-ctl="bpoint">${['summit', 'mid'].map(p => `<button type="button" data-bp="${p}" class="${B.point === p ? 'on' : ''}">${esc(tr(p === 'mid' ? 'b_mid' : 'b_summit'))}</button>`).join('')}</div></div>
-      ${pt ? chart48(pt) : `<p class="muted">${esc(B.fcErr ? tr('b_fc_fail') : tr('b_loading'))}</p>`}
+      ${pt ? `<div data-fc="hourly">${chart48(pt)}</div>` : `<p class="muted">${esc(B.fcErr ? tr('b_fc_fail') : tr('b_loading'))}</p>`}
       ${B.fc ? `<p class="small muted">${esc(tr('b_fc_src', tr(B.point === 'mid' ? 'b_mid' : 'b_summit'), fmt.elev(B.fc.points[B.point], u)))} ${esc(tr('d_upd', updTime(B.fc.fetchedAt)))}</p>` : ''}
     </section>
-    <section class="block card"><h2>${esc(tr('b_7d'))}</h2>${pt ? table7(pt) : `<p class="muted">${esc(B.fcErr ? tr('b_fc_fail') : tr('b_loading'))}</p>`}</section>
+    <section class="block card"><h2>${esc(tr('b_7d'))}</h2>${pt ? `<div data-fc="daily">${table7(pt)}</div>` : `<p class="muted">${esc(B.fcErr ? tr('b_fc_fail') : tr('b_loading'))}</p>`}</section>
     <section class="block card"><h2>${esc(tr('b_map'))}</h2>
       <div id="b-map" class="rmap"></div>
       <p class="small"><a href="${gdir}" target="_blank" rel="noopener">${esc(tr('b_dir'))} ↗</a></p>
@@ -852,7 +852,7 @@ export async function showBasic(id) {
   if (!document.getElementById('basic').dataset.bound) {
     document.getElementById('basic').dataset.bound = '1';
     document.getElementById('basic').addEventListener('click', e => {
-      const bp = e.target.closest('[data-bp]'); if (bp) { D.basic.point = bp.dataset.bp; renderBasic(); return; }
+      const bp = e.target.closest('[data-bp]'); if (bp) { D.basic.point = bp.dataset.bp; X.forecast?.('summit_base', bp.dataset.bp); renderBasic(); return; }
       const fav = e.target.closest('[data-fav]'); if (fav) { toggleFav(fav.dataset.fav); renderBasic(); return; }
       if (e.target.closest('[data-home]')) { e.preventDefault(); X.home(); }
     });
@@ -948,7 +948,7 @@ export function renderAlts(curId, el) {
   if (!el) return;
   if (!el.dataset.altBound) {
     el.dataset.altBound = '1';
-    el.addEventListener('click', e => { const a = e.target.closest('[data-alt]'); if (!a || e.metaKey || e.ctrlKey) return; e.preventDefault(); X.track('alt_open', a.dataset.alt); X.open(a.dataset.alt); });
+    el.addEventListener('click', e => { const a = e.target.closest('[data-alt]'); if (!a || e.metaKey || e.ctrlKey) return; e.preventDefault(); X.track('alt_open', a.dataset.alt); X.open(a.dataset.alt, 'alternative'); });
   }
   const head = `<h2>${esc(tr('a_h'))}</h2>`;
   if (!D.cat || !D.cond) { el.innerHTML = `${head}<p class="muted">${esc(tr('a_loading'))}</p>`; return; }
