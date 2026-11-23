@@ -15,16 +15,16 @@ const CFG_URL = 'https://raw.githubusercontent.com/Jzhang1011/followthepowder/ma
 // Weather group 0 is src:weather (served in latest.json); groups 1.. are src:weather:g<N> (api/weather.json?g=N).
 const WXG = Math.max(4, wxGroupCount(bundledCfg)); // key space; the live cfg decides how many groups are refreshed
 const wxKey = g => g > 0 ? `weather:g${g}` : 'weather';
-const KEYS = ['weather', ...Array.from({ length: WXG - 1 }, (_, i) => wxKey(i + 1)), 'roads', 'alerts', 'cameras', 'camsall', 'intel', 'cotrip'];
+const KEYS = ['weather', ...Array.from({ length: WXG - 1 }, (_, i) => wxKey(i + 1)), 'roads', 'alerts', 'cameras', 'camsall', 'intel', 'cotrip', 'utah-roads'];
 /** What a cron tick (every 15 min, UTC) refreshes. */
 function plan(d) {
   const h = d.getUTCHours(), q = Math.floor(d.getUTCMinutes() / 15);
   if (h === 12 && q === 2) return SOURCES;                     // 12:30 UTC = 5:30 AM MST: everything
-  const out = ['roads', 'alerts', 'cameras'];                  // every 15 min
+  const out = ['roads', 'utah-roads', 'alerts', 'cameras'];    // every 15 min
   if (q === 0) { out.push('weather'); if (h >= 12 && h <= 23) out.push('intel'); } // hourly; intel 5 AM–4 PM MST
   return out;
 }
-const PLAN = { cron: '*/15 * * * *', every15min: ['roads', 'alerts', 'cameras', 'catalog (1 of 4 slices: Open-Meteo + resort lift/terrain/snow feeds; each resort hourly)'], hourly: ['weather (group 0 here; groups 1.. fanned out, one self-request each)'], hourly_12_23_utc: ['intel'], daily_12_30_utc: SOURCES };
+const PLAN = { cron: '*/15 * * * *', every15min: ['roads', 'utah-roads', 'alerts', 'cameras', 'catalog (1 of 4 slices: Open-Meteo + resort lift/terrain/snow feeds; each resort hourly)'], hourly: ['weather (group 0 here; groups 1.. fanned out, one self-request each)'], hourly_12_23_utc: ['intel'], daily_12_30_utc: SOURCES };
 const TTL = 60; // seconds: browsers and the edge re-check every minute; data itself changes every 15–60 min
 
 async function loadCfg() {
@@ -66,7 +66,7 @@ async function refresh(env, names, { wxGroup = 0 } = {}) {
   }
   const want = names.filter(n => n !== 'cotrip');
   const prev = await readAll(env, [...new Set([...want, ...(want.includes('cameras') ? ['camsall'] : [])])]);
-  const { rec, failures } = await runSources(want, cfg, prev, { openMeteoKey: env.OPEN_METEO_KEY });
+  const { rec, failures } = await runSources(want, cfg, prev, { openMeteoKey: env.OPEN_METEO_KEY, udotApiKey: env.UDOT_API_KEY });
   if (env.COTRIP_API_KEY && (names.includes('cotrip') || names.includes('roads'))) {
     const p = await env.SKI_DATA.get('src:cotrip', 'json');
     try { rec.cotrip = { status: 'ok', ok: true, fetchedAt: new Date().toISOString(), attemptAt: new Date().toISOString(), error: null, data: await collectCotrip(env) }; }
@@ -101,7 +101,7 @@ const json = (body, status = 200, extra = {}) => new Response(JSON.stringify(bod
 
 async function serve(name, env, opt = {}) {
   if (name === 'latest') {
-    const rec = await readAll(env, ['weather', 'roads', 'alerts', 'cameras']);
+    const rec = await readAll(env, ['weather', 'roads', 'alerts', 'cameras', 'utah-roads']);
     if (!Object.values(rec).some(Boolean)) return json({ error: 'no data yet' }, 503);
     return json(toLatest(rec, 'ski-data-worker'));
   }
@@ -122,7 +122,7 @@ async function serve(name, env, opt = {}) {
   if (name === 'status') {
     const rec = await readAll(env);
     const sources = Object.fromEntries(Object.entries(rec).filter(([, v]) => v).map(([k, v]) => [k, { status: v.status, fetchedAt: v.fetchedAt, attemptAt: v.attemptAt, error: v.error || null }]));
-    return json({ now: new Date().toISOString(), schedule: PLAN, keys: { openMeteo: !!env.OPEN_METEO_KEY, cotrip: !!env.COTRIP_API_KEY }, sources });
+    return json({ now: new Date().toISOString(), schedule: PLAN, keys: { openMeteo: !!env.OPEN_METEO_KEY, cotrip: !!env.COTRIP_API_KEY, udot: !!env.UDOT_API_KEY }, sources });
   }
   return json({ error: 'not found' }, 404);
 }

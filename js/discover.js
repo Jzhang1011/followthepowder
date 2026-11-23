@@ -1,8 +1,8 @@
 // Resort discovery (default home) + basic resort view for catalog resorts without a full dashboard.
 // Data: data/catalog.json (static, verified) + api/catalog-conditions.json (Open-Meteo model, refreshed hourly by
 // the ski-data Worker; resort-published base depth / terrain open / lifts / 24 h snow where SkiDay reads a public feed) + api/forecast.json?r=<id> (basic view).
-import { fmt, weatherEmoji, chainLevel, recommendFrom, visLevel } from './core.js?v=102eab543a';
-import { getRoute, getTable } from './start.js?v=102eab543a';
+import { fmt, weatherEmoji, chainLevel, recommendFrom, visLevel } from './core.js?v=27e13725dd';
+import { getRoute, getTable } from './start.js?v=27e13725dd';
 
 const S = {
   en: {

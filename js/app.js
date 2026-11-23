@@ -1,10 +1,11 @@
 import { openMeteoUrl, splitOpenMeteo, dailyRows, hourlyRows, weatherEmoji, carsUrl, slimEvents, EVENT_CLASSES,
-  nwsUrl, slimAlerts, verdictFor, outfitFor, recommendFrom, fmt, wxGroupOf, wxGroupCfg, wxGroupCount } from './core.js?v=102eab543a';
-import { STR, PACK_DEFAULT } from './i18n.js?v=102eab543a';
-import { selectCameras, routeSegments, inCO } from './route.js?v=102eab543a';
-import { dl, initAnalytics, selectResort, resortCompare, forecast, gear, startSet, pageView } from './analytics.js?v=102eab543a';
-import { loadStart, saveStart, isDefaultStart, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=102eab543a';
-import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=102eab543a';
+  nwsUrl, slimAlerts, verdictFor, outfitFor, recommendFrom, fmt, wxGroupOf, wxGroupCfg, wxGroupCount,
+  utahCarsUrl, slimUtahEvents } from './core.js?v=27e13725dd';
+import { STR, PACK_DEFAULT } from './i18n.js?v=27e13725dd';
+import { selectCameras, routeSegments, inCO, inUT } from './route.js?v=27e13725dd';
+import { dl, initAnalytics, selectResort, resortCompare, forecast, gear, startSet, pageView } from './analytics.js?v=27e13725dd';
+import { loadStart, saveStart, isDefaultStart, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=27e13725dd';
+import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=27e13725dd';
 
 const LS = {
   get: (k, d) => { try { const v = localStorage.getItem('ski.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -17,6 +18,7 @@ const state = {
   point: LS.get('point', 'summit'),
   cfg: null,
   wx: { data: null, mode: null, at: null }, wxG: {}, roads: { data: null, mode: null, at: null }, alerts: { data: null, mode: null, at: null },
+  utahRoads: { data: null, mode: null, at: null }, // {events, cameras, passes} from the UDOT feeds; null until loaded
   intel: { data: {}, at: null, mode: null }, cams: null, camsAt: null, start: null, routes: {}, camsAll: null, startUI: null, map: null, refreshing: false, lastLive: 0
 };
 
@@ -91,7 +93,7 @@ async function getJson(url, ms = 20000) {
 // falling back to the git snapshot (data/*.json, GitHub Action backup). The browser only calls the
 // upstream APIs itself when neither copy is fresh enough (see LIMIT), so visitors share one fetch.
 const API = 'api/';
-const LIMIT = { wx: 180, roads: 30, alerts: 30, intel: 120 }; // minutes before a copy counts as stale
+const LIMIT = { wx: 180, roads: 30, utahRoads: 30, alerts: 30, intel: 120 }; // minutes before a copy counts as stale
 const ageMin = at => { if (!at) return Infinity; const ms = typeof at === 'number' ? at : new Date(String(at).replace(/([+-]\d{2})(\d{2})$/, '$1:$2')).getTime(); return isNaN(ms) ? Infinity : (Date.now() - ms) / 60000; };
 const isStale = slot => !state[slot].data || ageMin(state[slot].at) > LIMIT[slot];
 
@@ -117,6 +119,7 @@ async function loadServer() {
     const s = snap.value.j, from = snap.value.from, src = s.sources || {};
     if (src.weather?.ok && s.weather) takeWx(0, s.weather, src.weather.fetchedAt, from, src.weather.status);
     if (src.roads?.ok && s.roads) take('roads', s.roads.events, src.roads.fetchedAt, from, src.roads.status);
+    if (src['utah-roads']?.ok && s['utah-roads']) take('utahRoads', s['utah-roads'], src['utah-roads'].fetchedAt, from, src['utah-roads'].status);
     if (s.alerts && src.alerts?.ok !== false && Object.values(s.alerts).some(v => v)) take('alerts', s.alerts, src.alerts?.fetchedAt, from, src.alerts?.status);
     if (s.cameras) state.cams = s.cameras;
   }
@@ -153,15 +156,25 @@ async function loadWxGroups(groups) {
 }
 const otherWxGroups = () => { const cur = wxGroupOf(resort()); return Array.from({ length: wxGroupCount(state.cfg) }, (_, i) => i).filter(g => g !== cur && g > 0 && !wxFresh(g)); };
 
+/** The road-data slot for a resort: CDOT for Colorado, UDOT for Utah. */
+const roadsSlot = r => r?.region === 'UT' ? state.utahRoads : state.roads;
+/** The slim events array for a resort's road slot (null when not loaded). */
+const roadsEvents = r => r?.region === 'UT' ? (state.utahRoads.data?.events || null) : state.roads.data;
+
 /** Last resort: fetch upstream directly, only for sources with no fresh copy. */
 async function loadLiveFallback() {
   const cfg = state.cfg; const jobs = []; const g = wxGroupOf(resort());
   // Only the open resort's weather group, and only the open resort's NWS alerts: one visitor never fans out to every resort.
   if (!wxFresh(g)) { const gc = wxGroupCfg(cfg, g); jobs.push(getJson(openMeteoUrl(gc)).then(j => { const d = splitOpenMeteo(gc, j); if (!Object.keys(d).length) throw new Error('empty'); takeWx(g, d, new Date().toISOString(), 'live', 'ok'); })
     .catch(e => { state.wx.error = String(e.message || e); })); }
-  if (isStale('roads')) jobs.push(Promise.all(EVENT_CLASSES.map(c => getJson(carsUrl(cfg, c), 30000).then(j => slimEvents(cfg, c, j))))
-    .then(all => { state.roads = { data: all.flat(), mode: 'live', at: new Date().toISOString(), status: 'ok' }; })
-    .catch(e => { state.roads.error = String(e.message || e); }));
+  if (isStale(resort().region === 'UT' ? 'utahRoads' : 'roads')) {
+    if (resort().region === 'UT') jobs.push(getJson(utahCarsUrl(cfg), 30000)
+      .then(j => { state.utahRoads = { data: { events: slimUtahEvents(cfg, j), cameras: [], passes: [] }, mode: 'live', at: new Date().toISOString(), status: 'ok' }; })
+      .catch(e => { state.utahRoads.error = String(e.message || e); }));
+    else jobs.push(Promise.all(EVENT_CLASSES.map(c => getJson(carsUrl(cfg, c), 30000).then(j => slimEvents(cfg, c, j))))
+      .then(all => { state.roads = { data: all.flat(), mode: 'live', at: new Date().toISOString(), status: 'ok' }; })
+      .catch(e => { state.roads.error = String(e.message || e); }));
+  }
   if (isStale('alerts') || !state.alerts.data?.[resort().id]) jobs.push(Promise.all([resort()].map(r => getJson(nwsUrl(cfg, r)).then(j => [r.id, slimAlerts(j)])))
     .then(all => { state.alerts = { data: { ...(state.alerts.data || {}), ...Object.fromEntries(all) }, mode: state.alerts.data ? state.alerts.mode : 'live', at: state.alerts.at || new Date().toISOString(), status: 'ok' }; })
     .catch(e => { state.alerts.error = String(e.message || e); }));
@@ -196,23 +209,29 @@ const ctxMemo = new Map();
 function ctxFor(r) {
   const rs = state.routes[r.id];
   if (!rs || rs.status !== 'ok') return null;
-  const key = `${rs.key}|${state.roads.at}|${state.camsAll ? state.camsAll.length : 0}`;
+  const ut = r.region === 'UT';
+  const evData = ut ? (state.utahRoads.data?.events || []) : (state.roads.data || []);
+  const camData = ut ? (state.utahRoads.data?.cameras || null) : state.camsAll;
+  const key = `${rs.key}|${ut ? state.utahRoads.at : state.roads.at}|${camData ? camData.length : 0}`;
   if (ctxMemo.get(r.id)?.key === key) return ctxMemo.get(r.id);
   const route = rs.route;
-  const dyn = routeSegments(route, state.roads.data || []);
-  const cams = state.camsAll ? selectCameras(route, state.camsAll, { max: 15, maxDist: 1500 }) : null;
-  // Does the route leave Colorado after entering it (e.g. Fort Collins → Steamboat via Wyoming)?
+  const dyn = routeSegments(route, evData, undefined, r.region);
+  const cams = camData ? selectCameras(route, camData, { max: 15, maxDist: 1500 }) : null;
+  // Does the route leave the home state after entering it (e.g. Fort Collins → Steamboat via Wyoming)?
   const e = Math.max(0, route.coEntry);
   const leaves = route.coEntry >= 0 && route.pts.slice(e).some(p => !inCO(p));
-  const c = { key, route, ...dyn, cams, leaves };
+  const ue = Math.max(0, route.utEntry);
+  const leavesUt = route.utEntry >= 0 && route.pts.slice(ue).some(p => !inUT(p));
+  const c = { key, route, ...dyn, cams, leaves, leavesUt };
   ctxMemo.set(r.id, c);
   return c;
 }
 function verdict(r) {
   const c = ctxFor(r);
   const cfg = c ? { ...state.cfg, segments: { ...state.cfg.segments, ...c.segments } } : state.cfg;
+  const evs = roadsEvents(r);
   return verdictFor(cfg, c ? { ...r, route: c.legs } : r, {
-    roads: state.roads.data ? { ok: true, events: c ? c.events : state.roads.data } : { ok: false },
+    roads: evs ? { ok: true, events: c ? c.events : evs } : { ok: false },
     alerts: state.alerts.data && state.alerts.data[r.id] ? { ok: true, list: state.alerts.data[r.id] } : { ok: false },
     days: daysFor(r), intel: intelFor(r)
   });
@@ -305,7 +324,7 @@ const SEV = { nogo: 0, caution: 1, unknown: 2, info: 3, go: 4 };
 const GROUP = { resort: 'mountain', chain: 'road', closure: 'road', incident: 'road', conditions: 'road', roads: 'road', nws: 'weather', snow: 'weather', wind: 'weather', cold: 'weather', vis: 'weather', weather: 'weather' };
 function srcOf(x, r) {
   if (x.kind === 'resort') return intelFor(r)?.source?.name || r.short;
-  if (GROUP[x.kind] === 'road') return t('src_cdot');
+  if (GROUP[x.kind] === 'road') return r.region === 'UT' ? t('src_udot') : t('src_cdot');
   return x.kind === 'nws' ? t('src_nws') : t('src_om');
 }
 /* ---------- Shared resort-page components (full dashboards + basic catalog pages, via ctx.ui) ---------- */
@@ -331,12 +350,13 @@ const UI = {
 };
 /** CDOT checks along a route (any resort, e.g. a basic Colorado page): same matching and levels as the full dashboards. */
 function roadCheck(r, route) {
-  if (!state.roads.data || !route) return null;
-  const dyn = routeSegments(route, state.roads.data);
+  const evs = roadsEvents(r);
+  if (!evs || !route) return null;
+  const dyn = routeSegments(route, evs, undefined, r.region);
   const cfg = { ...state.cfg, segments: { ...state.cfg.segments, ...dyn.segments } };
   const v = verdictFor(cfg, { ...r, route: dyn.legs }, { roads: { ok: true, events: dyn.events }, alerts: { ok: true, list: [] }, days: null });
   const segN = id => { const sg = dyn.segments[id]; return sg ? `${sg.key} · ${km(sg.km * 1000)}` : id; };
-  return { at: state.roads.at, reasons: v.reasons.filter(x => GROUP[x.kind] === 'road').map(x => ({ ...x, text: reasonText(x), segLabel: x.seg ? segN(x.seg) : '' })) };
+  return { at: roadsSlot(r).at, reasons: v.reasons.filter(x => GROUP[x.kind] === 'road').map(x => ({ ...x, text: reasonText(x), segLabel: x.seg ? segN(x.seg) : '' })) };
 }
 function renderVerdict() {
   const r = resort(); const v = verdict(r); const u = U();
@@ -347,7 +367,7 @@ function renderVerdict() {
   $$('#hero-credit').innerHTML = r.photo ? `📷 ${esc(r.photo.credit)} · <a href="${esc(r.photo.page)}" target="_blank" rel="noopener">${esc(r.photo.license)}</a>` : '';
   const bad = [...v.reasons].filter(x => x.level === 'nogo' || x.level === 'caution').sort((a, b) => SEV[a.level] - SEV[b.level]);
   const when = i?.ok ? fmtTime([i.asOf, i.snowAsOf].filter(Boolean).sort((a, b) => ageMin(a) - ageMin(b))[0] || i.fetchedAt) : '';
-  const basis = rec.key === 'rec_noreport' ? (noFeed(r) ? t('intel_nofeed') : t('rec_noreport_sub')) : t('rec_basis', `${t('rec_src_rep', `${i.source?.name || r.short}, ${when}`)}, ${t('rec_src_rest')}`);
+  const basis = rec.key === 'rec_noreport' ? (noFeed(r) ? t('intel_nofeed') : t('rec_noreport_sub')) : t('rec_basis', `${t('rec_src_rep', `${i.source?.name || r.short}, ${when}`)}, ${t(r.region === 'UT' ? 'rec_src_rest_ut' : 'rec_src_rest')}`);
   $('#verdict').innerHTML = UI.rec(rec, bad.map(reasonText), basis);
 
   // A. Mountain conditions
@@ -367,17 +387,24 @@ function renderVerdict() {
   // B. Getting there (start-location UI lives in #start, above this)
   const rs = state.routes[r.id]; const dm = driveMin(r);
   const dur = dm == null ? null : `${Math.floor(dm / 60)}h${String(dm % 60).padStart(2, '0')}`;
-  const roadsOk = !!state.roads.data;
+  const ut = r.region === 'UT';
+  const slot = roadsSlot(r);
+  const roadsOk = ut ? !!state.utahRoads.data?.events : !!state.roads.data;
   const cnt = kinds => roadCount(v.reasons, kinds, roadsOk);
-  const ch = cnt(['chain']), cl = cnt(['closure']), inc = cnt(['incident', 'conditions']);
+  const ch0 = cnt(['chain']), cl = cnt(['closure']), inc = cnt(['incident', 'conditions']);
+  // Utah feeds carry no chain data: no chain reason on the route means "not reported", not "none".
+  const ch = (ut && !v.reasons.some(x => x.kind === 'chain' && x.seg)) ? { cls: 'unknown', txt: t('g_chain_na') } : ch0;
+  const traffic = ut
+    ? `<a href="https://www.udottraffic.utah.gov/" target="_blank" rel="noopener">${esc(t('g_traffic_link_ut'))} ↗</a>`
+    : `<a href="https://www.cotrip.org/trip-planner" target="_blank" rel="noopener">${esc(t('g_traffic_link'))} ↗</a>`;
   $$('#getthere').innerHTML = `<ul class="glist">
       ${UI.grow(t('g_dist'), rs?.status === 'ok' ? esc(km(rs.route.distM)) : rs?.status === 'loading' ? `<span class="muted">${esc(t('route_loading'))}</span>` : '—')}
-      ${UI.grow(t('g_time'), dur ? `~${esc(dur)}` : '—', '', esc(rs?.status === 'ok' ? t('g_time_note') : dur ? t('g_time_static') : ''))}
-      ${UI.grow(t('g_traffic'), `<span class="muted">${esc(t('g_traffic_na'))}</span>`, '', `<a href="https://www.cotrip.org/trip-planner" target="_blank" rel="noopener">${esc(t('g_traffic_link'))} ↗</a>`)}
+      ${UI.grow(t('g_time'), dur ? `~${esc(dur)}` : '—', '', esc(rs?.status === 'ok' ? t('g_time_note') : dur ? t(ut ? 'g_time_static_ut' : 'g_time_static') : ''))}
+      ${UI.grow(t('g_traffic'), `<span class="muted">${esc(t('g_traffic_na'))}</span>`, '', traffic)}
       ${UI.grow(t('g_chain'), esc(ch.txt), ch.cls)}
       ${UI.grow(t('g_closure'), esc(cl.txt), cl.cls)}
       ${UI.grow(t('g_incident'), esc(inc.txt), inc.cls)}
-    </ul><p class="hp-src">${esc(t('g_src', roadsOk ? ago(state.roads.at) : t('unavailable')))} · <a href="#roads">${esc(t('g_more'))} ↓</a></p>`;
+    </ul><p class="hp-src">${esc(t(ut ? 'g_src_ut' : 'g_src', roadsOk ? ago(slot.at) : t('unavailable')))} · <a href="#roads">${esc(t('g_more'))} ↓</a></p>`;
 
   // What you should know before heading out: Mountain / Road / Weather
   const item = x => ({ level: x.level, text: reasonText(x), src: srcOf(x, r),
@@ -527,7 +554,7 @@ function freshness(kind, r) {
     const stale = i.stale || (opHours && m > LIMIT.intel) || prevDay;
     return { cls: stale ? 'stale' : 'ok', text: stale ? t('b_cached', ago(at)) : t('b_report', ago(at)) };
   }
-  const slot = state[kind];
+  const slot = kind === 'roads' && r?.region === 'UT' ? state.utahRoads : state[kind];
   if (!slot?.data) return { cls: 'na', text: t('b_na') };
   if (ageMin(slot.at) > LIMIT[kind] || slot.status === 'stale') return { cls: 'stale', text: t('b_cached', ago(slot.at)) };
   return { cls: 'ok', text: t(kind === 'wx' ? 'b_forecast' : 'b_live', ago(slot.at)) };
@@ -566,15 +593,41 @@ const camShort = n => n.replace(/^((?:I|US|CO|SH)[- ]\d+) MP [\d.]+ ?(?:[NSEW]B)
 function routeNoteHtml(r) {
   const rs = state.routes[r.id]; const c = ctxFor(r);
   if (!rs || rs.status === 'loading') return `<p class="rnote">${esc(t('route_loading'))}</p>`;
-  if (rs.status === 'fail') return `<p class="rnote warn">⚠️ ${esc(t('route_fail'))}</p>`;
+  if (rs.status === 'fail') return `<p class="rnote warn">⚠️ ${esc(t(r.region === 'UT' ? 'route_fail_ut' : 'route_fail'))}</p>`;
   const bits = [];
-  if (!c.route.startsInCO) bits.push(`<p class="rnote warn">🗺️ ${esc(t('outside_co', km(c.route.coEntryAlongM || 0)))}</p>`);
-  if (c.leaves) bits.push(`<p class="rnote warn">🗺️ ${esc(t('leaves_co'))}</p>`);
+  if (r.region === 'UT') {
+    if (!c.route.startsInUT) bits.push(`<p class="rnote warn">🗺️ ${esc(t('outside_ut', km(c.route.utEntryAlongM || 0)))}</p>`);
+    if (c.leavesUt) bits.push(`<p class="rnote warn">🗺️ ${esc(t('leaves_ut'))}</p>`);
+  } else {
+    if (!c.route.startsInCO) bits.push(`<p class="rnote warn">🗺️ ${esc(t('outside_co', km(c.route.coEntryAlongM || 0)))}</p>`);
+    if (c.leaves) bits.push(`<p class="rnote warn">🗺️ ${esc(t('leaves_co'))}</p>`);
+  }
   return bits.join('');
 }
 
+/** Mountain passes along the resort's route (UDOT data): name, surface, air temp, visibility, wind. */
+function passBlock(r, c) {
+  const passes = state.utahRoads.data?.passes || [];
+  if (!passes.length) return '';
+  const norm = s => String(s || '').replace(/[\s-]/g, '').toUpperCase();
+  const refs = c ? c.route.legs.flatMap(l => l.refs) : r.route.flatMap(l => (state.cfg.segments[l.seg]?.routes || []));
+  const onRoute = passes.filter(p => refs.some(ref => norm(p.roadway).startsWith(norm(ref))));
+  if (!onRoute.length) return '';
+  const u = U();
+  const row = p => {
+    const temp = p.airTempF != null ? fmt.temp((p.airTempF - 32) * 5 / 9, u) : null;
+    const vis = p.visibilityMi != null ? km(p.visibilityMi * 1609.34) : null;
+    const wind = p.windMph != null ? fmt.wind(p.windMph * 1.60934, u) : null;
+    const bits = [p.surface, temp, vis ? `vis ${vis}` : null, wind].filter(Boolean);
+    return `<li>${esc(p.name)} — ${esc(bits.join(' · '))}</li>`;
+  };
+  return `<h3>⛰️ ${esc(t('passes_h'))}</h3><ul class="plist">${onRoute.map(row).join('')}</ul>`;
+}
+
 function renderRoads() {
-  const r = resort(); const cfg = state.cfg; const evs = state.roads.data; const el = $('#roads');
+  const r = resort(); const cfg = state.cfg; const ut = r.region === 'UT';
+  const slot = roadsSlot(r);
+  const evs = roadsEvents(r); const el = $('#roads');
   const c = ctxFor(r);
   const segs = c ? c.segments : cfg.segments;
   const routeLegs = c ? c.legs : r.route;
@@ -587,35 +640,48 @@ function renderRoads() {
     const segR = allR.filter(x => x.seg === leg.seg);
     const lvl = !evs || seg.outside ? 'unknown' : !segR.length ? 'go' : segR.some(x => x.level === 'nogo') ? 'nogo' : segR.some(x => x.level === 'caution') ? 'caution' : 'info';
     const nm = c ? `${esc(seg.key)} <small class="muted">· ${km(seg.km * 1000)}</small>` : esc(L(seg.name));
-    const name = `${nm}${seg.outside ? ` <small class="tag">${esc(t('outside_tag'))}</small>` : ''}${leg.alt ? ` <small class="muted">(${esc(t('alt'))})</small>` : ''}`;
+    const name = `${nm}${seg.outside ? ` <small class="tag">${esc(t(ut ? 'outside_tag_ut' : 'outside_tag'))}</small>` : ''}${leg.alt ? ` <small class="muted">(${esc(t('alt'))})</small>` : ''}`;
     return `<li class="rrow"><span class="pill-s p-${PILL[lvl]}">${esc(t(PILL[lvl]))}</span>${list.length
       ? `<details><summary>${name} <small class="muted">· ${list.length}</small></summary><ul class="evs">${list.map(e => `<li>${icon(e)} ${esc(e.tooltip || e.title)}${e.oppDir ? ` <small class="tag">${esc(t('opp_dir'))}</small>` : ''}<br><small class="muted">${esc(e.detail)}</small></li>`).join('')}</ul></details>`
       : `<span>${name}</span>`}</li>`;
   }).join('');
 
+  // Mountain passes on the route (UDOT, Utah only): canyon conditions that decide the drive.
+  const passesHtml = ut ? passBlock(r, c) : '';
+
   let camsHtml, camCount;
   if (c && c.cams) {
     camCount = c.cams.length;
-    camsHtml = c.cams.length ? c.cams.map((m, i) => camTile({ href: `https://www.cotrip.org/camera/${m.id}`, img: m.img, name: camShort(m.name), title: m.name, ts: m.ts, broken: m.broken,
+    // UDOT cameras have no camera page: link straight to the still image.
+    const camHref = m => ut ? m.img : `https://www.cotrip.org/camera/${m.id}`;
+    camsHtml = c.cams.length ? c.cams.map((m, i) => camTile({ href: camHref(m), img: m.img, name: camShort(m.name), title: m.name, ts: m.ts, broken: m.broken,
       extra: `<i class="num">${i + 1}</i><em class="km">${km(m.along)}</em>` })).join('')
-      : `<p class="muted">${esc(t('cams_none'))}</p>`;
+      : `<p class="muted">${esc(t(ut ? 'cams_none_ut' : 'cams_none'))}</p>`;
   } else {
     const meta = new Map((state.cams || []).map(x => [x.id, x]));
     const onRoute = new Set(r.route.map(x => x.seg));
-    const list = cfg.cameras.filter(x => onRoute.has(x.seg));
+    const list = ut ? [] : cfg.cameras.filter(x => onRoute.has(x.seg));
     camCount = list.length;
-    camsHtml = list.map(x => { const mm = meta.get(x.id); return camTile({ href: `https://www.cotrip.org/camera/${x.id}`, img: mm?.image || x.image, name: camShort(x.name), title: x.name, ts: mm?.ts, broken: mm?.broken }); }).join('');
+    camsHtml = list.length ? list.map(x => { const mm = meta.get(x.id); return camTile({ href: `https://www.cotrip.org/camera/${x.id}`, img: mm?.image || x.image, name: camShort(x.name), title: x.name, ts: mm?.ts, broken: mm?.broken }); }).join('')
+      : `<p class="muted">${esc(t(ut ? 'cams_none_ut' : 'cams_none'))}</p>`;
   }
   const from = c ? L(state.start.name) : L(state.cfg.trip.origin.name);
-  el.innerHTML = `<div class="sec-h"><h2>${esc(t('roads_h'))}</h2><span class="sub-h">${esc(from)} → ${esc(r.short)}${c ? ` · ${km(c.route.distM)}` : ''}</span>${badge('roads')}</div>
+  const srcLine = ut
+    ? `UDOT · ${slot.data ? `${esc(fmtTime(slot.at))} (${esc(ago(slot.at))})` : esc(t('unavailable'))}${c ? ` · ${esc(t('route_src'))} <a href="https://project-osrm.org/" target="_blank" rel="noopener">OSRM</a> (© OpenStreetMap)` : ''} · <a href="https://www.udottraffic.utah.gov/" target="_blank" rel="noopener">${esc(t('open_udot'))} ↗</a>`
+    : `CDOT COtrip · ${state.roads.data ? `${esc(fmtTime(state.roads.at))} (${esc(ago(state.roads.at))})` : esc(t('unavailable'))}${c ? ` · ${esc(t('route_src'))} <a href="https://project-osrm.org/" target="_blank" rel="noopener">OSRM</a> (© OpenStreetMap)` : ''} · <a href="https://www.cotrip.org/" target="_blank" rel="noopener">${esc(t('open_cotrip'))} ↗</a> · <a href="https://www.cotrip.org/road-conditions" target="_blank" rel="noopener">${esc(t('cotrip_cond'))} ↗</a>`;
+  const driveLink = ut
+    ? `<a href="https://www.udottraffic.utah.gov/" target="_blank" rel="noopener">${esc(t('open_udot'))} ↗</a>`
+    : `<a href="https://www.cotrip.org/trip-planner" target="_blank" rel="noopener">${esc(t('cotrip_tt'))} ↗</a>`;
+  el.innerHTML = `<div class="sec-h"><h2>${esc(t('roads_h'))}</h2><span class="sub-h">${esc(from)} → ${esc(r.short)}${c ? ` · ${km(c.route.distM)}` : ''}</span>${badge('roads', r)}</div>
     ${routeNoteHtml(r)}
     ${c ? '' : `<details class="more"><summary>🧭 ${esc(t('route'))}</summary><p class="small">${esc(L(r.routeNote))}</p></details>`}
     <ul class="rlist">${legs}</ul>
+    ${passesHtml}
     ${c ? `<div id="route-map" class="rmap" role="img" aria-label="${esc(t('map_label'))}"></div>` : ''}
     <h3>📷 ${esc(c ? t('cams_route') : t('cameras'))} <small class="muted">(${camCount})</small></h3>
     <div class="thumbs">${camsHtml}</div>
-    <p class="note">🚗 ${esc(t('drive_note_long'))} <a href="https://www.cotrip.org/trip-planner" target="_blank" rel="noopener">${esc(t('cotrip_tt'))} ↗</a></p>
-    <p class="note">CDOT COtrip · ${state.roads.data ? `${esc(fmtTime(state.roads.at))} (${esc(ago(state.roads.at))})` : esc(t('unavailable'))}${c ? ` · ${esc(t('route_src'))} <a href="https://project-osrm.org/" target="_blank" rel="noopener">OSRM</a> (© OpenStreetMap)` : ''} · <a href="https://www.cotrip.org/" target="_blank" rel="noopener">${esc(t('open_cotrip'))} ↗</a> · <a href="https://www.cotrip.org/road-conditions" target="_blank" rel="noopener">${esc(t('cotrip_cond'))} ↗</a></p>`;
+    <p class="note">🚗 ${esc(t('drive_note_long'))} ${driveLink}</p>
+    <p class="note">${srcLine}</p>`;
   if (c) mountMap(c);
 }
 
@@ -688,7 +754,7 @@ function updateStartMsg() {
   const r = resort(); const rs = state.routes[r.id];
   let h = '';
   if (rs?.status === 'loading') h = `<span class="muted">${esc(t('route_loading'))}</span>`;
-  else if (rs?.status === 'fail') h = `<span class="warn">⚠️ ${esc(t('route_fail'))}</span>`;
+  else if (rs?.status === 'fail') h = `<span class="warn">⚠️ ${esc(t(r.region === 'UT' ? 'route_fail_ut' : 'route_fail'))}</span>`;
   else if (state.start?.kind === 'auto-ip') h = `<span class="muted">${esc(t('approx_loc'))}</span>`;
   state.startUI.setMsg(h);
 }

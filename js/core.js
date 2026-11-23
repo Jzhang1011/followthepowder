@@ -205,6 +205,211 @@ export function chainLevel(ev) {
 
 const WINTER_BAD = /(icy|ice|snow ?packed|snow covered|blowing snow|drifting|poor visibility|slushy|black ice|whiteout|closed)/i;
 
+/* ---------------- Roads (UDOT, Utah) ---------------- */
+
+/** Keyless ArcGIS UDOT events query URL (layer 0, point geometry, ~87 active features). */
+export function utahCarsUrl(cfg) {
+  const fields = ['OBJECTID', 'RoadwayName', 'EventType', 'EventCategory', 'Description', 'DirectionOfTravel', 'IsFullClosure',
+    'LanesAffected', 'MPStart', 'MPEnd', 'StartDate', 'PlannedEndDate', 'LastUpdated', 'Reported', 'Name'];
+  const q = new URLSearchParams({ where: '1=1', outFields: fields.join(','), returnGeometry: 'true', f: 'json' });
+  return `${cfg.sources.udotEvents}/0/query?${q}`;
+}
+
+/** Keyed ibi511 UDOT Traffic API URL. Throttle: 10 calls / 60 s — callers must stay well under it. */
+export function utahKeyedUrl(cfg, key, resource, version = 2) {
+  return `${cfg.sources.udot}/api/v${version}/get/${resource}?key=${encodeURIComponent(key)}`;
+}
+
+const UDOT_ALIASES = {
+  'big cottonwood canyon road': 'SR-190', 'little cottonwood canyon road': 'SR-210', 'belt route': 'I-215',
+  'dwight d. eisenhower highway': 'I-80', 'united states highway 89': 'US-89', 'united states highway 189': 'US-189',
+  'united states highway 40': 'US-40', 'wasatch boulevard': 'SR-190', '6200 south': 'SR-190'
+};
+/** One RoadwayName token -> canonical route number ('I 84' -> 'I-84', 'Big Cottonwood Canyon Road' -> 'SR-190'). */
+function normUtahRoad(s) {
+  const t = String(s || '').trim().replace(/\s+/g, ' ');
+  if (!t) return '';
+  const low = t.toLowerCase();
+  if (UDOT_ALIASES[low]) return UDOT_ALIASES[low];
+  const m = low.match(/^(i|us|sr)\s+(\d+[a-z]?)$/);
+  if (m) return `${m[1].toUpperCase()}-${m[2]}`;
+  return t;
+}
+const sameRoad = (a, b) => String(a || '').replace(/-/g, ' ').toUpperCase() === String(b || '').replace(/-/g, ' ').toUpperCase();
+/** Segment ids an event touches: route-name match AND point/polygon inside the segment bbox.
+ *  Events with no usable road name are tagged only when the point falls in exactly one segment bbox.
+ *  With `routeOnly` (road-condition segments, whose RoadwayName names the road authoritatively),
+ *  a route-name match alone is enough when there is no geometry to check against. */
+function utahSegIds(cfg, tokens, lon, lat, bbox, { routeOnly = false } = {}) {
+  const ids = [];
+  const b = bbox || (lon != null && lat != null ? [lon, lat, lon, lat] : null);
+  for (const [id, s] of Object.entries(cfg.segments)) {
+    if (!b) {
+      if (routeOnly && tokens.length && s.routes.some(r => tokens.some(tk => sameRoad(tk, r)))) ids.push(id);
+      continue;
+    }
+    const hit = b[0] <= s.bbox[2] + 0.001 && b[2] >= s.bbox[0] - 0.001 && b[1] <= s.bbox[3] + 0.001 && b[3] >= s.bbox[1] - 0.001;
+    if (!hit) continue;
+    if (!tokens.length) { ids.push(id); continue; }
+    if (s.routes.some(r => tokens.some(tk => sameRoad(tk, r)))) ids.push(id);
+  }
+  if (!tokens.length) return ids.length === 1 ? ids : [];
+  return ids;
+}
+
+/** Decode a UDOT (Google polyline, precision 5) string; null when it does not decode to Utah coords. */
+function decodeUtahPolyline(str) {
+  try {
+    const f = 1e5, out = [];
+    let i = 0, lat = 0, lon = 0;
+    while (i < str.length) {
+      for (const which of [0, 1]) {
+        let b, shift = 0, res = 0;
+        do { b = str.charCodeAt(i++) - 63; res |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+        const d = (res & 1) ? ~(res >> 1) : (res >> 1);
+        if (which === 0) lat += d; else lon += d;
+      }
+      out.push([+(lon / f).toFixed(4), +(lat / f).toFixed(4)]);
+    }
+    if (!out.length || out.some(p => p[0] < -113 || p[0] > -110 || p[1] < 39 || p[1] > 43)) return null;
+    return out;
+  } catch { return null; }
+}
+const sampleGeo = pts => {
+  if (!pts?.length) return [];
+  const step = Math.max(1, Math.ceil(pts.length / 40));
+  return pts.filter((_, i) => i % step === 0 || i === pts.length - 1);
+};
+const dirWord = d => ({ EB: 'eastbound', WB: 'westbound', NB: 'northbound', SB: 'southbound' }[String(d || '').toUpperCase()] || '');
+
+/**
+ * Normalize UDOT events into the slim event shape the frontend expects
+ * ({id, cls, segs, route, geo, title, tooltip, detail, eventType, priority, icon, updated, start}).
+ * Accepts the keyless ArcGIS feed ({features:[{attributes, geometry}]}) or the keyed ibi511 /event
+ * list ([{ID, EventType, ...}]) when `keyed` is set. Bucket mapping: full closure -> roadClosures;
+ * accidentsAndIncidents -> roadReports (incident); roadwork -> roadReports with eventType 'routine'
+ * (so the verdict treats it as minor); Road Weather -> winterDriving. The feed carries no chain /
+ * traction-law type, so cls is never 'chainLaws' here — chain status comes from roadconditions.
+ */
+export function slimUtahEvents(cfg, json, { keyed = false } = {}) {
+  const rows = keyed ? (Array.isArray(json) ? json : []) : (json?.features || []).map(f => ({ ...(f.attributes || {}), _x: f.geometry?.x, _y: f.geometry?.y }));
+  const out = [];
+  for (let i = 0; i < rows.length; i++) {
+    const a = rows[i];
+    // ArcGIS only returns OBJECTID when it is in outFields; fall back to the row index so an
+    // upstream field change degrades to unstable ids instead of dropping every event.
+    const oid = keyed ? a.ID : (a.OBJECTID ?? `arc-${i}`);
+    if (oid == null) continue;
+    const full = keyed ? a.IsFullClosure === true : String(a.IsFullClosure || '').toLowerCase() === 'true';
+    const et = a.EventType || '', cat = a.EventCategory || '';
+    const cls = full || et === 'closures' ? 'roadClosures'
+      : et === 'accidentsAndIncidents' ? 'roadReports'
+      : cat === 'Road Weather' ? 'winterDriving' : 'roadReports';
+    const tokens = String(a.RoadwayName || '').split(',').map(normUtahRoad).filter(Boolean);
+    if (a.Name) tokens.push(normUtahRoad(a.Name));
+    const desc = String(a.Description || '');
+    for (const m of desc.matchAll(/\b(?:SR|US|I)[- ]?\d+[A-Z]?\b/gi)) tokens.push(normUtahRoad(m[0]));
+    const route = tokens[0] || (a.Name ? String(a.Name) : '');
+    const lon = keyed ? a.Longitude : a._x, lat = keyed ? a.Latitude : a._y;
+    let geo = [], bbox = null;
+    if (keyed && Array.isArray(a.EncodedPolyline) && a.EncodedPolyline.length) {
+      const pts = decodeUtahPolyline(a.EncodedPolyline[0]);
+      if (pts) { geo = sampleGeo(pts); const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]); bbox = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]; }
+    }
+    if (!geo.length && lon != null && lat != null) geo = [[+lon.toFixed(4), +lat.toFixed(4)]];
+    if (!geo.length) continue;
+    const segs = utahSegIds(cfg, [...new Set(tokens)], lon, lat, bbox);
+    if (!segs.length && !geo.length) continue;
+    const title = (desc.split('\n')[0] || a.Name || cat || 'UDOT event').trim();
+    const detail = [desc, a.Comment && a.Comment !== desc ? a.Comment : ''].filter(Boolean).join('\n').slice(0, 600);
+    const toMs = s => (typeof s === 'number' && s > 0 ? (s < 1e12 ? s * 1000 : s) : null);
+    out.push({
+      id: `udot-${oid}`, cls, segs, route, geo,
+      title, tooltip: dirWord(a.DirectionOfTravel),
+      detail: stripHtml(detail),
+      eventType: et === 'roadwork' ? 'routine' : null, priority: null, icon: null,
+      updated: toMs(a.LastUpdated), start: toMs(a.StartDate)
+    });
+  }
+  return out;
+}
+
+/** Road-condition segments that are icy / snow-covered, plus any non-'none' Restriction (traction/chain).
+ *  Restriction values are unverified live (all 'none' at probe time) — the raw value goes into the title,
+ *  so the UI shows whatever UDOT reports and chainLevel() can match 'traction law' / 'code 15/16' when present. */
+export function slimUtahRoadConditions(cfg, json) {
+  const out = [];
+  for (const s of (Array.isArray(json) ? json : [])) {
+    const name = String(s.RoadwayName || '');
+    const m = name.match(/^(I|US|SR)[- ]?(\d+[A-Z]?)/i);
+    if (!m) continue;
+    const route = `${m[1].toUpperCase()}-${m[2]}`;
+    const rc = String(s.RoadCondition || ''), wc = String(s.WeatherCondition || ''), rs = s.Restriction;
+    const hasRestriction = rs != null && String(rs).toLowerCase() !== 'none' && String(rs).trim() !== '';
+    const icy = /icy spots|snow covered|patchy snow/i.test(rc);
+    if (!hasRestriction && !icy) continue;
+    let geo = [], bbox = null;
+    if (Array.isArray(s.EncodedPolyline)) {
+      for (const p of s.EncodedPolyline) { const pts = decodeUtahPolyline(p); if (pts) { geo.push(...pts); } }
+      if (geo.length) { geo = sampleGeo(geo); const xs = geo.map(p => p[0]), ys = geo.map(p => p[1]); bbox = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]; }
+    }
+    const segs = utahSegIds(cfg, [route], null, null, bbox, { routeOnly: true });
+    if (!segs.length && !geo.length) continue;
+    const detail = `Road condition: ${rc || '—'}; weather: ${wc || '—'}; restriction: ${rs ?? 'none'}`;
+    if (hasRestriction) {
+      out.push({ id: `udot-rc-${s.Id}-chain`, cls: 'chainLaws', segs, route, geo,
+        title: `Traction restriction: ${rs} — ${name}`, tooltip: '', detail,
+        eventType: null, priority: null, icon: null, updated: null, start: null });
+    }
+    if (icy) {
+      const label = /patchy snow/i.test(rc) ? 'Snow covered in patches' : rc.replace(/^./, c => c.toUpperCase());
+      out.push({ id: `udot-rc-${s.Id}-winter`, cls: 'winterDriving', segs, route, geo,
+        title: `${label} — ${name}`, tooltip: '', detail,
+        eventType: null, priority: null, icon: null, updated: null, start: null });
+    }
+  }
+  return out;
+}
+
+/** Keyed UDOT cameras -> the {id, lon, lat, name, route, local, img, stream, broken} shape selectCameras() takes.
+ *  Kept only when the camera is on a corridor road (its Roadway is a segment route number) AND
+ *  inside a corridor bbox, so the payload stays small (332 of 2091 at probe time). */
+export function slimUtahCameras(cfg, json) {
+  const routes = new Set(Object.values(cfg.segments).flatMap(s => s.routes.map(normUtahRoad)).filter(r => /^(I|US|SR)-\d/.test(r)));
+  const out = [];
+  for (const c of (Array.isArray(json) ? json : [])) {
+    const lon = +c.Longitude, lat = +c.Latitude;
+    if (!Number.isFinite(lon) || !Number.isFinite(lat)) continue;
+    const rn = normUtahRoad(c.Roadway);
+    if (!routes.has(rn)) continue;
+    const inCorridor = Object.values(cfg.segments).some(s => lon >= s.bbox[0] - 0.01 && lon <= s.bbox[2] + 0.01 && lat >= s.bbox[1] - 0.01 && lat <= s.bbox[3] + 0.01);
+    if (!inCorridor) continue;
+    const v = (c.Views || [])[0];
+    if (!v?.Url) continue;
+    out.push({ id: `udot-${c.Id}`, lon: +lon.toFixed(5), lat: +lat.toFixed(5),
+      name: c.Location || `${c.Roadway || ''} ${c.Direction || ''}`.trim() || `UDOT camera ${c.Id}`,
+      route: rn, local: false, img: v.Url, stream: null,
+      broken: String(v.Status || '').toLowerCase() !== 'enabled', ts: null });
+  }
+  return out;
+}
+
+/** Keyed mountain passes, kept when the pass road is one of the resort drive corridors. */
+export function slimUtahPasses(cfg, json) {
+  const routes = new Set(Object.values(cfg.segments).flatMap(s => s.routes.map(normUtahRoad)));
+  const out = [];
+  for (const p of (Array.isArray(json) ? json : [])) {
+    const road = String(p.Roadway || '');
+    const m = road.match(/^(I|US|SR)[- ]?(\d+[A-Z]?)/i);
+    if (!m || !routes.has(`${m[1].toUpperCase()}-${m[2]}`)) continue;
+    out.push({ id: `udot-pass-${p.Id}`, name: p.Name || road, roadway: road,
+      airTempF: p.AirTemperature ?? null, windMph: p.WindSpeed ?? null, gustMph: p.WindGust ?? null,
+      windDir: p.WindDirection || null, surfaceTempF: p.SurfaceTemp ?? null,
+      surface: p.SurfaceStatus || null, visibilityMi: p.Visibility ?? null });
+  }
+  return out;
+}
+
 /* ---------------- NWS alerts ---------------- */
 
 export function nwsUrl(cfg, r) { return `${cfg.sources.nws}?point=${r.lat.toFixed(4)},${r.lon.toFixed(4)}`; }
@@ -244,7 +449,7 @@ export function verdictFor(cfg, resort, { roads, alerts, days, intel = null, now
   const segIds = resort.route.map(r => r.seg);
 
   if (!roads || !roads.ok) {
-    reasons.push({ level: 'unknown', kind: 'roads', key: 'r_roads_unavailable' });
+    reasons.push({ level: 'unknown', kind: 'roads', key: resort.region === 'UT' ? 'r_roads_unavailable_ut' : 'r_roads_unavailable' });
   } else {
     for (const leg of resort.route) {
       const evs = roads.events.filter(e => e.segs.includes(leg.seg));
@@ -270,7 +475,12 @@ export function verdictFor(cfg, resort, { roads, alerts, days, intel = null, now
       }
     }
     const main = reasons.filter(r => r.seg && r.level !== 'info');
-    if (!main.some(r => r.kind === 'chain')) reasons.push({ level: 'go', kind: 'chain', key: 'r_no_chain' });
+    // Utah feeds carry no chain/traction-law type: absence of a chain event is not evidence there is
+    // none, so say so (info) instead of the Colorado 'no chain law' all-clear.
+    if (!main.some(r => r.kind === 'chain')) {
+      if (resort.region === 'UT') reasons.push({ level: 'info', kind: 'chain', key: 'r_chain_unknown' });
+      else reasons.push({ level: 'go', kind: 'chain', key: 'r_no_chain' });
+    }
     if (!main.some(r => r.kind === 'closure')) reasons.push({ level: 'go', kind: 'closure', key: 'r_no_closure' });
     if (!main.some(r => r.kind === 'incident')) reasons.push({ level: 'go', kind: 'incident', key: 'r_no_incident' });
   }

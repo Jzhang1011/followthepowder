@@ -23,6 +23,15 @@
     "lon": -104.6737
    },
    {
+    "id": "SLC",
+    "name": {
+     "en": "Salt Lake City Airport (SLC)",
+     "zh": "\u76d0\u6e56\u57ce\u673a\u573a (SLC)"
+    },
+    "lat": 40.7884,
+    "lon": -111.9778
+   },
+   {
     "id": "denver",
     "name": {
      "en": "Downtown Denver",
@@ -65,6 +74,8 @@
   "cars": "https://api-511x-co.carsprogram.org",
   "nws": "https://api.weather.gov/alerts/active",
   "cotrip": "https://www.cotrip.org/",
+  "udot": "https://www.udottraffic.utah.gov/",
+  "udotEvents": "https://services6.arcgis.com/KaHXE9OkiB9e63uE/ArcGIS/rest/services/UDOT_Events/FeatureServer",
   "snapshots": [
    "data/latest.json"
   ],
@@ -501,6 +512,317 @@
     37.4,
     -106.3,
     37.75
+   ]
+  },
+  "slc-airport": {
+   "name": {
+    "en": "SLC Airport \u2192 I-80 (Terminal Dr / 3700 W)",
+    "zh": "\u76d0\u6e56\u57ce\u673a\u573a \u2192 I-80\uff08\u822a\u7ad9\u697c\u9053 / 3700 W\uff09"
+   },
+   "routes": [
+    "Terminal Drive",
+    "3700 West",
+    "I-80"
+   ],
+   "bbox": [
+    -111.9916,
+    40.7634,
+    -111.97,
+    40.7838
+   ]
+  },
+  "i80-slc": {
+   "name": {
+    "en": "I-80 through Salt Lake City",
+    "zh": "I-80 \u76d0\u6e56\u57ce\u5e02\u533a\u6bb5"
+   },
+   "routes": [
+    "I-80",
+    "I-15"
+   ],
+   "bbox": [
+    -111.9705,
+    40.7104,
+    -111.8008,
+    40.7661
+   ]
+  },
+  "i215-south": {
+   "name": {
+    "en": "I-215 south (Belt Route)",
+    "zh": "I-215 \u5357\uff08\u73af\u7ebf\uff09"
+   },
+   "routes": [
+    "I-215",
+    "Belt Route"
+   ],
+   "bbox": [
+    -111.809,
+    40.638,
+    -111.7953,
+    40.7091
+   ]
+  },
+  "sr190-wasatch": {
+   "name": {
+    "en": "SR-190 Wasatch Blvd (6200 S)",
+    "zh": "SR-190 Wasatch \u5927\u9053\uff086200 S\uff09"
+   },
+   "routes": [
+    "SR-190",
+    "SR 190",
+    "Wasatch Blvd",
+    "6200 South"
+   ],
+   "bbox": [
+    -111.8087,
+    40.5888,
+    -111.7887,
+    40.6375
+   ]
+  },
+  "sr210-little-cottonwood": {
+   "name": {
+    "en": "SR-210 Little Cottonwood Canyon",
+    "zh": "SR-210 \u5c0f\u68c9\u767d\u6768\u5ce1\u8c37"
+   },
+   "routes": [
+    "SR-210",
+    "SR 210",
+    "Little Cottonwood Canyon Road"
+   ],
+   "bbox": [
+    -111.7932,
+    40.5706,
+    -111.6446,
+    40.589
+   ]
+  },
+  "sr190-big-cottonwood": {
+   "name": {
+    "en": "SR-190 Big Cottonwood Canyon",
+    "zh": "SR-190 \u5927\u68c9\u767d\u6768\u5ce1\u8c37"
+   },
+   "routes": [
+    "SR-190",
+    "SR 190",
+    "Big Cottonwood Canyon Road"
+   ],
+   "bbox": [
+    -111.7895,
+    40.604,
+    -111.5796,
+    40.6517
+   ]
+  },
+  "i80-parleys": {
+   "name": {
+    "en": "I-80 Parleys Canyon",
+    "zh": "I-80 \u5e15\u5229\u5ce1\u8c37"
+   },
+   "routes": [
+    "I-80"
+   ],
+   "bbox": [
+    -111.9055,
+    40.6566,
+    -111.5066,
+    40.756
+   ]
+  },
+  "sr224-park-city": {
+   "name": {
+    "en": "SR-224 Kimball Jct \u2192 Park City",
+    "zh": "SR-224 Kimball \u67a2\u7ebd \u2192 \u5e15\u514b\u57ce"
+   },
+   "routes": [
+    "SR-224",
+    "SR 224"
+   ],
+   "bbox": [
+    -111.5077,
+    40.6206,
+    -111.4951,
+    40.6568
+   ]
+  },
+  "i215-north": {
+   "name": {
+    "en": "I-215 north",
+    "zh": "I-215 \u5317"
+   },
+   "routes": [
+    "I-215",
+    "Belt Route"
+   ],
+   "bbox": [
+    -111.9495,
+    40.7697,
+    -111.9141,
+    40.8415
+   ]
+  },
+  "i15-north": {
+   "name": {
+    "en": "I-15 north (Salt Lake City \u2192 Ogden)",
+    "zh": "I-15 \u5317\uff08\u76d0\u6e56\u57ce \u2192 \u5965\u683c\u767b\uff09"
+   },
+   "routes": [
+    "I-15"
+   ],
+   "bbox": [
+    -111.9152,
+    40.8417,
+    -111.8908,
+    41.0618
+   ]
+  },
+  "us89-weber": {
+   "name": {
+    "en": "US-89 / I-84 (Weber County)",
+    "zh": "US-89 / I-84\uff08\u97e6\u4f2f\u53bf\uff09"
+   },
+   "routes": [
+    "US-89",
+    "US 89",
+    "United States Highway 89",
+    "I-84",
+    "I 84"
+   ],
+   "bbox": [
+    -111.9401,
+    41.0621,
+    -111.8289,
+    41.1553
+   ]
+  },
+  "sr167-trappers": {
+   "name": {
+    "en": "SR-167 Trappers Loop",
+    "zh": "SR-167 \u730e\u4eba\u73af\u7ebf"
+   },
+   "routes": [
+    "SR-167",
+    "SR 167"
+   ],
+   "bbox": [
+    -111.8287,
+    41.1378,
+    -111.7953,
+    41.2067
+   ]
+  },
+  "sr226-snowbasin": {
+   "name": {
+    "en": "SR-226 Snowbasin Road",
+    "zh": "SR-226 Snowbasin \u8def"
+   },
+   "routes": [
+    "SR-226",
+    "SR 226"
+   ],
+   "bbox": [
+    -111.8584,
+    41.2039,
+    -111.815,
+    41.2209
+   ]
+  },
+  "sr203-ogden": {
+   "name": {
+    "en": "SR-203 Harrison Blvd (Ogden)",
+    "zh": "SR-203 \u54c8\u91cc\u68ee\u5927\u9053\uff08\u5965\u683c\u767b\uff09"
+   },
+   "routes": [
+    "SR-203",
+    "SR 203"
+   ],
+   "bbox": [
+    -111.9493,
+    41.1556,
+    -111.9287,
+    41.2367
+   ]
+  },
+  "sr39-sr158-powder": {
+   "name": {
+    "en": "SR-39 Ogden Canyon \u2192 SR-158 Powder Mountain",
+    "zh": "SR-39 \u5965\u683c\u767b\u5ce1\u8c37 \u2192 SR-158 \u9c8d\u5fb7\u5c71"
+   },
+   "routes": [
+    "SR-39",
+    "SR 39",
+    "SR-158",
+    "SR 158"
+   ],
+   "bbox": [
+    -111.9286,
+    41.236,
+    -111.781,
+    41.3802
+   ]
+  },
+  "i15-south": {
+   "name": {
+    "en": "I-15 south (Salt Lake City \u2192 Orem)",
+    "zh": "I-15 \u5357\uff08\u76d0\u6e56\u57ce \u2192 \u5965\u52d2\u59c6\uff09"
+   },
+   "routes": [
+    "I-15"
+   ],
+   "bbox": [
+    -111.9147,
+    40.3118,
+    -111.7258,
+    40.756
+   ]
+  },
+  "sr52-orem": {
+   "name": {
+    "en": "SR-52 (800 North, Orem)",
+    "zh": "SR-52\uff08800 North\uff0c\u5965\u52d2\u59c6\uff09"
+   },
+   "routes": [
+    "SR-52",
+    "SR 52"
+   ],
+   "bbox": [
+    -111.7255,
+    40.3118,
+    -111.6515,
+    40.3164
+   ]
+  },
+  "us189-provo-canyon": {
+   "name": {
+    "en": "US-189 Provo Canyon",
+    "zh": "US-189 \u666e\u7f57\u6c83\u5ce1\u8c37"
+   },
+   "routes": [
+    "US-189",
+    "US 189"
+   ],
+   "bbox": [
+    -111.6514,
+    40.3165,
+    -111.556,
+    40.3651
+   ]
+  },
+  "sr92-alpine-loop": {
+   "name": {
+    "en": "SR-92 Alpine Loop",
+    "zh": "SR-92 \u9ad8\u5c71\u73af\u7ebf"
+   },
+   "routes": [
+    "SR-92",
+    "SR 92"
+   ],
+   "bbox": [
+    -111.5794,
+    40.3656,
+    -111.5556,
+    40.3925
    ]
   }
  },
@@ -2015,7 +2337,1024 @@
     "page": "https://commons.wikimedia.org/wiki/File:Wolf_Creek_Ski_Area.JPG",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0"
    }
+  },
+ {
+  "id": "alta",
+  "name": {
+   "en": "Alta",
+   "zh": "Alta\uff08\u963f\u5c14\u5854\uff09"
+  },
+  "short": "Alta",
+  "passes": [
+   "ikon"
+  ],
+  "region": "UT",
+  "lat": 40.58083,
+  "lon": -111.63722,
+  "baseElevM": 2600,
+  "summitElevM": 3374,
+  "driveMin": 52,
+  "driveSource": "OSRM route from SLC airport, no traffic (computed 2026-11-23)",
+  "routeNote": {
+   "en": "SLC \u2192 I-80 E \u2192 I-215 S \u2192 SR-190 (6200 S / Wasatch Blvd) \u2192 SR-210 up Little Cottonwood Canyon to Alta.",
+   "zh": "\u76d0\u6e56\u57ce\u673a\u573a \u2192 I-80 \u4e1c \u2192 I-215 \u5357 \u2192 SR-190\uff086200 S / Wasatch \u5927\u9053\uff09\u2192 SR-210 \u4e0a\u5c0f\u68c9\u767d\u6768\u5ce1\u8c37\u5230 Alta\u3002"
+  },
+  "route": [
+   {
+    "seg": "slc-airport",
+    "closure": "caution"
+   },
+   {
+    "seg": "i80-slc",
+    "closure": "caution"
+   },
+   {
+    "seg": "i215-south",
+    "closure": "caution"
+   },
+   {
+    "seg": "sr190-wasatch",
+    "closure": "caution"
+   },
+   {
+    "seg": "sr210-little-cottonwood",
+    "closure": "nogo"
+   }
+  ],
+  "links": {
+   "site": "https://www.alta.com/",
+   "webcams": "https://www.alta.com/weather#mountain-cams",
+   "report": "https://www.alta.com/weather"
+  },
+  "webcams": [
+   {
+    "name": {
+     "en": "Albion Basin",
+     "zh": "\u963f\u5c14\u6bd4\u6069\u76c6\u5730"
+    },
+    "image": "https://app.prismcam.com/public/helpers/realtime_preview.php?c=65&s=720"
+   },
+   {
+    "name": {
+     "en": "Mount Baldy",
+     "zh": "\u79c3\u9876\u5c71"
+    },
+    "image": "https://app.prismcam.com/public/helpers/realtime_preview.php?c=88&s=720"
+   },
+   {
+    "name": {
+     "en": "Snow Stake",
+     "zh": "\u96ea\u6869"
+    },
+    "image": "https://alta-webcams.sfo3.cdn.digitaloceanspaces.com/Collins_Snow_Stake.jpg"
+   },
+   {
+    "name": {
+     "en": "Mount Superior",
+     "zh": "\u82cf\u5fc5\u5229\u5c14\u5c71"
+    },
+    "image": "https://alta-webcams.sfo3.cdn.digitaloceanspaces.com/Superior.jpg"
+   },
+   {
+    "name": {
+     "en": "High Rustler",
+     "zh": "High Rustler"
+    },
+    "image": "https://alta-webcams.sfo3.cdn.digitaloceanspaces.com/Highrustler.jpg"
+   },
+   {
+    "name": {
+     "en": "Sugarloaf Peak",
+     "zh": "\u7cd6\u9762\u5305\u5cf0"
+    },
+    "image": "https://alta-webcams.sfo3.cdn.digitaloceanspaces.com/sugar_peak.jpg"
+   },
+   {
+    "name": {
+     "en": "East Greeley",
+     "zh": "\u4e1c\u683c\u91cc\u5229"
+    },
+    "image": "https://alta-webcams.sfo3.cdn.digitaloceanspaces.com/Greeley.jpg"
+   },
+   {
+    "name": {
+     "en": "Salt Lake Valley",
+     "zh": "\u76d0\u6e56\u8c37"
+    },
+    "image": "https://alta-webcams.sfo3.cdn.digitaloceanspaces.com/collins_dtc.jpg"
+   }
+  ],
+  "intel": null,
+  "intelFrom": "catalog",
+  "parking": {
+   "lat": 40.58083,
+   "lon": -111.63722
+  },
+  "summitLat": 40.5684,
+  "summitLon": -111.6377,
+  "summitSource": "Summit 11,068 ft / 3,374 m (Alta Ski Area); weather point = Mount Baldy (OpenStreetMap peak)",
+  "baseSource": "Base 8,530 ft / 2,600 m (Alta Ski Area)",
+  "wxGroup": 4,
+  "photo": {
+   "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f5/Alta_Little_Cottonwood_Canyon.JPG/960px-Alta_Little_Cottonwood_Canyon.JPG",
+   "credit": "Baileypalblue",
+   "license": "Public domain",
+   "page": "https://commons.wikimedia.org/wiki/File:Alta_Little_Cottonwood_Canyon.JPG"
   }
+ },
+ {
+  "id": "snowbird",
+  "name": {
+   "en": "Snowbird",
+   "zh": "Snowbird\uff08\u96ea\u9e1f\uff09"
+  },
+  "short": "Snowbird",
+  "passes": [
+   "ikon"
+  ],
+  "region": "UT",
+  "lat": 40.58111,
+  "lon": -111.65639,
+  "baseElevM": 2365,
+  "summitElevM": 3353,
+  "driveMin": 52,
+  "driveSource": "OSRM route from SLC airport, no traffic (computed 2026-11-23)",
+  "routeNote": {
+   "en": "SLC \u2192 I-80 E \u2192 I-215 S \u2192 SR-190 (6200 S / Wasatch Blvd) \u2192 SR-210 up Little Cottonwood Canyon to Snowbird.",
+   "zh": "\u76d0\u6e56\u57ce\u673a\u573a \u2192 I-80 \u4e1c \u2192 I-215 \u5357 \u2192 SR-190\uff086200 S / Wasatch \u5927\u9053\uff09\u2192 SR-210 \u4e0a\u5c0f\u68c9\u767d\u6768\u5ce1\u8c37\u5230 Snowbird\u3002"
+  },
+  "route": [
+   {
+    "seg": "slc-airport",
+    "closure": "caution"
+   },
+   {
+    "seg": "i80-slc",
+    "closure": "caution"
+   },
+   {
+    "seg": "i215-south",
+    "closure": "caution"
+   },
+   {
+    "seg": "sr190-wasatch",
+    "closure": "caution"
+   },
+   {
+    "seg": "sr210-little-cottonwood",
+    "closure": "nogo"
+   }
+  ],
+  "links": {
+   "site": "https://www.snowbird.com/",
+   "webcams": "https://www.snowbird.com/the-mountain/webcams/view-all-webcams/",
+   "report": "https://www.snowbird.com/the-mountain/mountain-report/current-conditions-weather/"
+  },
+  "webcams": [
+   {
+    "name": {
+     "en": "Snowstake",
+     "zh": "\u96ea\u6869"
+    },
+    "image": "https://manage.hdrelay.com/snapshot/544432bd-3910-4888-aa9f-14b6f51a7eb5"
+   },
+   {
+    "name": {
+     "en": "Peruvian Gulch",
+     "zh": "\u79d8\u9c81\u5ce1\u8c37"
+    },
+    "image": "https://manage.hdrelay.com/snapshot/5780754f-8da1-4223-ab8a-6755d84cbc10"
+   },
+   {
+    "name": {
+     "en": "Mineral Basin",
+     "zh": "\u77ff\u7269\u76c6\u5730"
+    },
+    "image": "https://manage.hdrelay.com/snapshot/db2a69c5-66e9-4c48-a713-919eaf191fc1"
+   },
+   {
+    "name": {
+     "en": "Little Cloud",
+     "zh": "\u5c0f\u4e91"
+    },
+    "image": "https://manage.hdrelay.com/snapshot/61b2490be101c00b9c48374f"
+   },
+   {
+    "name": {
+     "en": "Tram Bullpen",
+     "zh": "\u7f06\u8f66\u7ad9"
+    },
+    "image": "https://backend.roundshot.com/cams/44cfff4ff2a218a1178dbb105d95846a/medium"
+   },
+   {
+    "name": {
+     "en": "Hidden Peak",
+     "zh": "\u9690\u85cf\u5cf0"
+    },
+    "image": "https://backend.roundshot.com/cams/48fc223c0ed88474ecc2f884bf39de63/medium"
+   },
+   {
+    "name": {
+     "en": "Powder Paradise",
+     "zh": "\u7c89\u96ea\u4e50\u571f"
+    },
+    "image": "https://backend.roundshot.com/cams/09123258cc29cd6e86d3af9a3836c150/optional"
+   }
+  ],
+  "intel": null,
+  "intelFrom": "catalog",
+  "parking": {
+   "lat": 40.58111,
+   "lon": -111.65639
+  },
+  "summitLat": 40.5608,
+  "summitLon": -111.6451,
+  "summitSource": "Summit 11,000 ft / 3,353 m (Snowbird); weather point = Hidden Peak (OpenStreetMap peak)",
+  "baseSource": "Base 7,760 ft / 2,365 m (Snowbird)",
+  "wxGroup": 4,
+  "photo": {
+   "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/68/Snowbird_Tram_at_Hidden_Peak.jpg/960px-Snowbird_Tram_at_Hidden_Peak.jpg",
+   "credit": "VeggieGarden",
+   "license": "CC BY-SA 4.0",
+   "page": "https://commons.wikimedia.org/wiki/File:Snowbird_Tram_at_Hidden_Peak.jpg",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  }
+ },
+ {
+  "id": "brighton",
+  "name": {
+   "en": "Brighton",
+   "zh": "Brighton\uff08\u5e03\u83b1\u987f\uff09"
+  },
+  "short": "Brighton",
+  "passes": [
+   "ikon"
+  ],
+  "region": "UT",
+  "lat": 40.6,
+  "lon": -111.58333,
+  "baseElevM": 2669,
+  "summitElevM": 3277,
+  "driveMin": 59,
+  "driveSource": "OSRM route from SLC airport, no traffic (computed 2026-11-23)",
+  "routeNote": {
+   "en": "SLC \u2192 I-80 E \u2192 I-215 S \u2192 SR-190 up Big Cottonwood Canyon to Brighton.",
+   "zh": "\u76d0\u6e56\u57ce\u673a\u573a \u2192 I-80 \u4e1c \u2192 I-215 \u5357 \u2192 SR-190 \u4e0a\u5927\u68c9\u767d\u6768\u5ce1\u8c37\u5230 Brighton\u3002"
+  },
+  "route": [
+   {
+    "seg": "slc-airport",
+    "closure": "caution"
+   },
+   {
+    "seg": "i80-slc",
+    "closure": "caution"
+   },
+   {
+    "seg": "i215-south",
+    "closure": "caution"
+   },
+   {
+    "seg": "sr190-wasatch",
+    "closure": "caution"
+   },
+   {
+    "seg": "sr190-big-cottonwood",
+    "closure": "nogo"
+   }
+  ],
+  "links": {
+   "site": "https://www.brightonresort.com/",
+   "webcams": "https://www.brightonresort.com/conditions",
+   "report": "https://www.brightonresort.com/conditions"
+  },
+  "webcams": [
+   {
+    "name": {
+     "en": "Molly Green's",
+     "zh": "\u83ab\u8389\u683c\u6797"
+    },
+    "youtube": "uZ24vqOWEkQ"
+   },
+   {
+    "name": {
+     "en": "Top of Crest 6",
+     "zh": "Crest 6 \u5c71\u9876"
+    },
+    "youtube": "Zv8HYwaXjBg"
+   },
+   {
+    "name": {
+     "en": "Explorer Lift",
+     "zh": "Explorer \u7f06\u8f66"
+    },
+    "youtube": "vMwQRjlfqtA"
+   },
+   {
+    "name": {
+     "en": "Milly Express",
+     "zh": "Milly Express \u7f06\u8f66"
+    },
+    "youtube": "N-d3MuOagLg"
+   },
+   {
+    "name": {
+     "en": "Parking Lot",
+     "zh": "\u505c\u8f66\u573a"
+    },
+    "youtube": "4a-3iEM7bHk"
+   }
+  ],
+  "intel": null,
+  "intelFrom": "catalog",
+  "parking": {
+   "lat": 40.6,
+   "lon": -111.58333
+  },
+  "summitLat": 40.5926,
+  "summitLon": -111.5615,
+  "summitSource": "Summit 10,750 ft / 3,277 m (Brighton Resort); weather point = top of Great Western Express (OpenStreetMap aerialway), approximate",
+  "baseSource": "Base 8,755 ft / 2,669 m (Brighton Resort)",
+  "wxGroup": 5,
+  "photo": {
+   "src": "img/cat/brighton.jpg",
+   "credit": "PeteysHead",
+   "license": "CC BY-SA 3.0",
+   "page": "https://commons.wikimedia.org/wiki/File:Big_Cottonwood_Canyon,_Utah.JPG",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+  }
+ },
+ {
+  "id": "solitude",
+  "name": {
+   "en": "Solitude",
+   "zh": "Solitude\uff08\u7d22\u5229\u8482\u5fb7\uff09"
+  },
+  "short": "Solitude",
+  "passes": [
+   "ikon"
+  ],
+  "region": "UT",
+  "lat": 40.61514,
+  "lon": -111.58892,
+  "baseElevM": 2435,
+  "summitElevM": 3197,
+  "driveMin": 56,
+  "driveSource": "OSRM route from SLC airport, no traffic (computed 2026-11-23)",
+  "routeNote": {
+   "en": "SLC \u2192 I-80 E \u2192 I-215 S \u2192 SR-190 up Big Cottonwood Canyon to Solitude.",
+   "zh": "\u76d0\u6e56\u57ce\u673a\u573a \u2192 I-80 \u4e1c \u2192 I-215 \u5357 \u2192 SR-190 \u4e0a\u5927\u68c9\u767d\u6768\u5ce1\u8c37\u5230 Solitude\u3002"
+  },
+  "route": [
+   {
+    "seg": "slc-airport",
+    "closure": "caution"
+   },
+   {
+    "seg": "i80-slc",
+    "closure": "caution"
+   },
+   {
+    "seg": "i215-south",
+    "closure": "caution"
+   },
+   {
+    "seg": "sr190-wasatch",
+    "closure": "caution"
+   },
+   {
+    "seg": "sr190-big-cottonwood",
+    "closure": "nogo"
+   }
+  ],
+  "links": {
+   "site": "https://www.solitudemountain.com/",
+   "webcams": "https://www.solitudemountain.com/mountain-and-village/webcams",
+   "report": "https://www.solitudemountain.com/mountain-and-village/conditions-and-maps"
+  },
+  "webcams": [
+   {
+    "name": {
+     "en": "Honeycomb Canyon",
+     "zh": "\u8702\u5de2\u5ce1\u8c37"
+    },
+    "youtube": "ta-4QZbfMXc"
+   },
+   {
+    "name": {
+     "en": "Powderhorn",
+     "zh": "\u7c89\u89d2"
+    },
+    "youtube": "xNER0JHrqLg"
+   },
+   {
+    "name": {
+     "en": "Sunshine Bowl",
+     "zh": "\u9633\u5149\u7897"
+    },
+    "youtube": "Lnznapxh2xM"
+   },
+   {
+    "name": {
+     "en": "Snowstake",
+     "zh": "\u96ea\u6869"
+    },
+    "youtube": "lkEM6EC8NVA"
+   },
+   {
+    "name": {
+     "en": "Moonbeam Lift Line",
+     "zh": "Moonbeam \u7f06\u8f66\u7ebf"
+    },
+    "youtube": "NSiItCGabfo"
+   },
+   {
+    "name": {
+     "en": "Apex Express / Sunrise",
+     "zh": "Apex Express / Sunrise"
+    },
+    "youtube": "l2X9DlRzX54"
+   },
+   {
+    "name": {
+     "en": "Eagle Express",
+     "zh": "\u9e70\u7f06\u8f66"
+    },
+    "youtube": "oWaG8txpW1c"
+   },
+   {
+    "name": {
+     "en": "Summit Express",
+     "zh": "\u5c71\u9876\u7f06\u8f66"
+    },
+    "youtube": "Yblyfl97Mhc"
+   },
+   {
+    "name": {
+     "en": "Powderhorn II",
+     "zh": "\u7c89\u89d2 II"
+    },
+    "youtube": "yeoBog_kSzc"
+   },
+   {
+    "name": {
+     "en": "Link Lift Line",
+     "zh": "Link \u7f06\u8f66\u7ebf"
+    },
+    "youtube": "Yx3QmuKfwjY"
+   }
+  ],
+  "intel": null,
+  "intelFrom": "catalog",
+  "parking": {
+   "lat": 40.61514,
+   "lon": -111.58892
+  },
+  "summitLat": 40.6048,
+  "summitLon": -111.6029,
+  "summitSource": "Summit 10,488 ft / 3,197 m (Solitude Mountain Resort); weather point = Summit Express area (OpenStreetMap aerialway), approximate",
+  "baseSource": "Base 7,989 ft / 2,435 m (Solitude Mountain Resort)",
+  "wxGroup": 5,
+  "photo": {
+   "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/dd/Solitude_Mountain_Resort_Honeycomb_Canyon.JPG/960px-Solitude_Mountain_Resort_Honeycomb_Canyon.JPG",
+   "credit": "Baileypalblue",
+   "license": "Public domain",
+   "page": "https://commons.wikimedia.org/wiki/File:Solitude_Mountain_Resort_Honeycomb_Canyon.JPG"
+  }
+ },
+ {
+  "id": "deer-valley",
+  "name": {
+   "en": "Deer Valley",
+   "zh": "Deer Valley\uff08\u9e7f\u8c37\uff09"
+  },
+  "short": "Deer Valley",
+  "passes": [
+   "ikon"
+  ],
+  "region": "UT",
+  "lat": 40.62278,
+  "lon": -111.48944,
+  "baseElevM": 1990,
+  "summitElevM": 2917,
+  "driveMin": 58,
+  "driveSource": "OSRM route from SLC airport, no traffic (computed 2026-11-23)",
+  "routeNote": {
+   "en": "SLC \u2192 I-80 E through Parleys Canyon \u2192 exit 144 Kimball Jct \u2192 SR-224 south to Deer Valley.",
+   "zh": "\u76d0\u6e56\u57ce\u673a\u573a \u2192 I-80 \u4e1c\u8fc7\u5e15\u5229\u5ce1\u8c37 \u2192 144 \u51fa\u53e3 Kimball \u67a2\u7ebd \u2192 SR-224 \u5357\u884c\u5230 Deer Valley\u3002"
+  },
+  "route": [
+   {
+    "seg": "slc-airport",
+    "closure": "caution"
+   },
+   {
+    "seg": "i80-slc",
+    "closure": "caution"
+   },
+   {
+    "seg": "i80-parleys",
+    "closure": "caution"
+   },
+   {
+    "seg": "sr224-park-city",
+    "closure": "caution"
+   }
+  ],
+  "links": {
+   "site": "https://www.deervalley.com/",
+   "webcams": "https://www.deervalley.com/explore-the-mountain/webcams",
+   "report": "https://www.deervalley.com/explore-the-mountain/mountain-report"
+  },
+  "webcams": [
+   {
+    "name": {
+     "en": "Sterling Express",
+     "zh": "\u65af\u7279\u6797\u7f06\u8f66"
+    },
+    "youtube": "iNdfTLilLlU"
+   },
+   {
+    "name": {
+     "en": "Sultan Express",
+     "zh": "\u82cf\u4e39\u7f06\u8f66"
+    },
+    "youtube": "sAjdqw-lzgI"
+   },
+   {
+    "name": {
+     "en": "Silver Lake Lodge",
+     "zh": "\u94f6\u6e56\u5c0f\u5c4b"
+    },
+    "youtube": "uE_ent5rC3Y"
+   },
+   {
+    "name": {
+     "en": "Galena Express",
+     "zh": "\u52a0\u5229\u7eb3\u7f06\u8f66"
+    },
+    "youtube": "0shWeR7Fvpg"
+   },
+   {
+    "name": {
+     "en": "Snow Park Lodge",
+     "zh": "\u96ea\u56ed\u5c0f\u5c4b"
+    },
+    "youtube": "QozKoFs-hL0"
+   },
+   {
+    "name": {
+     "en": "Hoodoo Express",
+     "zh": "\u80e1\u675c\u7f06\u8f66"
+    },
+    "youtube": "RaX_MhXETq4"
+   },
+   {
+    "name": {
+     "en": "Ontario Snow Stake",
+     "zh": "\u5b89\u5927\u7565\u96ea\u6869"
+    },
+    "youtube": "4vi7EiWba7E"
+   },
+   {
+    "name": {
+     "en": "Park Peak Snow Stake",
+     "zh": "\u516c\u56ed\u5cf0\u96ea\u6869"
+    },
+    "youtube": "k8NiVrlQACQ"
+   }
+  ],
+  "intel": null,
+  "intelFrom": "catalog",
+  "parking": {
+   "lat": 40.62278,
+   "lon": -111.48944
+  },
+  "summitLat": 40.6146,
+  "summitLon": -111.511,
+  "summitSource": "Summit 9,570 ft / 2,917 m (Deer Valley Resort); weather point = Empire Express / Bald Mountain top (OpenStreetMap aerialway), approximate",
+  "baseSource": "Base 6,529 ft / 1,990 m (Deer Valley Resort)",
+  "wxGroup": 6,
+  "photo": {
+   "src": "img/cat/deer-valley.jpg",
+   "credit": "Skyguy414",
+   "license": "CC BY-SA 3.0",
+   "page": "https://commons.wikimedia.org/wiki/File:Deervalleyutah_0209.jpg",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+  }
+ },
+ {
+  "id": "snowbasin",
+  "name": {
+   "en": "Snowbasin",
+   "zh": "Snowbasin\uff08\u96ea\u76c6\uff09"
+  },
+  "short": "Snowbasin",
+  "passes": [
+   "ikon"
+  ],
+  "region": "UT",
+  "lat": 41.216,
+  "lon": -111.857,
+  "baseElevM": 1948,
+  "summitElevM": 2850,
+  "driveMin": 66,
+  "driveSource": "OSRM route from SLC airport, no traffic (computed 2026-11-23)",
+  "routeNote": {
+   "en": "SLC \u2192 I-80 E \u2192 I-215 N \u2192 I-15 N \u2192 US-89 \u2192 I-84 E \u2192 SR-167 Trappers Loop \u2192 SR-226 to Snowbasin.",
+   "zh": "\u76d0\u6e56\u57ce\u673a\u573a \u2192 I-80 \u4e1c \u2192 I-215 \u5317 \u2192 I-15 \u5317 \u2192 US-89 \u2192 I-84 \u4e1c \u2192 SR-167 \u730e\u4eba\u73af\u7ebf \u2192 SR-226 \u5230 Snowbasin\u3002"
+  },
+  "route": [
+   {
+    "seg": "slc-airport",
+    "closure": "caution"
+   },
+   {
+    "seg": "i80-slc",
+    "closure": "caution"
+   },
+   {
+    "seg": "i215-north",
+    "closure": "caution"
+   },
+   {
+    "seg": "i15-north",
+    "closure": "caution"
+   },
+   {
+    "seg": "us89-weber",
+    "closure": "caution"
+   },
+   {
+    "seg": "sr167-trappers",
+    "closure": "caution"
+   },
+   {
+    "seg": "sr226-snowbasin",
+    "closure": "caution"
+   }
+  ],
+  "links": {
+   "site": "https://www.snowbasin.com/",
+   "webcams": "https://www.snowbasin.com/the-mountain/web-cams",
+   "report": "https://www.snowbasin.com/the-mountain/mountain-report"
+  },
+  "webcams": [
+   {
+    "name": {
+     "en": "Mt. Ogden",
+     "zh": "\u5965\u683c\u767b\u5c71"
+    },
+    "image": "https://app.prismcam.com/public/helpers/realtime_preview.php?c=54&s=720"
+   },
+   {
+    "name": {
+     "en": "John Paul Lodge",
+     "zh": "\u7ea6\u7ff0\u00b7\u4fdd\u7f57\u5c0f\u5c4b"
+    },
+    "image": "https://app.prismcam.com/public/helpers/realtime_preview.php?c=115&s=720"
+   },
+   {
+    "name": {
+     "en": "Snowstake",
+     "zh": "\u96ea\u6869"
+    },
+    "live": "https://watch.hdrelay.io/player.html?cam=f9e1b19a-a72f-4319-8c01-0fd3e4392efb"
+   },
+   {
+    "name": {
+     "en": "Earl's Plaza",
+     "zh": "Earl \u5e7f\u573a"
+    },
+    "live": "https://watch.hdrelay.io/player.html?cam=6192dda05233cdcad76d7dbb"
+   },
+   {
+    "name": {
+     "en": "Needles",
+     "zh": "Needles"
+    },
+    "live": "https://watch.hdrelay.io/player.html?cam=5af99fc0-02f8-4dc2-8e9a-ba20ad3093c5"
+   },
+   {
+    "name": {
+     "en": "Strawberry Patio",
+     "zh": "\u8349\u8393\u9732\u53f0"
+    },
+    "live": "https://watch.hdrelay.io/player.html?cam=65652b917efa88233092a64d"
+   },
+   {
+    "name": {
+     "en": "Base Area",
+     "zh": "\u5c71\u811a\u533a"
+    },
+    "live": "https://watch.hdrelay.io/player.html?cam=621944fbaaab8d0820944246"
+   },
+   {
+    "name": {
+     "en": "Middle Bowl Base",
+     "zh": "\u4e2d\u7897\u5e95"
+    },
+    "live": "https://watch.hdrelay.io/player.html?cam=62101bfb8db58d080b9eac84"
+   },
+   {
+    "name": {
+     "en": "Base of Wildcat",
+     "zh": "\u91ce\u732b\u5e95"
+    },
+    "live": "https://watch.hdrelay.io/player.html?cam=61e1c348e73e870b5583f203"
+   },
+   {
+    "name": {
+     "en": "Trappers Loop (SR-167)",
+     "zh": "Trappers Loop (SR-167)"
+    },
+    "image": "https://prod-ut.ibi511.com/map/Cctv/138642"
+   },
+   {
+    "name": {
+     "en": "Snowbasin Road (SR-226)",
+     "zh": "Snowbasin Road (SR-226)"
+    },
+    "image": "https://prod-ut.ibi511.com/map/Cctv/136126"
+   }
+  ],
+  "intel": null,
+  "intelFrom": "catalog",
+  "parking": {
+   "lat": 41.216,
+   "lon": -111.857
+  },
+  "summitLat": 41.2042,
+  "summitLon": -111.8843,
+  "summitSource": "Summit 9,350 ft / 2,850 m (Snowbasin Resort); weather point = Allen Peak (OpenStreetMap peak), approximate",
+  "baseSource": "Base 6,391 ft / 1,948 m (Snowbasin Resort)",
+  "wxGroup": 7,
+  "photo": {
+   "src": "img/cat/snowbasin.jpg",
+   "credit": "Gyejournal",
+   "license": "CC BY-SA 4.0",
+   "page": "https://commons.wikimedia.org/wiki/File:Basin_1x_blue_sky.jpg",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  }
+ },
+ {
+  "id": "park-city",
+  "name": {
+   "en": "Park City Mountain",
+   "zh": "Park City Mountain\uff08\u5e15\u514b\u57ce\uff09"
+  },
+  "short": "Park City",
+  "passes": [
+   "epic"
+  ],
+  "region": "UT",
+  "lat": 40.65083,
+  "lon": -111.5075,
+  "baseElevM": 2103,
+  "summitElevM": 3056,
+  "driveMin": 52,
+  "driveSource": "OSRM route from SLC airport, no traffic (computed 2026-11-23)",
+  "routeNote": {
+   "en": "SLC \u2192 I-80 E through Parleys Canyon \u2192 exit 144 Kimball Jct \u2192 SR-224 south to Park City.",
+   "zh": "\u76d0\u6e56\u57ce\u673a\u573a \u2192 I-80 \u4e1c\u8fc7\u5e15\u5229\u5ce1\u8c37 \u2192 144 \u51fa\u53e3 Kimball \u67a2\u7ebd \u2192 SR-224 \u5357\u884c\u5230 Park City\u3002"
+  },
+  "route": [
+   {
+    "seg": "slc-airport",
+    "closure": "caution"
+   },
+   {
+    "seg": "i80-slc",
+    "closure": "caution"
+   },
+   {
+    "seg": "i80-parleys",
+    "closure": "caution"
+   },
+   {
+    "seg": "sr224-park-city",
+    "closure": "caution"
+   }
+  ],
+  "links": {
+   "site": "https://www.parkcitymountain.com/",
+   "webcams": "https://www.parkcitymountain.com/the-mountain/mountain-conditions/mountain-cams.aspx",
+   "report": "https://www.parkcitymountain.com/the-mountain/mountain-conditions/weather-report.aspx"
+  },
+  "webcams": [],
+  "intel": null,
+  "intelFrom": "catalog",
+  "parking": {
+   "lat": 40.65083,
+   "lon": -111.5075
+  },
+  "summitLat": 40.6134,
+  "summitLon": -111.5399,
+  "summitSource": "Summit 10,026 ft / 3,056 m (Park City Mountain); weather point = Jupiter Peak (OpenStreetMap peak)",
+  "baseSource": "Base 6,900 ft / 2,103 m (Park City Mountain)",
+  "wxGroup": 6,
+  "photo": {
+   "src": "img/cat/park-city.jpg",
+   "credit": "Rudi Riet from Washington, DC, United States",
+   "license": "CC BY-SA 2.0",
+   "page": "https://commons.wikimedia.org/wiki/File:Eagle_Race_Arena_at_Park_City_Resort.jpg",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0"
+  }
+ },
+ {
+  "id": "powder-mountain",
+  "name": {
+   "en": "Powder Mountain",
+   "zh": "Powder Mountain\uff08\u9c8d\u5fb7\u5c71\uff09"
+  },
+  "short": "Pow Mow",
+  "passes": [],
+  "region": "UT",
+  "lat": 41.38,
+  "lon": -111.78028,
+  "baseElevM": 2103,
+  "summitElevM": 2713,
+  "driveMin": 89,
+  "driveSource": "OSRM route from SLC airport, no traffic (computed 2026-11-23)",
+  "routeNote": {
+   "en": "SLC \u2192 I-15 N \u2192 US-89 \u2192 SR-203 Harrison Blvd \u2192 SR-39 Ogden Canyon \u2192 SR-158 to Powder Mountain.",
+   "zh": "\u76d0\u6e56\u57ce\u673a\u573a \u2192 I-15 \u5317 \u2192 US-89 \u2192 SR-203 \u54c8\u91cc\u68ee\u5927\u9053 \u2192 SR-39 \u5965\u683c\u767b\u5ce1\u8c37 \u2192 SR-158 \u5230 Powder Mountain\u3002"
+  },
+  "route": [
+   {
+    "seg": "slc-airport",
+    "closure": "caution"
+   },
+   {
+    "seg": "i80-slc",
+    "closure": "caution"
+   },
+   {
+    "seg": "i215-north",
+    "closure": "caution"
+   },
+   {
+    "seg": "i15-north",
+    "closure": "caution"
+   },
+   {
+    "seg": "us89-weber",
+    "closure": "caution"
+   },
+   {
+    "seg": "sr203-ogden",
+    "closure": "caution"
+   },
+   {
+    "seg": "sr39-sr158-powder",
+    "closure": "nogo"
+   }
+  ],
+  "links": {
+   "site": "https://powdermountain.com/",
+   "webcams": "https://powdermountain.com/conditions",
+   "report": "https://powdermountain.com/conditions"
+  },
+  "webcams": [
+   {
+    "name": {
+     "en": "Snow Stake",
+     "zh": "\u96ea\u6869"
+    },
+    "image": "https://storage.googleapis.com/prism-cam-00107/1080-watermark.jpg"
+   },
+   {
+    "name": {
+     "en": "Village Base",
+     "zh": "\u6751\u5e84\u57fa\u5730"
+    },
+    "image": "https://storage.googleapis.com/prism-cam-00108/1080-watermark.jpg"
+   },
+   {
+    "name": {
+     "en": "Lightning Ridge",
+     "zh": "\u95ea\u7535\u5cad"
+    },
+    "image": "https://storage.googleapis.com/prism-cam-00109/360.jpg"
+   },
+   {
+    "name": {
+     "en": "Paradise",
+     "zh": "\u5929\u5802"
+    },
+    "image": "https://storage.googleapis.com/prism-cam-00112/360.jpg"
+   },
+   {
+    "name": {
+     "en": "Timberline",
+     "zh": "\u6797\u7ebf"
+    },
+    "image": "https://storage.googleapis.com/prism-cam-00113/360.jpg"
+   }
+  ],
+  "intel": null,
+  "intelFrom": "catalog",
+  "parking": {
+   "lat": 41.38,
+   "lon": -111.78028
+  },
+  "summitLat": 41.384,
+  "summitLon": -111.7828,
+  "summitSource": "Summit 8,900 ft / 2,713 m (Powder Mountain); weather point = Lightning Ridge lift top (OpenStreetMap aerialway), approximate \u2014 James Peak is higher but is not the resort summit",
+  "baseSource": "Base 6,900 ft / 2,103 m (Powder Mountain)",
+  "wxGroup": 7,
+  "photo": {
+   "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/af/Powder_Mountain_Hidden_Lake_Lodge.JPG/960px-Powder_Mountain_Hidden_Lake_Lodge.JPG",
+   "credit": "Baileypalblue",
+   "license": "Public domain",
+   "page": "https://commons.wikimedia.org/wiki/File:Powder_Mountain_Hidden_Lake_Lodge.JPG"
+  }
+ },
+ {
+  "id": "sundance",
+  "name": {
+   "en": "Sundance",
+   "zh": "Sundance\uff08\u5723\u4e39\u65af\uff09"
+  },
+  "short": "Sundance",
+  "passes": [],
+  "region": "UT",
+  "lat": 40.392,
+  "lon": -111.579,
+  "baseElevM": 1859,
+  "summitElevM": 2515,
+  "driveMin": 74,
+  "driveSource": "OSRM route from SLC airport, no traffic (computed 2026-11-23)",
+  "routeNote": {
+   "en": "SLC \u2192 I-80 E \u2192 I-15 S \u2192 SR-52 (800 North, Orem) \u2192 US-189 Provo Canyon \u2192 SR-92 Alpine Loop to Sundance.",
+   "zh": "\u76d0\u6e56\u57ce\u673a\u573a \u2192 I-80 \u4e1c \u2192 I-15 \u5357 \u2192 SR-52\uff08800 North\uff0c\u5965\u52d2\u59c6\uff09\u2192 US-189 \u666e\u7f57\u6c83\u5ce1\u8c37 \u2192 SR-92 \u9ad8\u5c71\u73af\u7ebf\u5230 Sundance\u3002"
+  },
+  "route": [
+   {
+    "seg": "slc-airport",
+    "closure": "caution"
+   },
+   {
+    "seg": "i80-slc",
+    "closure": "caution"
+   },
+   {
+    "seg": "i15-south",
+    "closure": "caution"
+   },
+   {
+    "seg": "sr52-orem",
+    "closure": "caution"
+   },
+   {
+    "seg": "us189-provo-canyon",
+    "closure": "caution"
+   },
+   {
+    "seg": "sr92-alpine-loop",
+    "closure": "nogo"
+   }
+  ],
+  "links": {
+   "site": "https://www.sundanceresort.com/",
+   "webcams": "https://www.sundanceresort.com/webcams/",
+   "report": "https://www.sundanceresort.com/mountain-report/"
+  },
+  "webcams": [
+   {
+    "name": {
+     "en": "Bearclaw Summit",
+     "zh": "\u718a\u722a\u5cf0\u9876"
+    },
+    "image": "https://app.prismcam.com/public/helpers/realtime_preview.php?c=74&s=720"
+   },
+   {
+    "name": {
+     "en": "Sundance Base",
+     "zh": "\u5723\u4e39\u65af\u57fa\u5730"
+    },
+    "image": "https://app.prismcam.com/public/helpers/realtime_preview.php?c=75&s=720"
+   }
+  ],
+  "intel": null,
+  "intelFrom": "catalog",
+  "parking": {
+   "lat": 40.392,
+   "lon": -111.579
+  },
+  "summitLat": 40.392,
+  "summitLon": -111.579,
+  "summitSource": "Summit 8,250 ft / 2,515 m (Sundance Resort); summit point unverified \u2014 using base coordinates as weather point",
+  "baseSource": "Base 6,100 ft / 1,859 m (Sundance Resort)",
+  "wxGroup": 8,
+  "photo": {
+   "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3f/Sundance_Resort_at_night%2C_Jan_17.jpg/960px-Sundance_Resort_at_night%2C_Jan_17.jpg",
+   "credit": "An Errant Knight",
+   "license": "CC BY-SA 4.0",
+   "page": "https://commons.wikimedia.org/wiki/File:Sundance_Resort_at_night,_Jan_17.jpg",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  }
+ }
  ],
  "cameras": [
   {

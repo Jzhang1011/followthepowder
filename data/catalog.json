@@ -553,7 +553,7 @@
    "summitElevM": 3374,
    "tz": "America/Denver",
    "url": "https://www.alta.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Alta_Ski_Area"
   },
   {
@@ -574,7 +574,7 @@
    "summitElevM": 3353,
    "tz": "America/Denver",
    "url": "https://www.snowbird.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Snowbird,_Utah",
    "report": {
     "p": "powdr",
@@ -600,7 +600,7 @@
    "summitElevM": 3277,
    "tz": "America/Denver",
    "url": "https://www.brightonresort.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Brighton_Ski_Resort",
    "photo": {
     "src": "img/cat/brighton.jpg",
@@ -632,7 +632,7 @@
    "summitElevM": 3197,
    "tz": "America/Denver",
    "url": "https://www.solitudemountain.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Solitude_Mountain_Resort",
    "report": {
     "p": "mtnpowder",
@@ -659,7 +659,7 @@
    "summitElevM": 2917,
    "tz": "America/Denver",
    "url": "https://www.deervalley.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Deer_Valley",
    "photo": {
     "src": "img/cat/deer-valley.jpg",
@@ -692,7 +692,7 @@
    "summitElevM": 2850,
    "tz": "America/Denver",
    "url": "https://www.snowbasin.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Snowbasin",
    "photo": {
     "src": "img/cat/snowbasin.jpg",
@@ -722,7 +722,7 @@
    "summitElevM": 3056,
    "tz": "America/Denver",
    "url": "https://www.parkcitymountain.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Park_City_Mountain_Resort",
    "photo": {
     "src": "img/cat/park-city.jpg",
@@ -754,8 +754,8 @@
    "baseElevM": 2103,
    "summitElevM": 2713,
    "tz": "America/Denver",
-   "url": "https://www.powmow.com/",
-   "detail": "basic",
+   "url": "https://powdermountain.com/",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Powder_Mountain"
   },
   {
@@ -774,7 +774,7 @@
    "summitElevM": 2515,
    "tz": "America/Denver",
    "url": "https://www.sundanceresort.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Sundance_Resort",
    "photo": {
     "src": "img/cat/sundance.jpg",

@@ -18,6 +18,7 @@ Deploy: `npx wrangler@4 deploy` from this folder (`workers/ski-data/`). The bund
 | `REFRESH_TOKEN` | Required for `POST /api/run`. |
 | `OPEN_METEO_KEY` | Uses `customer-api.open-meteo.com` with the commercial key (same response). |
 | `COTRIP_API_KEY` | Also fetches CDOT's official data-sharing feeds (`destinations`, `incidents`, `roadConditions`) into `src:cotrip`. Endpoint path/params (`COTRIP_API_BASE`, default `https://data.cotrip.org/api/v1`) must be confirmed against the portal once the key is issued; the UI still reads the COtrip map feed until then. |
+| `UDOT_API_KEY` | Utah roads: keyed ibi511 feeds (cameras, roadconditions v3, mountainpasses) plus the keyed `/event` feed for `src:utah-roads`. Without it the source still works from the keyless ArcGIS UDOT events feed (events only, no cameras/passes/chain status). Free developer key at udottraffic.utah.gov; throttle 10 calls / 60 s (the collector makes at most 4 keyed calls per 15-min tick). |
 
 ## Resort catalog conditions (discovery page)
 

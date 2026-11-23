@@ -4,10 +4,11 @@
 // value and its own fetchedAt, and records the failure (status 'stale' = serving last good copy,
 // 'failed' = nothing to serve).
 import { fetchAllIntel } from '../js/intel.js';
-import { openMeteoUrl, splitOpenMeteo, carsUrl, slimEvents, EVENT_CLASSES, nwsUrl, slimAlerts, wxGroupCfg } from '../js/core.js';
+import { openMeteoUrl, splitOpenMeteo, carsUrl, slimEvents, EVENT_CLASSES, nwsUrl, slimAlerts, wxGroupCfg,
+  utahCarsUrl, utahKeyedUrl, slimUtahEvents, slimUtahRoadConditions, slimUtahCameras, slimUtahPasses } from '../js/core.js';
 
 export const UA = 'SkiDay ski dashboard (https://followthepowder.com/)';
-export const SOURCES = ['weather', 'roads', 'alerts', 'cameras', 'intel'];
+export const SOURCES = ['weather', 'roads', 'alerts', 'cameras', 'intel', 'utah-roads'];
 const now = () => new Date().toISOString();
 
 export function makeHttp({ tries = 3, timeoutMs = 25000 } = {}) {
@@ -87,7 +88,30 @@ export const collectors = {
     }
     return { route, all };
   },
-  async intel(cfg, http) { return fetchAllIntel(cfg, http); }
+  async intel(cfg, http) { return fetchAllIntel(cfg, http); },
+  /**
+   * Utah roads: {events, cameras, passes}. Events always come from the keyless ArcGIS UDOT feed
+   * (or the keyed ibi511 /event feed when a key is present, with ArcGIS as fallback). When
+   * keys.udotApiKey is set, three more single-try keyed calls add road-condition segments
+   * (traction/chain restrictions + icy/snow-covered roads), corridor cameras and mountain passes.
+   * Keyed calls are 4 per 15-min tick at most — well under UDOT's 10 calls / 60 s throttle.
+   * Without a key the source still works (events only), so the GitHub Action backup keeps working.
+   */
+  async 'utah-roads'(cfg, http, keys = {}) {
+    const out = { events: [], cameras: [], passes: [] };
+    const key = keys.udotApiKey;
+    if (key) {
+      const keyHttp = makeHttp({ tries: 1, timeoutMs: 20000 });
+      try { out.events.push(...slimUtahEvents(cfg, await keyHttp.getJson(utahKeyedUrl(cfg, key, 'event')), { keyed: true })); }
+      catch { out.events.push(...slimUtahEvents(cfg, await http.getJson(utahCarsUrl(cfg)))); }
+      try { out.cameras = slimUtahCameras(cfg, await keyHttp.getJson(utahKeyedUrl(cfg, key, 'cameras'))); } catch (e) { console.warn?.(`[ski] utah cameras: ${e.message || e}`); }
+      try { out.events.push(...slimUtahRoadConditions(cfg, await keyHttp.getJson(utahKeyedUrl(cfg, key, 'roadconditions', 3)))); } catch (e) { console.warn?.(`[ski] utah roadconditions: ${e.message || e}`); }
+      try { out.passes = slimUtahPasses(cfg, await keyHttp.getJson(utahKeyedUrl(cfg, key, 'mountainpasses'))); } catch (e) { console.warn?.(`[ski] utah mountainpasses: ${e.message || e}`); }
+    } else {
+      out.events.push(...slimUtahEvents(cfg, await http.getJson(utahCarsUrl(cfg))));
+    }
+    return out;
+  }
 };
 
 /** Merge one source attempt into its last record. */
@@ -118,11 +142,12 @@ const meta = r => r ? { ok: !!r.ok, status: r.status, fetchedAt: r.fetchedAt, at
 
 /** Records -> the latest.json shape the page reads. */
 export function toLatest(rec, servedBy) {
-  const times = ['weather', 'roads', 'alerts', 'cameras'].map(k => rec[k]?.fetchedAt).filter(Boolean).sort();
+  const times = ['weather', 'roads', 'alerts', 'cameras', 'utah-roads'].map(k => rec[k]?.fetchedAt).filter(Boolean).sort();
   return {
     generatedAt: times[times.length - 1] || null, servedBy,
-    sources: { weather: meta(rec.weather), roads: meta(rec.roads), alerts: meta(rec.alerts), cameras: meta(rec.cameras) },
-    weather: rec.weather?.data || null, roads: rec.roads?.data || null, alerts: rec.alerts?.data || {}, cameras: rec.cameras?.data || null
+    sources: { weather: meta(rec.weather), roads: meta(rec.roads), alerts: meta(rec.alerts), cameras: meta(rec.cameras), 'utah-roads': meta(rec['utah-roads']) },
+    weather: rec.weather?.data || null, roads: rec.roads?.data || null, alerts: rec.alerts?.data || {}, cameras: rec.cameras?.data || null,
+    'utah-roads': rec['utah-roads']?.data || null
   };
 }
 export const toIntel = (r, servedBy) => ({ generatedAt: r?.fetchedAt || null, attemptAt: r?.attemptAt || null, status: r?.status || 'failed', error: r?.error || null, servedBy, resorts: r?.data || {} });
@@ -131,7 +156,7 @@ export const toCameras = (r, cfg, servedBy) => ({ generatedAt: r?.fetchedAt || n
 /** latest.json (+ intel.json, cameras.json) on disk -> records, so the Node backup can merge too. */
 export function fromFiles(latest, intel, cams) {
   const rec = {};
-  for (const k of ['weather', 'roads', 'alerts', 'cameras']) {
+  for (const k of ['weather', 'roads', 'alerts', 'cameras', 'utah-roads']) {
     const s = latest?.sources?.[k]; const d = latest?.[k];
     const has = d != null && s?.ok !== false && !(k === 'alerts' && !Object.values(d).some(v => v));
     rec[k] = has ? { status: s?.status || 'ok', ok: true, fetchedAt: s?.fetchedAt || latest.generatedAt, attemptAt: s?.attemptAt || null, error: s?.error || null, data: d } : null;

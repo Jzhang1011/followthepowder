@@ -3,6 +3,8 @@
 
 export const CO_BOX = { w: -109.0603, e: -102.0415, s: 36.9925, n: 41.0034 };
 export const inCO = ([lon, lat]) => lon >= CO_BOX.w && lon <= CO_BOX.e && lat >= CO_BOX.s && lat <= CO_BOX.n;
+export const UT_BOX = { w: -114.0529, e: -109.0418, s: 36.9975, n: 42.0017 };
+export const inUT = ([lon, lat]) => lon >= UT_BOX.w && lon <= UT_BOX.e && lat >= UT_BOX.s && lat <= UT_BOX.n;
 
 export function decodePolyline(str, precision = 6) {
   const f = 10 ** precision, out = [];
@@ -97,10 +99,14 @@ export function buildRoute(json) {
   // Colorado portion
   const coFirst = P.findIndex(inCO);
   const startsInCO = inCO(P[0]);
+  // Utah portion (same shape, for Utah resorts)
+  const utFirst = P.findIndex(inUT);
+  const startsInUT = inUT(P[0]);
   return {
     pts: P, cum, legOf, legs, durS: r.duration, distM: r.distance,
     bbox: P.reduce((b, p) => [Math.min(b[0], p[0]), Math.min(b[1], p[1]), Math.max(b[2], p[0]), Math.max(b[3], p[1])], [180, 90, -180, -90]),
-    startsInCO, coEntry: coFirst, coEntryAlongM: coFirst >= 0 ? cum[coFirst] : null
+    startsInCO, coEntry: coFirst, coEntryAlongM: coFirst >= 0 ? cum[coFirst] : null,
+    startsInUT, utEntry: utFirst, utEntryAlongM: utFirst >= 0 ? cum[utFirst] : null
   };
 }
 
@@ -197,14 +203,17 @@ export function oppositeDirection(route, i, e) {
   return (dx * ux + dy * uy) / L < -0.3;
 }
 
-/** Turn a route into verdictFor-compatible {segments, legs[], events[]} with synthetic seg ids. */
-export function routeSegments(route, events, startLabel) {
+/** Turn a route into verdictFor-compatible {segments, legs[], events[]} with synthetic seg ids.
+ *  `region` ('UT' or 'CO', default 'CO') decides which state a leg is "outside" of: legs mostly
+ *  outside the resort's home state get the unknown level (no DOT data there), as Colorado legs do today. */
+export function routeSegments(route, events, startLabel, region) {
+  const inHome = region === 'UT' ? inUT : inCO;
   const segments = {}, legs = [];
   route.legs.forEach((l, i) => {
     const id = `dyn-${i}`;
     const km = Math.round(l.distM / 1000);
     const lp = route.pts.slice(l.from, l.to + 1);
-    const outside = lp.filter(inCO).length < lp.length / 2; // mostly outside Colorado
+    const outside = lp.filter(inHome).length < lp.length / 2; // mostly outside the home state
     segments[id] = { name: { en: `${l.key} · ${km} km`, zh: `${l.key} · ${km} 公里` }, routes: l.refs, km, key: l.key, outside };
     // A full closure on a long highway leg has no easy detour; short local legs usually do.
     legs.push({ seg: id, closure: l.distM > 15000 && l.refs.length ? 'nogo' : 'caution' });
