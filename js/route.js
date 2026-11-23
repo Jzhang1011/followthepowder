@@ -92,6 +92,23 @@ export function buildRoute(json) {
     pass--; if (legs.length < 2) break;
     if (!legs.some(l => l.distM < MIN)) break;
   }
+  // Unnamed legs (OSRM steps with no ref or street name — typically the departure
+  // step) must never reach the UI as a "…" leg: fold each into its previous
+  // named neighbour, or the next one when it leads the route.
+  {
+    const merged = [];
+    for (const l of legs) {
+      if (l.key !== '…') { merged.push(l); continue; }
+      const prev = merged[merged.length - 1];
+      if (prev && prev.key !== '…') { prev.distM += l.distM; prev.steps.push(...l.steps); prev.refs.push(...l.refs); continue; }
+      merged.push(l);
+    }
+    if (merged.length > 1 && merged[0].key === '…') {
+      const first = merged.shift(), next = merged[0];
+      next.distM += first.distM; next.steps = [...first.steps, ...next.steps]; next.refs = [...new Set([...first.refs, ...next.refs])];
+    }
+    legs = fold(merged); // re-join same-road neighbours split by a folded unnamed leg
+  }
   const stepToLeg = new Map(); legs.forEach((l, i) => l.steps.forEach(k => stepToLeg.set(k, i)));
   const legOf = S.map(k => stepToLeg.get(k) ?? 0);
   legs.forEach((l, i) => { l.from = legOf.indexOf(i); l.to = legOf.lastIndexOf(i); });
@@ -212,9 +229,11 @@ export function routeSegments(route, events, startLabel, region) {
   route.legs.forEach((l, i) => {
     const id = `dyn-${i}`;
     const km = Math.round(l.distM / 1000);
+    const label = l.key === '…' ? 'Local roads' : l.key; // degenerate all-unnamed route only
+    const labelZh = l.key === '…' ? '本地道路' : l.key;
     const lp = route.pts.slice(l.from, l.to + 1);
     const outside = lp.filter(inHome).length < lp.length / 2; // mostly outside the home state
-    segments[id] = { name: { en: `${l.key} · ${km} km`, zh: `${l.key} · ${km} 公里` }, routes: l.refs, km, key: l.key, outside };
+    segments[id] = { name: { en: `${label} · ${km} km`, zh: `${labelZh} · ${km} 公里` }, routes: l.refs, km, key: l.key, outside };
     // A full closure on a long highway leg has no easy detour; short local legs usually do.
     legs.push({ seg: id, closure: l.distM > 15000 && l.refs.length ? 'nogo' : 'caution' });
   });

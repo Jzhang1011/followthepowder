@@ -1,11 +1,11 @@
 import { openMeteoUrl, splitOpenMeteo, dailyRows, hourlyRows, weatherEmoji, carsUrl, slimEvents, EVENT_CLASSES,
   nwsUrl, slimAlerts, verdictFor, outfitFor, recommendFrom, fmt, wxGroupOf, wxGroupCfg, wxGroupCount,
-  utahCarsUrl, slimUtahEvents } from './core.js?v=27e13725dd';
-import { STR, PACK_DEFAULT } from './i18n.js?v=27e13725dd';
-import { selectCameras, routeSegments, inCO, inUT } from './route.js?v=27e13725dd';
-import { dl, initAnalytics, selectResort, resortCompare, forecast, gear, startSet, pageView } from './analytics.js?v=27e13725dd';
-import { loadStart, saveStart, isDefaultStart, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=27e13725dd';
-import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=27e13725dd';
+  utahCarsUrl, slimUtahEvents } from './core.js?v=93113197c5';
+import { STR, PACK_DEFAULT } from './i18n.js?v=93113197c5';
+import { selectCameras, routeSegments, inCO, inUT } from './route.js?v=93113197c5';
+import { dl, initAnalytics, selectResort, resortCompare, forecast, gear, startSet, pageView } from './analytics.js?v=93113197c5';
+import { loadStart, saveStart, isDefaultStart, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=93113197c5';
+import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=93113197c5';
 
 const LS = {
   get: (k, d) => { try { const v = localStorage.getItem('ski.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -869,10 +869,11 @@ function bindPack() {
 function renderSources() {
   const via = m => t(m === 'live' ? 'via_live' : m === 'server' ? 'via_server' : 'via_snapshot');
   const cls = f => f.cls === 'ok' ? 'ok' : f.cls === 'stale' ? 'snap' : 'bad';
-  const item = (k, slot) => { const f = freshness(slot), s = state[slot];
+  const r = resort();
+  const item = (k, slot, rr) => { const f = freshness(slot, rr), s = (slot === 'roads' && rr?.region === 'UT') ? state.utahRoads : state[slot];
     return `<span class="${cls(f)}">${esc(t(k))}: ${esc(f.text)}${s.data ? ` · ${esc(fmtTime(s.at))} · ${esc(via(s.mode))}` : ''}</span>`; };
-  const fi = freshness('intel', resort());
-  $('#sources').innerHTML = item('src_roads', 'roads') + item('src_weather', 'wx') + item('src_alerts', 'alerts')
+  const fi = freshness('intel', r);
+  $('#sources').innerHTML = item(r?.region === 'UT' ? 'src_roads_ut' : 'src_roads', 'roads', r) + item('src_weather', 'wx') + item('src_alerts', 'alerts')
     + `<span class="${cls(fi)}">${esc(t('intel_h'))}: ${esc(fi.text)}${state.intel.at ? ` · ${esc(fmtTime(state.intel.at))} · ${esc(via(state.intel.mode))}` : ''}</span>`
     + (state.camsAt ? `<span class="${ageMin(state.camsAt) > 60 ? 'snap' : 'ok'}">${esc(t('cameras'))}: ${esc(t('cam_list'))} ${esc(ago(state.camsAt))}</span>` : '');
   $('#credits').innerHTML = state.cfg.resorts.filter(r => r.photo).map(r => `${esc(r.short)} ${esc(t('photo_by', r.photo.credit))}, <a href="${esc(r.photo.page)}" target="_blank" rel="noopener">Wikimedia Commons</a>, <a href="${esc(r.photo.licenseUrl)}" target="_blank" rel="noopener">${esc(r.photo.license)}</a>`).join(' · ');
