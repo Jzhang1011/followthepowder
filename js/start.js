@@ -1,5 +1,5 @@
 // Starting location: input with Photon autocomplete, presets, browser geolocation; OSRM routing with cache + throttle.
-import { buildRoute, osrmRouteUrl, osrmTableUrl } from './route.js?v=93113197c5';
+import { buildRoute, osrmRouteUrl, osrmTableUrl } from './route.js?v=58e23c4e81';
 
 const LSK = 'ski.start', RCK = 'ski.routes';
 const round = (v, n = 3) => +(+v).toFixed(n); // ~100 m: enough for routing, kinder to privacy
@@ -73,7 +73,9 @@ function writeCache(c) {
 export async function getRoute(cfg, start, resort) {
   const from = { lat: round(start.lat), lon: round(start.lon) };
   const to = resort.parking || { lat: resort.lat, lon: resort.lon };
-  const key = `${from.lat},${from.lon}>${resort.id}`;
+  // Route-model version: bump when buildRoute's leg model changes, so browsers
+  // drop cached routes built by older code (a stale model can show a "…" leg).
+  const key = `v2:${from.lat},${from.lon}>${resort.id}`;
   const cache = readCache();
   if (cache[key] && Date.now() - cache[key].at < 3 * 864e5) return cache[key].route;
   if (inflight.has(key)) return inflight.get(key);
@@ -131,7 +133,7 @@ function photonLabel(f) {
   return { main, sub: where.filter(w => w !== main).join(', ') };
 }
 
-export function mountStartUI(root, { cfg, t, L, getStart, onChange }) {
+export function mountStartUI(root, { cfg, t, L, getStart, getRegion, onChange }) {
   const presets = cfg.trip.presets || [];
   root.innerHTML = `
     <div class="start-row">
@@ -156,7 +158,13 @@ export function mountStartUI(root, { cfg, t, L, getStart, onChange }) {
     root.querySelector('#start-geo').title = t('use_loc');
     if (document.activeElement !== input) input.value = label();
     const cur = getStart();
-    root.querySelector('#start-presets').innerHTML = presets.map(p => `<button type="button" data-p="${p.id}" class="${cur.id === p.id ? 'on' : ''}">${L(p.name)}</button>`).join('');
+    // Quick picks show only the nearby airport for the resort's region (DEN for
+    // Colorado, SLC for Utah). Other starts stay available via search / "Use my location".
+    const region = getRegion?.();
+    const airports = presets.filter(p => p.airport);
+    const shown = presets.filter(p => p.airport && (!region || p.region === region));
+    const picks = shown.length ? shown : (airports.length ? airports : presets);
+    root.querySelector('#start-presets').innerHTML = picks.map(p => `<button type="button" data-p="${p.id}" class="${cur.id === p.id ? 'on' : ''}">${L(p.name)}</button>`).join('');
   }
   function close() { list.hidden = true; input.setAttribute('aria-expanded', 'false'); active = -1; }
   function show() {

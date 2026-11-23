@@ -1,11 +1,11 @@
 import { openMeteoUrl, splitOpenMeteo, dailyRows, hourlyRows, weatherEmoji, carsUrl, slimEvents, EVENT_CLASSES,
   nwsUrl, slimAlerts, verdictFor, outfitFor, recommendFrom, fmt, wxGroupOf, wxGroupCfg, wxGroupCount,
-  utahCarsUrl, slimUtahEvents } from './core.js?v=93113197c5';
-import { STR, PACK_DEFAULT } from './i18n.js?v=93113197c5';
-import { selectCameras, routeSegments, inCO, inUT } from './route.js?v=93113197c5';
-import { dl, initAnalytics, selectResort, resortCompare, forecast, gear, startSet, pageView } from './analytics.js?v=93113197c5';
-import { loadStart, saveStart, isDefaultStart, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=93113197c5';
-import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=93113197c5';
+  utahCarsUrl, slimUtahEvents } from './core.js?v=58e23c4e81';
+import { STR, PACK_DEFAULT } from './i18n.js?v=58e23c4e81';
+import { selectCameras, routeSegments, inCO, inUT } from './route.js?v=58e23c4e81';
+import { dl, initAnalytics, selectResort, resortCompare, forecast, gear, startSet, pageView } from './analytics.js?v=58e23c4e81';
+import { loadStart, saveStart, isDefaultStart, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=58e23c4e81';
+import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=58e23c4e81';
 
 const LS = {
   get: (k, d) => { try { const v = localStorage.getItem('ski.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -983,7 +983,7 @@ function goHome() {
   try { state.start = loadStart(state.cfg); } catch { state.start = { ...state.cfg.trip.origin, kind: 'preset' }; }
   state.manualStart = hasManualStart();
   if (!state.manualStart) autoLocate({ api: API, onUpdate: setStart, shouldStop: () => state.manualStart }).catch(() => {});
-  try { if ($('#start')) state.startUI = mountStartUI($('#start'), { cfg: state.cfg, t, L, getStart: () => state.start, onChange: setStart }); }
+  try { if ($('#start')) state.startUI = mountStartUI($('#start'), { cfg: state.cfg, t, L, getStart: () => state.start, getRegion: () => resort().region, onChange: setStart }); }
   catch (e) { console.warn('[ski] start UI failed:', e); }
   initDiscover({ compare: resortCompare, forecast, state, L, t, ui: UI, roadCheck, roadCount, reasonText, getJson, track, loadLeaflet, getStart: () => state.start, setStart, open: openResort, loadRoads: async () => { if (!state.roads.data) { try { await loadServer(); } catch {} } return state.roads; }, home: goHome, plan: openPlan, view: () => state.view });
   try { bind(); } catch (e) { console.warn('[ski] bind failed:', e); }

@@ -15,6 +15,8 @@
   "presets": [
    {
     "id": "DEN",
+    "airport": true,
+    "region": "CO",
     "name": {
      "en": "Denver Airport (DEN)",
      "zh": "丹佛机场 (DEN)"
@@ -24,6 +26,8 @@
    },
    {
     "id": "SLC",
+    "airport": true,
+    "region": "UT",
     "name": {
      "en": "Salt Lake City Airport (SLC)",
      "zh": "\u76d0\u6e56\u57ce\u673a\u573a (SLC)"
@@ -33,6 +37,7 @@
    },
    {
     "id": "denver",
+    "region": "CO",
     "name": {
      "en": "Downtown Denver",
      "zh": "丹佛市中心"
@@ -42,6 +47,7 @@
    },
    {
     "id": "boulder",
+    "region": "CO",
     "name": {
      "en": "Boulder",
      "zh": "Boulder"
@@ -51,6 +57,7 @@
    },
    {
     "id": "cos",
+    "region": "CO",
     "name": {
      "en": "Colorado Springs",
      "zh": "科罗拉多斯普林斯"
@@ -60,6 +67,7 @@
    },
    {
     "id": "foco",
+    "region": "CO",
     "name": {
      "en": "Fort Collins",
      "zh": "柯林斯堡"
