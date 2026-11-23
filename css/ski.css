@@ -483,15 +483,27 @@ section{scroll-margin-top:70px}
 .rec-go .rec-dot{background:#3fbf7f} .rec-caution .rec-dot{background:var(--orange)} .rec-nogo .rec-dot{background:#e5554d}
 .rec-why{margin:8px 0 0;padding-left:22px;font-size:14px;color:#e6eef6} .rec-why li{margin:2px 0}
 .rec-basis{margin:8px 0 0;font-size:12px;color:#b7c7d8}
-.hgrid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:12px;align-items:start}
+.hgrid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start}
 .hp{padding:0 0 2px} .getthere{overflow:visible;padding:0 16px 4px}
 .hp-h{font-size:13px;font-weight:750;letter-spacing:.06em;text-transform:uppercase;color:#d6e3ef;margin:0;padding:14px 16px 10px}
 .getthere .hp-h{padding-left:0;padding-right:0}
+.getthere summary{display:flex;align-items:center;gap:8px;cursor:pointer;list-style:none;padding:0 16px}
+.getthere summary::-webkit-details-marker{display:none}
+.getthere summary::marker{content:""}
+.getthere summary .hp-h{flex:1}
+.getthere summary::after{content:"›";font-size:22px;line-height:1;color:#d6e3ef;transition:transform .15s}
+.getthere[open] summary::after{transform:rotate(90deg)}
 .getthere .start{margin:0 0 6px;max-width:none}
 .getthere .start-l{display:none}
 .tiles.t6{grid-template-columns:repeat(3,1fr)}
 .tiles.t6 .tile{border-bottom:1px solid rgba(255,255,255,.1)} .tiles.t6 .tile:nth-child(3n){border-right:0} .tiles.t6 .tile:nth-child(n+4){border-bottom:0}
 .tiles.t6 .tile b{font-size:24px}
+@media (min-width:861px){
+  .tiles.t6{grid-template-columns:repeat(6,1fr)}
+  .tiles.t6 .tile{border-bottom:0}
+  .tiles.t6 .tile:nth-child(3n){border-right:1px solid rgba(255,255,255,.1)}
+  .tiles.t6 .tile:nth-child(6n){border-right:0}
+}
 .hp-src{font-size:11.5px;color:#9fb3c8;margin:8px 16px 10px;line-height:1.4} .getthere .hp-src{margin:8px 0 12px} .hp-src a{color:#ffd2a8}
 .glist{list-style:none;margin:6px 0 0;padding:0;font-size:14px}
 .grow{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.1)} .grow:last-child{border:0}
@@ -503,7 +515,6 @@ section{scroll-margin-top:70px}
 .rsrc{color:var(--mut);font-size:11.5px;white-space:nowrap}
 .rrow.rok span b{font-weight:650}
 .isrc{margin:-6px 0 12px} .isrc a{color:#245e93}
-@media (max-width:860px){.hgrid{grid-template-columns:minmax(0,1fr)}}
 .tiles.t6 .tile{min-width:0} .tiles.t6 .tile>span:not(.ti){overflow-wrap:anywhere}
 @media (max-width:560px){
   .dhero-a{margin:8px 0 12px} .dplan{width:100%;justify-content:center}
