@@ -3,14 +3,14 @@
 // HTML files (no app.js), so this module wires the same header the main app has.
 // Language and units are read from the same localStorage keys the main app uses
 // (ski.lang / ski.units), so a visitor's choice carries across pages.
-import { STR } from './i18n.js?v=8963d761ac';
-import { dl } from './analytics.js?v=8963d761ac';
+import { STR } from './i18n.js?v=cefb4f9a79';
+import { dl } from './analytics.js?v=cefb4f9a79';
 
 const LS = {
   get: (k, d) => { try { const v = localStorage.getItem('ski.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
   set: (k, v) => { try { localStorage.setItem('ski.' + k, JSON.stringify(v)); } catch {} }
 };
-export const lang = () => LS.get('lang', (navigator.language || '').toLowerCase().startsWith('zh') ? 'zh' : 'en');
+export const lang = () => 'en'; // Chinese hidden per owner request (see app.js).
 export const units = () => LS.get('units', 'imperial');
 export const t = k => (STR[lang()] || STR.en)[k] ?? STR.en[k] ?? k;
 

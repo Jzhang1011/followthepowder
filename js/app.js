@@ -1,20 +1,20 @@
 import { openMeteoUrl, splitOpenMeteo, dailyRows, hourlyRows, weatherEmoji, carsUrl, slimEvents, EVENT_CLASSES,
   nwsUrl, slimAlerts, verdictFor, recommendFrom, fmt, wxGroupOf, wxGroupCfg, wxGroupCount,
   utahCarsUrl, slimUtahEvents, caRoadsUrl, CA_DISTRICTS, slimCaEvents,
-  c2cUrl, slimNeEvents, ny511Url, slimNyEvents, massdotUrl, slimMaEvents } from './core.js?v=8963d761ac';
-import { STR, PACK_DEFAULT } from './i18n.js?v=8963d761ac';
-import { selectCameras, routeSegments, inCO, inUT } from './route.js?v=8963d761ac';
-import { dl, initAnalytics, selectResort, resortCompare, forecast, gear, startSet, pageView } from './analytics.js?v=8963d761ac';
-import { loadStart, saveStart, closestAirport, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=8963d761ac';
-import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=8963d761ac';
-import { wearCard } from './wear.js?v=8963d761ac';
+  c2cUrl, slimNeEvents, ny511Url, slimNyEvents, massdotUrl, slimMaEvents } from './core.js?v=cefb4f9a79';
+import { STR, PACK_DEFAULT } from './i18n.js?v=cefb4f9a79';
+import { selectCameras, routeSegments, inCO, inUT } from './route.js?v=cefb4f9a79';
+import { dl, initAnalytics, selectResort, resortCompare, forecast, gear, startSet, pageView } from './analytics.js?v=cefb4f9a79';
+import { loadStart, saveStart, closestAirport, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=cefb4f9a79';
+import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=cefb4f9a79';
+import { wearCard } from './wear.js?v=cefb4f9a79';
 
 const LS = {
   get: (k, d) => { try { const v = localStorage.getItem('ski.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
   set: (k, v) => { try { localStorage.setItem('ski.' + k, JSON.stringify(v)); } catch {} }
 };
 const state = {
-  lang: LS.get('lang', (navigator.language || '').toLowerCase().startsWith('zh') ? 'zh' : 'en'),
+  lang: 'en', // Chinese hidden per owner request: single-language site (zh strings stay in i18n.js, unreachable).
   units: LS.get('units', 'imperial'),
   resort: LS.get('resort', null),
   point: LS.get('point', 'summit'),
