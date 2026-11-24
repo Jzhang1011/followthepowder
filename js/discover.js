@@ -1,8 +1,8 @@
 // Resort discovery (default home) + basic resort view for catalog resorts without a full dashboard.
 // Data: data/catalog.json (static, verified) + api/catalog-conditions.json (Open-Meteo model, refreshed hourly by
 // the ski-data Worker; resort-published base depth / terrain open / lifts / 24 h snow where SkiDay reads a public feed) + api/forecast.json?r=<id> (basic view).
-import { fmt, weatherEmoji, chainLevel, recommendFrom, visLevel } from './core.js?v=04a33435b6';
-import { getRoute, getTable } from './start.js?v=04a33435b6';
+import { fmt, weatherEmoji, chainLevel, recommendFrom, visLevel } from './core.js?v=97a776c584';
+import { getRoute, getTable } from './start.js?v=97a776c584';
 
 const S = {
   en: {
@@ -90,7 +90,7 @@ Object.assign(S.en, {
   a_r_terrain: '{0} of terrain open vs {1} here.', a_r_snow: '{0} of new snow in 24 h vs {1} here.', a_r_lifts: '{0} lifts running vs {1} here.',
   a_r_closer: 'Similar conditions and about {0} less driving.', a_r_closer_line: 'Similar conditions and about {0} closer as the crow flies.', a_r_comp: 'Comparable conditions today.', a_r_pass: ' Same pass as {0}.',
   a_road_chain: 'CDOT: traction/chain law near the resort', a_road_na: 'Road reports: Colorado only (CDOT)',
-  a_note: 'Closed resorts and resorts without a readable report are never suggested, however much snow they have. Snow and status come from the resorts’ own reports where available (otherwise the Open-Meteo model). CDOT road reports cover Colorado only and are checked within ~20 km of each resort, not along your whole route. Drive times are estimates without traffic. No crowd data.',
+  a_note: 'Closed resorts and resorts without a readable report are never suggested, however much snow they have. Snow and status come from the resorts’ own reports where available (otherwise the Open-Meteo model). Road checks in these suggestions cover Colorado only (CDOT) and are checked within ~20 km of each resort, not along your whole route. Drive times are estimates without traffic. No crowd data.',
   a_loading: 'Loading nearby resorts…'
 });
 Object.assign(S.zh, {
@@ -106,7 +106,7 @@ Object.assign(S.zh, {
   a_r_terrain: '地形开放 {0}，这里 {1}。', a_r_snow: '24小时新雪 {0}，这里 {1}。', a_r_lifts: '缆车运行 {0}，这里 {1}。',
   a_r_closer: '雪况相近，车程少约 {0}。', a_r_closer_line: '雪况相近，直线距离近约 {0}。', a_r_comp: '今天雪况相当。', a_r_pass: ' 与{0}同一雪票。',
   a_road_chain: 'CDOT：雪场附近有牵引力/链条法规', a_road_na: '路况：仅覆盖科罗拉多（CDOT）',
-  a_note: '无论降雪多少，都不会推荐已关闭或没有可读取报告的雪场。降雪和营业状态尽量来自雪场自己的报告（否则用 Open-Meteo 模型）。CDOT 路况只覆盖科罗拉多，检查的是每个雪场约 20 公里范围内，而不是你的整条路线。车程为不含路况的估算。没有人流数据。',
+  a_note: '无论降雪多少，都不会推荐已关闭或没有可读取报告的雪场。降雪和营业状态尽量来自雪场自己的报告（否则用 Open-Meteo 模型）。这些推荐里的路况检查只覆盖科罗拉多（CDOT），检查的是每个雪场约 20 公里范围内，而不是你的整条路线。车程为不含路况的估算。没有人流数据。',
   a_loading: '正在加载附近雪场…'
 });
 // Basic resort pages on the shared resort-page layout — stage 2.
@@ -115,7 +115,7 @@ Object.assign(S.en, {
   b_src_rep: 'Lifts, runs, terrain, base and new snow: {0}, updated {1}. Temperature: Open-Meteo model at the summit ({2}).',
   b_src_none: 'SkiDay can’t read a lift or terrain report for this resort, so those show “Not reported”. New snow and temperature: Open-Meteo model at the summit ({0}).',
   b_norep: 'SkiDay can’t read this resort’s lift and terrain report. Check the official snow report.', b_nostatus: 'The resort’s report doesn’t say whether lifts are running.',
-  b_noroads: 'No road reports here: SkiDay’s road data (CDOT) covers Colorado only. Check the state DOT or 511 before you go.',
+  b_noroads: 'No road reports here: SkiDay’s live road data covers Colorado, Utah and California. Check the state DOT or 511 before you go.',
   b_roads_out: 'Road reports', b_roads_out_v: 'Colorado only (CDOT)', b_traffic_link: 'Check live traffic in Google Maps', b_drive_src: 'Drive: OSRM road-network estimate from {0}.',
   b_heavy: 'Heavy snow today: {0}, expect slow driving', b_nws: 'Weather alerts (National Weather Service) are only checked on SkiDay’s full dashboards.',
   b_rest_co: 'CDOT road data and the Open-Meteo forecast', b_rest: 'the Open-Meteo forecast', b_map: 'Route map', b_wait_route: 'Waiting for the drive estimate', b_wx_wait: 'Forecast loading…'
@@ -125,7 +125,7 @@ Object.assign(S.zh, {
   b_src_rep: '缆车、雪道、地形、雪底和新雪：{0}，更新于 {1}。气温：Open-Meteo 模型（山顶，{2}）。',
   b_src_none: 'SkiDay 读取不到此雪场的缆车或地形报告，所以显示“未公布”。新雪和气温：Open-Meteo 模型（山顶，{0}）。',
   b_norep: 'SkiDay 读取不到此雪场的缆车和地形报告。请查看官方雪况报告。', b_nostatus: '雪场报告没有说明缆车是否运行。',
-  b_noroads: '这里没有路况：SkiDay 的路况数据（CDOT）只覆盖科罗拉多。出发前请查看当地交通部门或 511。',
+  b_noroads: '这里没有路况：SkiDay 的实时路况数据覆盖科罗拉多、犹他和加州。出发前请查看当地交通部门或 511。',
   b_roads_out: '路况', b_roads_out_v: '仅科罗拉多（CDOT）', b_traffic_link: '在 Google 地图查看实时路况', b_drive_src: '车程：OSRM 道路网络估算，从 {0} 出发。',
   b_heavy: '今天大雪：{0}，开车会慢', b_nws: '天气预警（美国国家气象局）只在 SkiDay 的完整看板中检查。',
   b_rest_co: 'CDOT 路况和 Open-Meteo 预报', b_rest: 'Open-Meteo 预报', b_map: '路线地图', b_wait_route: '等待车程估算', b_wx_wait: '正在加载预报…'

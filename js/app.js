@@ -1,11 +1,11 @@
 import { openMeteoUrl, splitOpenMeteo, dailyRows, hourlyRows, weatherEmoji, carsUrl, slimEvents, EVENT_CLASSES,
   nwsUrl, slimAlerts, verdictFor, outfitFor, recommendFrom, fmt, wxGroupOf, wxGroupCfg, wxGroupCount,
-  utahCarsUrl, slimUtahEvents, caRoadsUrl, CA_DISTRICTS, slimCaEvents } from './core.js?v=04a33435b6';
-import { STR, PACK_DEFAULT } from './i18n.js?v=04a33435b6';
-import { selectCameras, routeSegments, inCO, inUT } from './route.js?v=04a33435b6';
-import { dl, initAnalytics, selectResort, resortCompare, forecast, gear, startSet, pageView } from './analytics.js?v=04a33435b6';
-import { loadStart, saveStart, isDefaultStart, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=04a33435b6';
-import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=04a33435b6';
+  utahCarsUrl, slimUtahEvents, caRoadsUrl, CA_DISTRICTS, slimCaEvents } from './core.js?v=97a776c584';
+import { STR, PACK_DEFAULT } from './i18n.js?v=97a776c584';
+import { selectCameras, routeSegments, inCO, inUT } from './route.js?v=97a776c584';
+import { dl, initAnalytics, selectResort, resortCompare, forecast, gear, startSet, pageView } from './analytics.js?v=97a776c584';
+import { loadStart, saveStart, isDefaultStart, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=97a776c584';
+import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=97a776c584';
 
 const LS = {
   get: (k, d) => { try { const v = localStorage.getItem('ski.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -332,7 +332,7 @@ const SEV = { nogo: 0, caution: 1, unknown: 2, info: 3, go: 4 };
 const GROUP = { resort: 'mountain', chain: 'road', closure: 'road', incident: 'road', conditions: 'road', roads: 'road', nws: 'weather', snow: 'weather', wind: 'weather', cold: 'weather', vis: 'weather', weather: 'weather' };
 function srcOf(x, r) {
   if (x.kind === 'resort') return intelFor(r)?.source?.name || r.short;
-  if (GROUP[x.kind] === 'road') return r.region === 'UT' ? t('src_udot') : t('src_cdot');
+  if (GROUP[x.kind] === 'road') return r.region === 'UT' ? t('src_udot') : r.region === 'CA' ? t('src_caltrans') : t('src_cdot');
   return x.kind === 'nws' ? t('src_nws') : t('src_om');
 }
 /* ---------- Shared resort-page components (full dashboards + basic catalog pages, via ctx.ui) ---------- */
@@ -375,7 +375,7 @@ function renderVerdict() {
   $$('#hero-credit').innerHTML = r.photo ? `📷 ${esc(r.photo.credit)} · <a href="${esc(r.photo.page)}" target="_blank" rel="noopener">${esc(r.photo.license)}</a>` : '';
   const bad = [...v.reasons].filter(x => x.level === 'nogo' || x.level === 'caution').sort((a, b) => SEV[a.level] - SEV[b.level]);
   const when = i?.ok ? fmtTime([i.asOf, i.snowAsOf].filter(Boolean).sort((a, b) => ageMin(a) - ageMin(b))[0] || i.fetchedAt) : '';
-  const basis = rec.key === 'rec_noreport' ? (noFeed(r) ? t('intel_nofeed') : t('rec_noreport_sub')) : t('rec_basis', `${t('rec_src_rep', `${i.source?.name || r.short}, ${when}`)}, ${t(r.region === 'UT' ? 'rec_src_rest_ut' : 'rec_src_rest')}`);
+  const basis = rec.key === 'rec_noreport' ? (noFeed(r) ? t('intel_nofeed') : t('rec_noreport_sub')) : t('rec_basis', `${t('rec_src_rep', `${i.source?.name || r.short}, ${when}`)}, ${t(r.region === 'UT' ? 'rec_src_rest_ut' : r.region === 'CA' ? 'rec_src_rest_ca' : 'rec_src_rest')}`);
   $('#verdict').innerHTML = UI.rec(rec, bad.map(reasonText), basis);
 
   // A. Mountain conditions
@@ -396,6 +396,7 @@ function renderVerdict() {
   const rs = state.routes[r.id]; const dm = driveMin(r);
   const dur = dm == null ? null : `${Math.floor(dm / 60)}h${String(dm % 60).padStart(2, '0')}`;
   const ut = r.region === 'UT';
+  const ca = r.region === 'CA';
   const slot = roadsSlot(r);
   const roadsOk = ut ? !!state.utahRoads.data?.events : !!state.roads.data;
   const cnt = kinds => roadCount(v.reasons, kinds, roadsOk);
@@ -404,7 +405,9 @@ function renderVerdict() {
   const ch = (ut && !v.reasons.some(x => x.kind === 'chain' && x.seg)) ? { cls: 'unknown', txt: t('g_chain_na') } : ch0;
   const traffic = ut
     ? `<a href="https://www.udottraffic.utah.gov/" target="_blank" rel="noopener">${esc(t('g_traffic_link_ut'))} ↗</a>`
-    : `<a href="https://www.cotrip.org/trip-planner" target="_blank" rel="noopener">${esc(t('g_traffic_link'))} ↗</a>`;
+    : ca
+      ? `<a href="https://quickmap.dot.ca.gov/" target="_blank" rel="noopener">${esc(t('g_traffic_link_ca'))} ↗</a>`
+      : `<a href="https://www.cotrip.org/trip-planner" target="_blank" rel="noopener">${esc(t('g_traffic_link'))} ↗</a>`;
   $$('#getthere').innerHTML = `<ul class="glist">
       ${UI.grow(t('g_dist'), rs?.status === 'ok' ? esc(km(rs.route.distM)) : rs?.status === 'loading' ? `<span class="muted">${esc(t('route_loading'))}</span>` : '—')}
       ${UI.grow(t('g_time'), dur ? `~${esc(dur)}` : '—', '', esc(rs?.status === 'ok' ? t('g_time_note') : dur ? t(ut ? 'g_time_static_ut' : 'g_time_static') : ''))}
@@ -412,7 +415,7 @@ function renderVerdict() {
       ${UI.grow(t('g_chain'), esc(ch.txt), ch.cls)}
       ${UI.grow(t('g_closure'), esc(cl.txt), cl.cls)}
       ${UI.grow(t('g_incident'), esc(inc.txt), inc.cls)}
-    </ul><p class="hp-src">${esc(t(ut ? 'g_src_ut' : 'g_src', roadsOk ? ago(slot.at) : t('unavailable')))} · <a href="#roads">${esc(t('g_more'))} ↓</a></p>`;
+    </ul><p class="hp-src">${esc(t(ut ? 'g_src_ut' : ca ? 'g_src_ca' : 'g_src', roadsOk ? ago(slot.at) : t('unavailable')))} · <a href="#roads">${esc(t('g_more'))} ↓</a></p>`;
 
   // What you should know before heading out: Mountain / Road / Weather
   const item = x => ({ level: x.level, text: reasonText(x), src: srcOf(x, r),
