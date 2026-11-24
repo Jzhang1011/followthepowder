@@ -1,16 +1,20 @@
 // Starting location: input with Photon autocomplete, presets, browser geolocation; OSRM routing with cache + throttle.
-import { buildRoute, osrmRouteUrl, osrmTableUrl } from './route.js?v=e5b2cdca3d';
+import { buildRoute, osrmRouteUrl, osrmTableUrl } from './route.js?v=b97e1fa25c';
 
 const LSK = 'ski.start', RCK = 'ski.routes';
 const round = (v, n = 3) => +(+v).toFixed(n); // ~100 m: enough for routing, kinder to privacy
 
-export function loadStart(cfg) {
-  try { const s = JSON.parse(localStorage.getItem(LSK)); if (s && isFinite(s.lat) && isFinite(s.lon)) return s; } catch {}
-  const d = cfg.trip.presets?.[0] || cfg.trip.origin;
-  return { id: d.id, name: d.name, lat: d.lat, lon: d.lon, kind: 'preset' };
+export function loadStart(cfg, resort) {
+  const dflt = closestAirport(cfg, resort) || cfg.trip.presets?.[0] || cfg.trip.origin;
+  const asPreset = d => ({ id: d.id, name: d.name, lat: d.lat, lon: d.lon, kind: 'preset' });
+  try { const s = JSON.parse(localStorage.getItem(LSK)); if (s && isFinite(s.lat) && isFinite(s.lon)) {
+    // A saved airport preset does not carry across resorts: the start follows
+    // the resort. Saved personal locations (search, "Use my location", auto-locate) persist.
+    if (s.kind === 'preset' && s.id !== dflt.id) return asPreset(dflt);
+    return s; } } catch {}
+  return asPreset(dflt);
 }
 export function saveStart(s) { try { localStorage.setItem(LSK, JSON.stringify(s)); } catch {} }
-export const isDefaultStart = (cfg, s) => s.id === (cfg.trip.presets?.[0]?.id || 'DEN');
 /** A start the visitor picked themselves (preset, search, "Use my location") is saved and wins over auto-location. */
 export const isAutoStart = s => !!s && String(s.kind || '').startsWith('auto');
 export function hasManualStart() {
@@ -20,6 +24,21 @@ export function hasManualStart() {
 const GEO_ASKED = 'ski.geoAsked';
 const kmBetween = (a, b) => { const R = 6371, r = Math.PI / 180, dLa = (b.lat - a.lat) * r, dLo = (b.lon - a.lon) * r;
   return 2 * R * Math.asin(Math.sqrt(Math.sin(dLa / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(dLo / 2) ** 2)); };
+/**
+ * The resort's closest airport: its gateway preset when set (California's
+ * RNO/ONT, the Northeast's BOS/ALB/BTV), otherwise the nearest airport
+ * preset by straight-line distance (SLC for Utah, DEN for Colorado).
+ */
+export function closestAirport(cfg, resort) {
+  const airports = (cfg.trip.presets || []).filter(p => p.airport);
+  if (!airports.length) return null;
+  if (resort?.gateway) { const g = airports.find(p => p.id === resort.gateway); if (g) return g; }
+  const to = resort?.parking || resort;
+  if (!to || !isFinite(to.lat) || !isFinite(to.lon)) return airports[0];
+  let best = airports[0], bd = Infinity;
+  for (const p of airports) { const d = kmBetween(to, p); if (d < bd) { bd = d; best = p; } }
+  return best;
+}
 /**
  * Location on open, in two steps, used only in this browser:
  *  1. instant approximate default from the visitor's network (our /api/whereami reads Cloudflare's request.cf;

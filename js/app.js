@@ -1,12 +1,12 @@
 import { openMeteoUrl, splitOpenMeteo, dailyRows, hourlyRows, weatherEmoji, carsUrl, slimEvents, EVENT_CLASSES,
   nwsUrl, slimAlerts, verdictFor, outfitFor, recommendFrom, fmt, wxGroupOf, wxGroupCfg, wxGroupCount,
   utahCarsUrl, slimUtahEvents, caRoadsUrl, CA_DISTRICTS, slimCaEvents,
-  c2cUrl, slimNeEvents, ny511Url, slimNyEvents, massdotUrl, slimMaEvents } from './core.js?v=e5b2cdca3d';
-import { STR, PACK_DEFAULT } from './i18n.js?v=e5b2cdca3d';
-import { selectCameras, routeSegments, inCO, inUT } from './route.js?v=e5b2cdca3d';
-import { dl, initAnalytics, selectResort, resortCompare, forecast, gear, startSet, pageView } from './analytics.js?v=e5b2cdca3d';
-import { loadStart, saveStart, isDefaultStart, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=e5b2cdca3d';
-import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=e5b2cdca3d';
+  c2cUrl, slimNeEvents, ny511Url, slimNyEvents, massdotUrl, slimMaEvents } from './core.js?v=b97e1fa25c';
+import { STR, PACK_DEFAULT } from './i18n.js?v=b97e1fa25c';
+import { selectCameras, routeSegments, inCO, inUT } from './route.js?v=b97e1fa25c';
+import { dl, initAnalytics, selectResort, resortCompare, forecast, gear, startSet, pageView } from './analytics.js?v=b97e1fa25c';
+import { loadStart, saveStart, closestAirport, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=b97e1fa25c';
+import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=b97e1fa25c';
 
 const LS = {
   get: (k, d) => { try { const v = localStorage.getItem('ski.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -451,7 +451,7 @@ function renderVerdict() {
         : `<a href="https://www.cotrip.org/trip-planner" target="_blank" rel="noopener">${esc(t('g_traffic_link'))} ↗</a>`;
   $$('#getthere').innerHTML = `<ul class="glist">
       ${UI.grow(t('g_dist'), rs?.status === 'ok' ? esc(km(rs.route.distM)) : rs?.status === 'loading' ? `<span class="muted">${esc(t('route_loading'))}</span>` : '—')}
-      ${UI.grow(t('g_time'), dur ? `~${esc(dur)}` : '—', '', esc(rs?.status === 'ok' ? t('g_time_note') : dur ? t(ut ? 'g_time_static_ut' : 'g_time_static') : ''))}
+      ${UI.grow(t('g_time'), dur ? `~${esc(dur)}` : '—', '', esc(rs?.status === 'ok' ? t('g_time_note') : dur ? t('g_time_static', L((closestAirport(state.cfg, r) || state.cfg.trip.origin).name)) : ''))}
       ${UI.grow(t('g_traffic'), `<span class="muted">${esc(t('g_traffic_na'))}</span>`, '', traffic)}
       ${UI.grow(t('g_chain'), esc(ch.txt), ch.cls)}
       ${UI.grow(t('g_closure'), esc(cl.txt), cl.cls)}
@@ -636,14 +636,11 @@ function segName(r, id) {
 function driveMin(r) {
   const rs = state.routes[r.id];
   if (rs?.status === 'ok') return Math.round(rs.route.durS / 60);
-  if (isDefaultStart(state.cfg, state.start)) return r.driveMin;
+  // The stored figure is the typical drive from the resort's own airport;
+  // show it whenever the start is an airport (the usual case). A personal
+  // start (search / "Use my location") gets no stored figure.
+  if (state.start?.kind === 'preset') return r.driveMin;
   return null;
-}
-function driveLabel(r) {
-  const rs = state.routes[r.id];
-  if (rs?.status === 'ok') return t('st_drive_from');
-  if (rs?.status === 'loading') return t('route_loading');
-  return isDefaultStart(state.cfg, state.start) ? t('st_drive') : t('st_drive_from');
 }
 const km = (m, u = U()) => u === 'imperial' ? `${Math.round(m / 1609.34)} mi` : `${Math.round(m / 1000)} km`;
 const camShort = n => n.replace(/^((?:I|US|CO|SH)[- ]\d+) MP [\d.]+ ?(?:[NSEW]B)? ?[:]? ?/, '$1 ');
@@ -651,7 +648,7 @@ const camShort = n => n.replace(/^((?:I|US|CO|SH)[- ]\d+) MP [\d.]+ ?(?:[NSEW]B)
 function routeNoteHtml(r) {
   const rs = state.routes[r.id]; const c = ctxFor(r);
   if (!rs || rs.status === 'loading') return `<p class="rnote">${esc(t('route_loading'))}</p>`;
-  if (rs.status === 'fail') return `<p class="rnote warn">⚠️ ${esc(t(r.region === 'UT' ? 'route_fail_ut' : 'route_fail'))}</p>`;
+  if (rs.status === 'fail') return `<p class="rnote warn">⚠️ ${esc(t('route_fail', L((closestAirport(state.cfg, r) || state.cfg.trip.origin).name)))}</p>`;
   const bits = [];
   if (r.region === 'UT') {
     if (!c.route.startsInUT) bits.push(`<p class="rnote warn">🗺️ ${esc(t('outside_ut', km(c.route.utEntryAlongM || 0)))}</p>`);
@@ -825,9 +822,16 @@ function updateStartMsg() {
   const r = resort(); const rs = state.routes[r.id];
   let h = '';
   if (rs?.status === 'loading') h = `<span class="muted">${esc(t('route_loading'))}</span>`;
-  else if (rs?.status === 'fail') h = `<span class="warn">⚠️ ${esc(t(r.region === 'UT' ? 'route_fail_ut' : 'route_fail'))}</span>`;
+  else if (rs?.status === 'fail') h = `<span class="warn">⚠️ ${esc(t('route_fail', L((closestAirport(state.cfg, r) || state.cfg.trip.origin).name)))}</span>`;
   else if (state.start?.kind === 'auto-ip') h = `<span class="muted">${esc(t('approx_loc'))}</span>`;
   state.startUI.setMsg(h);
+}
+/** The start follows the resort: when the current start is an airport preset, switch it to the new resort's closest airport. Personal starts (search, "Use my location", auto-locate) stay put. */
+function resetStartForResort(r) {
+  const s = state.start;
+  if (!s || s.kind !== 'preset' || !state.cfg) return;
+  const d = closestAirport(state.cfg, r || resort());
+  if (d && d.id !== s.id) { state.start = { id: d.id, name: d.name, lat: d.lat, lon: d.lon, kind: 'preset' }; saveStart(state.start); }
 }
 function setStart(s) {
   if (!isAutoStart(s)) state.manualStart = true; // a visitor's own pick wins over auto-location (and is remembered)
@@ -974,7 +978,7 @@ function bind() {
   $('#btn-refresh').onclick = () => { if (state.view === 'dash') refresh(); else { const b = $('#btn-refresh'); b.classList.add('spin'); loadConditions(true).finally(() => { b.classList.remove('spin'); renderView(); }); } };
   document.addEventListener('click', e => {
     const rc = e.target.closest('[data-resort]');
-    if (rc && (!e.target.closest('details') || e.target.closest('.omore'))) { state.resort = rc.dataset.resort; LS.set('resort', state.resort); track('resort_select', state.resort); selectResort(state.resort, 'card'); try { addRecent(state.resort); history.replaceState({ resort: state.resort }, '', `?resort=${encodeURIComponent(state.resort)}`); } catch {} syncWx(); renderAll(); routeAll(); if (state.view === 'dash') ensureWx(); if (rc.classList.contains('orow') || rc.classList.contains('rcard')) $('#verdict').scrollIntoView({ behavior: 'smooth' }); return; }
+    if (rc && (!e.target.closest('details') || e.target.closest('.omore'))) { state.resort = rc.dataset.resort; LS.set('resort', state.resort); track('resort_select', state.resort); selectResort(state.resort, 'card'); resetStartForResort(resort()); try { addRecent(state.resort); history.replaceState({ resort: state.resort }, '', `?resort=${encodeURIComponent(state.resort)}`); } catch {} syncWx(); renderAll(); routeAll(); if (state.view === 'dash') ensureWx(); if (rc.classList.contains('orow') || rc.classList.contains('rcard')) $('#verdict').scrollIntoView({ behavior: 'smooth' }); return; }
     const b = e.target.closest('.seg-ctl button');
     if (b && !b.closest('#basic')) { if (b.parentElement.dataset.ctl === 'point') { state.point = b.dataset.v; LS.set('point', state.point); forecast('summit_base', b.dataset.v); } renderWeather(); return; }
     const wx = e.target.closest('[data-wexp]');
@@ -1027,8 +1031,8 @@ async function route(push) {
   const full = q && state.cfg.resorts.find(r => r.id === q);
   const cr = !full && q ? resolveResort(q) : null;
   window.scrollTo(0, 0);
-  if (full || cr?.detail === 'full') { const id = full ? full.id : cr.id; addRecent(id); await showDash(id); pageView('resort_full', id); }
-  else if (cr) { addRecent(cr.id); setBodyView('basic'); safe('nav', renderChrome); await showBasic(cr.id); pageView('resort_basic', cr.id); }
+  if (full || cr?.detail === 'full') { const id = full ? full.id : cr.id; resetStartForResort(full || cr); addRecent(id); await showDash(id); pageView('resort_full', id); }
+  else if (cr) { resetStartForResort(cr); addRecent(cr.id); setBodyView('basic'); safe('nav', renderChrome); await showBasic(cr.id); pageView('resort_basic', cr.id); }
   else if (new URLSearchParams(location.search).has('plan')) { setBodyView('plan'); safe('nav', renderChrome); safe('plan', renderPlan); pageView('plan'); }
   else { setBodyView('disc'); safe('nav', renderChrome); renderDiscover(); pageView('home'); }
 }
@@ -1052,7 +1056,7 @@ function goHome() {
   catch { window.__skiReady = true; $$('#verdict').innerHTML = `<div class="why"><p>${esc(t('unavailable'))}: resorts.json · <a href="" onclick="location.reload();return false">↻</a></p></div>`; return; }
   if (!state.cfg.resorts.some(r => r.id === state.resort)) state.resort = state.cfg.resorts[0].id;
   initAnalytics({ nameOf, currentId: () => (state.view === 'dash' || state.view === 'basic') ? new URLSearchParams(location.search).get('resort') : null });
-  try { state.start = loadStart(state.cfg); } catch { state.start = { ...state.cfg.trip.origin, kind: 'preset' }; }
+  try { state.start = loadStart(state.cfg, resort()); } catch { state.start = { ...state.cfg.trip.origin, kind: 'preset' }; }
   state.manualStart = hasManualStart();
   if (!state.manualStart) autoLocate({ api: API, onUpdate: setStart, shouldStop: () => state.manualStart }).catch(() => {});
   try { if ($('#start')) state.startUI = mountStartUI($('#start'), { cfg: state.cfg, t, L, getStart: () => state.start, getRegion: () => resort().region, getGateway: () => resort().gateway, onChange: setStart }); }
