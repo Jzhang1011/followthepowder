@@ -146,10 +146,10 @@ export async function fetchAbasin(cfg, tz, getText) {
 
 /** Node-side: fetch every resort's intel. */
 export async function fetchAllIntel(cfg, { getJson, getText }) {
-  const tz = cfg.trip.timezone;
   const res = {};
   for (const r of cfg.resorts) {
     const c = r.intel; if (!c) continue;
+    const tz = r.tz || cfg.trip.timezone; // lift hours use the resort's day of week, not the site default
     try {
       if (c.provider === 'mtnpowder') res[r.id] = parseMtnpowder(await getJson(mtnpowderUrl(c)), c, tz);
       else if (c.provider === 'powdr') res[r.id] = await fetchPowdr(c, tz, getJson);

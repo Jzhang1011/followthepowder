@@ -1,5 +1,5 @@
 // Starting location: input with Photon autocomplete, presets, browser geolocation; OSRM routing with cache + throttle.
-import { buildRoute, osrmRouteUrl, osrmTableUrl } from './route.js?v=326736759e';
+import { buildRoute, osrmRouteUrl, osrmTableUrl } from './route.js?v=04a33435b6';
 
 const LSK = 'ski.start', RCK = 'ski.routes';
 const round = (v, n = 3) => +(+v).toFixed(n); // ~100 m: enough for routing, kinder to privacy
@@ -133,7 +133,7 @@ function photonLabel(f) {
   return { main, sub: where.filter(w => w !== main).join(', ') };
 }
 
-export function mountStartUI(root, { cfg, t, L, getStart, getRegion, onChange }) {
+export function mountStartUI(root, { cfg, t, L, getStart, getRegion, getGateway, onChange }) {
   const presets = cfg.trip.presets || [];
   root.innerHTML = `
     <div class="start-row">
@@ -159,10 +159,13 @@ export function mountStartUI(root, { cfg, t, L, getStart, getRegion, onChange })
     if (document.activeElement !== input) input.value = label();
     const cur = getStart();
     // Quick picks show only the nearby airport for the resort's region (DEN for
-    // Colorado, SLC for Utah). Other starts stay available via search / "Use my location".
+    // Colorado, SLC for Utah). A resort with a gateway (California has two airports)
+    // shows only its own — RNO for the Tahoe/Mammoth resorts, ONT for the Big Bear pair.
+    // Other starts stay available via search / "Use my location".
     const region = getRegion?.();
+    const gw = getGateway?.();
     const airports = presets.filter(p => p.airport);
-    const shown = presets.filter(p => p.airport && (!region || p.region === region));
+    const shown = presets.filter(p => p.airport && (gw ? p.id === gw : (!region || p.region === region)));
     const picks = shown.length ? shown : (airports.length ? airports : presets);
     root.querySelector('#start-presets').innerHTML = picks.map(p => `<button type="button" data-p="${p.id}" class="${cur.id === p.id ? 'on' : ''}">${L(p.name)}</button>`).join('');
   }

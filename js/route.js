@@ -5,6 +5,8 @@ export const CO_BOX = { w: -109.0603, e: -102.0415, s: 36.9925, n: 41.0034 };
 export const inCO = ([lon, lat]) => lon >= CO_BOX.w && lon <= CO_BOX.e && lat >= CO_BOX.s && lat <= CO_BOX.n;
 export const UT_BOX = { w: -114.0529, e: -109.0418, s: 36.9975, n: 42.0017 };
 export const inUT = ([lon, lat]) => lon >= UT_BOX.w && lon <= UT_BOX.e && lat >= UT_BOX.s && lat <= UT_BOX.n;
+export const CA_BOX = { w: -124.4096, e: -114.1315, s: 32.5343, n: 42.0095 };
+export const inCA = ([lon, lat]) => lon >= CA_BOX.w && lon <= CA_BOX.e && lat >= CA_BOX.s && lat <= CA_BOX.n;
 
 export function decodePolyline(str, precision = 6) {
   const f = 10 ** precision, out = [];
@@ -38,10 +40,15 @@ export function osrmTableUrl(base, from, tos) {
 }
 
 const normRef = s => String(s || '').trim().replace(/^([A-Z]{1,3})[\s-]+(\d+[A-Z]?)$/i, (m, a, n) => `${a.toUpperCase()}-${n}`);
+/** Display aliases for refs that are the same road under two names, or read oddly verbatim:
+ *  OSRM splits CA-88 into "SR-88" then "CA-88" (one road — merge the legs), and "US 40 Hist"
+ *  is Donner Pass Road. Aliases apply to the leg key only; the raw refs still match events. */
+const REF_ALIAS = { 'SR-88': 'CA-88', 'US 40 Hist': 'Donner Pass Rd' };
 /** First ref of an OSRM step ("I 70; US 6" → "I-70"), else the street name. */
 function stepKey(s) {
   const ref = String(s.ref || '').split(';')[0].trim();
-  return ref ? normRef(ref) : (s.name || '').trim();
+  const key = ref ? normRef(ref) : (s.name || '').trim();
+  return REF_ALIAS[key] || key;
 }
 
 /** Build a compact route model from an OSRM /route response (steps=true, polyline6). */
@@ -119,11 +126,15 @@ export function buildRoute(json) {
   // Utah portion (same shape, for Utah resorts)
   const utFirst = P.findIndex(inUT);
   const startsInUT = inUT(P[0]);
+  // California portion (same shape, for California resorts)
+  const caFirst = P.findIndex(inCA);
+  const startsInCA = inCA(P[0]);
   return {
     pts: P, cum, legOf, legs, durS: r.duration, distM: r.distance,
     bbox: P.reduce((b, p) => [Math.min(b[0], p[0]), Math.min(b[1], p[1]), Math.max(b[2], p[0]), Math.max(b[3], p[1])], [180, 90, -180, -90]),
     startsInCO, coEntry: coFirst, coEntryAlongM: coFirst >= 0 ? cum[coFirst] : null,
-    startsInUT, utEntry: utFirst, utEntryAlongM: utFirst >= 0 ? cum[utFirst] : null
+    startsInUT, utEntry: utFirst, utEntryAlongM: utFirst >= 0 ? cum[utFirst] : null,
+    startsInCA, caEntry: caFirst, caEntryAlongM: caFirst >= 0 ? cum[caFirst] : null
   };
 }
 
@@ -221,10 +232,10 @@ export function oppositeDirection(route, i, e) {
 }
 
 /** Turn a route into verdictFor-compatible {segments, legs[], events[]} with synthetic seg ids.
- *  `region` ('UT' or 'CO', default 'CO') decides which state a leg is "outside" of: legs mostly
+ *  `region` ('UT', 'CA' or 'CO', default 'CO') decides which state a leg is "outside" of: legs mostly
  *  outside the resort's home state get the unknown level (no DOT data there), as Colorado legs do today. */
 export function routeSegments(route, events, startLabel, region) {
-  const inHome = region === 'UT' ? inUT : inCO;
+  const inHome = region === 'UT' ? inUT : region === 'CA' ? inCA : inCO;
   const segments = {}, legs = [];
   route.legs.forEach((l, i) => {
     const id = `dyn-${i}`;

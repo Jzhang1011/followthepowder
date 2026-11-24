@@ -1,11 +1,11 @@
 import { openMeteoUrl, splitOpenMeteo, dailyRows, hourlyRows, weatherEmoji, carsUrl, slimEvents, EVENT_CLASSES,
   nwsUrl, slimAlerts, verdictFor, outfitFor, recommendFrom, fmt, wxGroupOf, wxGroupCfg, wxGroupCount,
-  utahCarsUrl, slimUtahEvents } from './core.js?v=326736759e';
-import { STR, PACK_DEFAULT } from './i18n.js?v=326736759e';
-import { selectCameras, routeSegments, inCO, inUT } from './route.js?v=326736759e';
-import { dl, initAnalytics, selectResort, resortCompare, forecast, gear, startSet, pageView } from './analytics.js?v=326736759e';
-import { loadStart, saveStart, isDefaultStart, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=326736759e';
-import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=326736759e';
+  utahCarsUrl, slimUtahEvents, caRoadsUrl, CA_DISTRICTS, slimCaEvents } from './core.js?v=04a33435b6';
+import { STR, PACK_DEFAULT } from './i18n.js?v=04a33435b6';
+import { selectCameras, routeSegments, inCO, inUT } from './route.js?v=04a33435b6';
+import { dl, initAnalytics, selectResort, resortCompare, forecast, gear, startSet, pageView } from './analytics.js?v=04a33435b6';
+import { loadStart, saveStart, isDefaultStart, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=04a33435b6';
+import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=04a33435b6';
 
 const LS = {
   get: (k, d) => { try { const v = localStorage.getItem('ski.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -19,6 +19,7 @@ const state = {
   cfg: null,
   wx: { data: null, mode: null, at: null }, wxG: {}, roads: { data: null, mode: null, at: null }, alerts: { data: null, mode: null, at: null },
   utahRoads: { data: null, mode: null, at: null }, // {events, cameras, passes} from the UDOT feeds; null until loaded
+  caRoads: { data: null, mode: null, at: null }, // {events} from the Caltrans CWWP2 feeds; null until loaded
   intel: { data: {}, at: null, mode: null }, cams: null, camsAt: null, start: null, routes: {}, camsAll: null, startUI: null, map: null, refreshing: false, lastLive: 0
 };
 
@@ -50,7 +51,8 @@ const $$ = s => document.querySelector(s) || document.createElement('div');
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const t = (k, ...a) => { let s = STR[state.lang][k] ?? STR.en[k] ?? k; a.forEach((v, i) => { s = s.replace(`{${i}}`, v); }); return s; };
 const L = o => (o && typeof o === 'object') ? (o[state.lang] || o.en) : o;
-const tz = () => state.cfg?.trip?.timezone || 'America/Denver';
+const tz = () => state.cfg?.resorts?.find(r => r.id === state.resort)?.tz || state.cfg?.trip?.timezone || 'America/Denver';
+const tzAbbr = () => ({ 'America/Denver': ' MT', 'America/Los_Angeles': ' PT', 'America/New_York': ' ET', 'America/Chicago': ' CT', 'America/Phoenix': ' MST', 'America/Anchorage': ' AKT', 'Pacific/Honolulu': ' HT' }[tz()] || '');
 const locale = () => state.lang === 'zh' ? 'zh-CN' : 'en-US';
 const resort = () => state.cfg.resorts.find(r => r.id === state.resort) || state.cfg.resorts[0];
 const U = () => state.units;
@@ -59,7 +61,7 @@ function fmtTime(iso) {
   if (!iso) return '—';
   const d = new Date(String(iso).replace(/([+-]\d{2})(\d{2})$/, '$1:$2'));
   if (isNaN(d)) return '—';
-  return new Intl.DateTimeFormat(locale(), { timeZone: tz(), month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(d) + ' MT';
+  return new Intl.DateTimeFormat(locale(), { timeZone: tz(), month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(d) + tzAbbr();
 }
 function dayLabel(date, opts = { weekday: 'short' }) {
   const [y, m, d] = date.split('-').map(Number);
@@ -70,7 +72,7 @@ function hourLabel(iso) {
   if (state.lang === 'zh') return `${h}时`;
   return h === 0 ? '12a' : h < 12 ? `${h}a` : h === 12 ? '12p' : `${h - 12}p`;
 }
-function denverNowKey() {
+function resortNowKey() {
   const p = new Intl.DateTimeFormat('en-CA', { timeZone: tz(), year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hourCycle: 'h23' }).formatToParts(new Date());
   const g = k => p.find(x => x.type === k).value;
   return `${g('year')}-${g('month')}-${g('day')}T${g('hour')}:00`;
@@ -93,7 +95,7 @@ async function getJson(url, ms = 20000) {
 // falling back to the git snapshot (data/*.json, GitHub Action backup). The browser only calls the
 // upstream APIs itself when neither copy is fresh enough (see LIMIT), so visitors share one fetch.
 const API = 'api/';
-const LIMIT = { wx: 180, roads: 30, utahRoads: 30, alerts: 30, intel: 120 }; // minutes before a copy counts as stale
+const LIMIT = { wx: 180, roads: 30, utahRoads: 30, caRoads: 30, alerts: 30, intel: 120 }; // minutes before a copy counts as stale
 const ageMin = at => { if (!at) return Infinity; const ms = typeof at === 'number' ? at : new Date(String(at).replace(/([+-]\d{2})(\d{2})$/, '$1:$2')).getTime(); return isNaN(ms) ? Infinity : (Date.now() - ms) / 60000; };
 const isStale = slot => !state[slot].data || ageMin(state[slot].at) > LIMIT[slot];
 
@@ -120,6 +122,7 @@ async function loadServer() {
     if (src.weather?.ok && s.weather) takeWx(0, s.weather, src.weather.fetchedAt, from, src.weather.status);
     if (src.roads?.ok && s.roads) take('roads', s.roads.events, src.roads.fetchedAt, from, src.roads.status);
     if (src['utah-roads']?.ok && s['utah-roads']) take('utahRoads', s['utah-roads'], src['utah-roads'].fetchedAt, from, src['utah-roads'].status);
+    if (src['ca-roads']?.ok && s['ca-roads']) take('caRoads', s['ca-roads'], src['ca-roads'].fetchedAt, from, src['ca-roads'].status);
     if (s.alerts && src.alerts?.ok !== false && Object.values(s.alerts).some(v => v)) take('alerts', s.alerts, src.alerts?.fetchedAt, from, src.alerts?.status);
     if (s.cameras) state.cams = s.cameras;
   }
@@ -156,10 +159,11 @@ async function loadWxGroups(groups) {
 }
 const otherWxGroups = () => { const cur = wxGroupOf(resort()); return Array.from({ length: wxGroupCount(state.cfg) }, (_, i) => i).filter(g => g !== cur && g > 0 && !wxFresh(g)); };
 
-/** The road-data slot for a resort: CDOT for Colorado, UDOT for Utah. */
-const roadsSlot = r => r?.region === 'UT' ? state.utahRoads : state.roads;
-/** The slim events array for a resort's road slot (null when not loaded). */
-const roadsEvents = r => r?.region === 'UT' ? (state.utahRoads.data?.events || null) : state.roads.data;
+/** The road-data slot for a resort: CDOT for Colorado, UDOT for Utah, Caltrans for California. */
+const roadsSlot = r => r?.region === 'UT' ? state.utahRoads : r?.region === 'CA' ? state.caRoads : state.roads;
+/** The slim events array for a resort's road slot (null when not loaded — the verdict then says roads
+ *  are unavailable instead of a false all-clear). */
+const roadsEvents = r => r?.region === 'UT' ? (state.utahRoads.data?.events || null) : r?.region === 'CA' ? (state.caRoads.data?.events || null) : state.roads.data;
 
 /** Last resort: fetch upstream directly, only for sources with no fresh copy. */
 async function loadLiveFallback() {
@@ -167,10 +171,14 @@ async function loadLiveFallback() {
   // Only the open resort's weather group, and only the open resort's NWS alerts: one visitor never fans out to every resort.
   if (!wxFresh(g)) { const gc = wxGroupCfg(cfg, g); jobs.push(getJson(openMeteoUrl(gc)).then(j => { const d = splitOpenMeteo(gc, j); if (!Object.keys(d).length) throw new Error('empty'); takeWx(g, d, new Date().toISOString(), 'live', 'ok'); })
     .catch(e => { state.wx.error = String(e.message || e); })); }
-  if (isStale(resort().region === 'UT' ? 'utahRoads' : 'roads')) {
-    if (resort().region === 'UT') jobs.push(getJson(utahCarsUrl(cfg), 30000)
+  const rr = resort().region;
+  if (isStale(rr === 'UT' ? 'utahRoads' : rr === 'CA' ? 'caRoads' : 'roads')) {
+    if (rr === 'UT') jobs.push(getJson(utahCarsUrl(cfg), 30000)
       .then(j => { state.utahRoads = { data: { events: slimUtahEvents(cfg, j), cameras: [], passes: [] }, mode: 'live', at: new Date().toISOString(), status: 'ok' }; })
       .catch(e => { state.utahRoads.error = String(e.message || e); }));
+    else if (rr === 'CA') jobs.push(Promise.all(CA_DISTRICTS.flatMap(d => [getJson(caRoadsUrl(d, 'cc'), 30000), getJson(caRoadsUrl(d, 'lcs'), 30000)]))
+      .then(all => { const cc = [], lcs = []; all.forEach((j, i) => (i % 2 === 0 ? cc : lcs).push(...(j.data || []))); state.caRoads = { data: { events: slimCaEvents(cfg, { cc, lcs }) }, mode: 'live', at: new Date().toISOString(), status: 'ok' }; })
+      .catch(e => { state.caRoads.error = String(e.message || e); }));
     else jobs.push(Promise.all(EVENT_CLASSES.map(c => getJson(carsUrl(cfg, c), 30000).then(j => slimEvents(cfg, c, j))))
       .then(all => { state.roads = { data: all.flat(), mode: 'live', at: new Date().toISOString(), status: 'ok' }; })
       .catch(e => { state.roads.error = String(e.message || e); }));
@@ -209,10 +217,10 @@ const ctxMemo = new Map();
 function ctxFor(r) {
   const rs = state.routes[r.id];
   if (!rs || rs.status !== 'ok') return null;
-  const ut = r.region === 'UT';
-  const evData = ut ? (state.utahRoads.data?.events || []) : (state.roads.data || []);
+  const ut = r.region === 'UT'; const ca = r.region === 'CA';
+  const evData = ut ? (state.utahRoads.data?.events || []) : ca ? (state.caRoads.data?.events || []) : (state.roads.data || []);
   const camData = ut ? (state.utahRoads.data?.cameras || null) : state.camsAll;
-  const key = `${rs.key}|${ut ? state.utahRoads.at : state.roads.at}|${camData ? camData.length : 0}`;
+  const key = `${rs.key}|${ut ? state.utahRoads.at : ca ? state.caRoads.at : state.roads.at}|${camData ? camData.length : 0}`;
   if (ctxMemo.get(r.id)?.key === key) return ctxMemo.get(r.id);
   const route = rs.route;
   const dyn = routeSegments(route, evData, undefined, r.region);
@@ -231,14 +239,14 @@ function verdict(r) {
   const cfg = c ? { ...state.cfg, segments: { ...state.cfg.segments, ...c.segments } } : state.cfg;
   const evs = roadsEvents(r);
   return verdictFor(cfg, c ? { ...r, route: c.legs } : r, {
-    roads: evs ? { ok: true, events: c ? c.events : evs } : { ok: false },
+    roads: evs ? { ok: true, events: c ? c.events : evs, chainKnown: r.region !== 'UT' } : { ok: false },
     alerts: state.alerts.data && state.alerts.data[r.id] ? { ok: true, list: state.alerts.data[r.id] } : { ok: false },
     days: daysFor(r), intel: intelFor(r)
   });
 }
 function nowRow(r, point = 'base') {
   const w = state.wx.data?.[r.id]; if (!w) return null;
-  const rows = hourlyRows(w[point], r); const k = denverNowKey();
+  const rows = hourlyRows(w[point], r); const k = resortNowKey();
   return rows.find(x => x.time >= k) || rows[0];
 }
 
@@ -354,7 +362,7 @@ function roadCheck(r, route) {
   if (!evs || !route) return null;
   const dyn = routeSegments(route, evs, undefined, r.region);
   const cfg = { ...state.cfg, segments: { ...state.cfg.segments, ...dyn.segments } };
-  const v = verdictFor(cfg, { ...r, route: dyn.legs }, { roads: { ok: true, events: dyn.events }, alerts: { ok: true, list: [] }, days: null });
+  const v = verdictFor(cfg, { ...r, route: dyn.legs }, { roads: { ok: true, events: dyn.events, chainKnown: r.region !== 'UT' }, alerts: { ok: true, list: [] }, days: null });
   const segN = id => { const sg = dyn.segments[id]; return sg ? `${sg.key} · ${km(sg.km * 1000)}` : id; };
   return { at: roadsSlot(r).at, reasons: v.reasons.filter(x => GROUP[x.kind] === 'road').map(x => ({ ...x, text: reasonText(x), segLabel: x.seg ? segN(x.seg) : '' })) };
 }
@@ -516,7 +524,7 @@ function renderWeather() {
   if (!wx) { el.innerHTML = `<h2>${esc(t('weather_h'))}</h2><p class="muted">${esc(t('r_wx_unavailable'))}</p>`; return; }
   const days = dailyRows(wx, r);
   const rows = hourlyRows(state.point === 'base' ? wx.base : wx.summit, r);
-  const k = denverNowKey(); let s0 = rows.findIndex(x => x.time >= k); if (s0 < 0) s0 = 0;
+  const k = resortNowKey(); let s0 = rows.findIndex(x => x.time >= k); if (s0 < 0) s0 = 0;
   const hs = rows.slice(s0, s0 + 48);
   const sv = days.map(d => snowVal(d.summit.snow) || 0);
   const elev = state.point === 'base' ? fmt.elev(r.baseElevM, u) : fmt.elev(r.summitElevM, u);
@@ -538,7 +546,7 @@ function ago(at) {
   if (m < 48 * 60) return t('ago_h', Math.round(m / 60));
   return t('ago_d', Math.round(m / 1440));
 }
-function mtParts(d) {
+function localParts(d) {
   const p = new Intl.DateTimeFormat('en-CA', { timeZone: tz(), year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(d);
   const g = k => p.find(x => x.type === k)?.value;
   return { day: `${g('year')}-${g('month')}-${g('day')}`, min: Number(g('hour')) * 60 + Number(g('minute')) };
@@ -548,13 +556,19 @@ function freshness(kind, r) {
   if (kind === 'intel') {
     const i = r && intelFor(r);
     if (!i || !i.ok) return { cls: 'na', text: t('b_na') };
-    const at = i.fetchedAt || state.intel.at, m = ageMin(at), now = mtParts(new Date());
+    const at = i.fetchedAt || state.intel.at, m = ageMin(at), now = localParts(new Date());
     const opHours = now.min >= 7 * 60 && now.min <= 16 * 60 + 30;
-    const prevDay = isFinite(m) && mtParts(new Date(Date.now() - m * 60000)).day !== now.day && now.min >= 6 * 60; // yesterday's report, after 6 AM MT
+    const prevDay = isFinite(m) && localParts(new Date(Date.now() - m * 60000)).day !== now.day && now.min >= 6 * 60; // yesterday's report, after 6 AM local
     const stale = i.stale || (opHours && m > LIMIT.intel) || prevDay;
     return { cls: stale ? 'stale' : 'ok', text: stale ? t('b_cached', ago(at)) : t('b_report', ago(at)) };
   }
-  const slot = kind === 'roads' && r?.region === 'UT' ? state.utahRoads : state[kind];
+  if (kind === 'roads') {
+    const s = r?.region === 'UT' ? state.utahRoads : r?.region === 'CA' ? state.caRoads : state.roads;
+    if (!s?.data) return { cls: 'na', text: t('b_na') };
+    if (ageMin(s.at) > LIMIT.roads || s.status === 'stale') return { cls: 'stale', text: t('b_cached', ago(s.at)) };
+    return { cls: 'ok', text: t('b_live', ago(s.at)) };
+  }
+  const slot = state[kind];
   if (!slot?.data) return { cls: 'na', text: t('b_na') };
   if (ageMin(slot.at) > LIMIT[kind] || slot.status === 'stale') return { cls: 'stale', text: t('b_cached', ago(slot.at)) };
   return { cls: 'ok', text: t(kind === 'wx' ? 'b_forecast' : 'b_live', ago(slot.at)) };
@@ -598,6 +612,9 @@ function routeNoteHtml(r) {
   if (r.region === 'UT') {
     if (!c.route.startsInUT) bits.push(`<p class="rnote warn">🗺️ ${esc(t('outside_ut', km(c.route.utEntryAlongM || 0)))}</p>`);
     if (c.leavesUt) bits.push(`<p class="rnote warn">🗺️ ${esc(t('leaves_ut'))}</p>`);
+  } else if (r.region === 'CA') {
+    // No cameras in the Caltrans feed; road status begins at the California state line.
+    if (!c.route.startsInCA) bits.push(`<p class="rnote warn">🗺️ ${esc(t('outside_ca', km(c.route.caEntryAlongM || 0)))}</p>`);
   } else {
     if (!c.route.startsInCO) bits.push(`<p class="rnote warn">🗺️ ${esc(t('outside_co', km(c.route.coEntryAlongM || 0)))}</p>`);
     if (c.leaves) bits.push(`<p class="rnote warn">🗺️ ${esc(t('leaves_co'))}</p>`);
@@ -625,7 +642,7 @@ function passBlock(r, c) {
 }
 
 function renderRoads() {
-  const r = resort(); const cfg = state.cfg; const ut = r.region === 'UT';
+  const r = resort(); const cfg = state.cfg; const ut = r.region === 'UT'; const ca = r.region === 'CA';
   const slot = roadsSlot(r);
   const evs = roadsEvents(r); const el = $('#roads');
   const c = ctxFor(r);
@@ -640,7 +657,7 @@ function renderRoads() {
     const segR = allR.filter(x => x.seg === leg.seg);
     const lvl = !evs || seg.outside ? 'unknown' : !segR.length ? 'go' : segR.some(x => x.level === 'nogo') ? 'nogo' : segR.some(x => x.level === 'caution') ? 'caution' : 'info';
     const nm = c ? `${esc(seg.key)} <small class="muted">· ${km(seg.km * 1000)}</small>` : esc(L(seg.name));
-    const name = `${nm}${seg.outside ? ` <small class="tag">${esc(t(ut ? 'outside_tag_ut' : 'outside_tag'))}</small>` : ''}${leg.alt ? ` <small class="muted">(${esc(t('alt'))})</small>` : ''}`;
+    const name = `${nm}${seg.outside ? ` <small class="tag">${esc(t(ut ? 'outside_tag_ut' : ca ? 'outside_tag_ca' : 'outside_tag'))}</small>` : ''}${leg.alt ? ` <small class="muted">(${esc(t('alt'))})</small>` : ''}`;
     return `<li class="rrow"><span class="pill-s p-${PILL[lvl]}">${esc(t(PILL[lvl]))}</span>${list.length
       ? `<details><summary>${name} <small class="muted">· ${list.length}</small></summary><ul class="evs">${list.map(e => `<li>${icon(e)} ${esc(e.tooltip || e.title)}${e.oppDir ? ` <small class="tag">${esc(t('opp_dir'))}</small>` : ''}<br><small class="muted">${esc(e.detail)}</small></li>`).join('')}</ul></details>`
       : `<span>${name}</span>`}</li>`;
@@ -656,22 +673,26 @@ function renderRoads() {
     const camHref = m => ut ? m.img : `https://www.cotrip.org/camera/${m.id}`;
     camsHtml = c.cams.length ? c.cams.map((m, i) => camTile({ href: camHref(m), img: m.img, name: camShort(m.name), title: m.name, ts: m.ts, broken: m.broken,
       extra: `<i class="num">${i + 1}</i><em class="km">${km(m.along)}</em>` })).join('')
-      : `<p class="muted">${esc(t(ut ? 'cams_none_ut' : 'cams_none'))}</p>`;
+      : `<p class="muted">${esc(t(ut ? 'cams_none_ut' : ca ? 'cams_none_ca' : 'cams_none'))}</p>`;
   } else {
     const meta = new Map((state.cams || []).map(x => [x.id, x]));
     const onRoute = new Set(r.route.map(x => x.seg));
     const list = ut ? [] : cfg.cameras.filter(x => onRoute.has(x.seg));
     camCount = list.length;
     camsHtml = list.length ? list.map(x => { const mm = meta.get(x.id); return camTile({ href: `https://www.cotrip.org/camera/${x.id}`, img: mm?.image || x.image, name: camShort(x.name), title: x.name, ts: mm?.ts, broken: mm?.broken }); }).join('')
-      : `<p class="muted">${esc(t(ut ? 'cams_none_ut' : 'cams_none'))}</p>`;
+      : `<p class="muted">${esc(t(ut ? 'cams_none_ut' : ca ? 'cams_none_ca' : 'cams_none'))}</p>`;
   }
   const from = c ? L(state.start.name) : L(state.cfg.trip.origin.name);
   const srcLine = ut
     ? `UDOT · ${slot.data ? `${esc(fmtTime(slot.at))} (${esc(ago(slot.at))})` : esc(t('unavailable'))}${c ? ` · ${esc(t('route_src'))} <a href="https://project-osrm.org/" target="_blank" rel="noopener">OSRM</a> (© OpenStreetMap)` : ''} · <a href="https://www.udottraffic.utah.gov/" target="_blank" rel="noopener">${esc(t('open_udot'))} ↗</a>`
-    : `CDOT COtrip · ${state.roads.data ? `${esc(fmtTime(state.roads.at))} (${esc(ago(state.roads.at))})` : esc(t('unavailable'))}${c ? ` · ${esc(t('route_src'))} <a href="https://project-osrm.org/" target="_blank" rel="noopener">OSRM</a> (© OpenStreetMap)` : ''} · <a href="https://www.cotrip.org/" target="_blank" rel="noopener">${esc(t('open_cotrip'))} ↗</a> · <a href="https://www.cotrip.org/road-conditions" target="_blank" rel="noopener">${esc(t('cotrip_cond'))} ↗</a>`;
+    : ca
+      ? `Caltrans · ${slot.data ? `${esc(fmtTime(slot.at))} (${esc(ago(slot.at))})` : esc(t('unavailable'))} · ${esc(t('route_src'))} <a href="https://project-osrm.org/" target="_blank" rel="noopener">OSRM</a> (© OpenStreetMap) · <a href="https://quickmap.dot.ca.gov/" target="_blank" rel="noopener">${esc(t('open_caltrans'))} ↗</a>`
+      : `CDOT COtrip · ${state.roads.data ? `${esc(fmtTime(state.roads.at))} (${esc(ago(state.roads.at))})` : esc(t('unavailable'))}${c ? ` · ${esc(t('route_src'))} <a href="https://project-osrm.org/" target="_blank" rel="noopener">OSRM</a> (© OpenStreetMap)` : ''} · <a href="https://www.cotrip.org/" target="_blank" rel="noopener">${esc(t('open_cotrip'))} ↗</a> · <a href="https://www.cotrip.org/road-conditions" target="_blank" rel="noopener">${esc(t('cotrip_cond'))} ↗</a>`;
   const driveLink = ut
     ? `<a href="https://www.udottraffic.utah.gov/" target="_blank" rel="noopener">${esc(t('open_udot'))} ↗</a>`
-    : `<a href="https://www.cotrip.org/trip-planner" target="_blank" rel="noopener">${esc(t('cotrip_tt'))} ↗</a>`;
+    : ca
+      ? `<a href="https://quickmap.dot.ca.gov/" target="_blank" rel="noopener">${esc(t('open_caltrans'))} ↗</a>`
+      : `<a href="https://www.cotrip.org/trip-planner" target="_blank" rel="noopener">${esc(t('cotrip_tt'))} ↗</a>`;
   el.innerHTML = `<div class="sec-h"><h2>${esc(t('roads_h'))}</h2><span class="sub-h">${esc(from)} → ${esc(r.short)}${c ? ` · ${km(c.route.distM)}` : ''}</span>${badge('roads', r)}</div>
     ${routeNoteHtml(r)}
     ${c ? '' : `<details class="more"><summary>🧭 ${esc(t('route'))}</summary><p class="small">${esc(L(r.routeNote))}</p></details>`}
@@ -870,10 +891,11 @@ function renderSources() {
   const via = m => t(m === 'live' ? 'via_live' : m === 'server' ? 'via_server' : 'via_snapshot');
   const cls = f => f.cls === 'ok' ? 'ok' : f.cls === 'stale' ? 'snap' : 'bad';
   const r = resort();
-  const item = (k, slot, rr) => { const f = freshness(slot, rr), s = (slot === 'roads' && rr?.region === 'UT') ? state.utahRoads : state[slot];
+  const item = (k, slot, rr) => { const f = freshness(slot, rr), s = (slot === 'roads' && rr?.region === 'UT') ? state.utahRoads : (slot === 'roads' && rr?.region === 'CA') ? state.caRoads : state[slot];
     return `<span class="${cls(f)}">${esc(t(k))}: ${esc(f.text)}${s.data ? ` · ${esc(fmtTime(s.at))} · ${esc(via(s.mode))}` : ''}</span>`; };
   const fi = freshness('intel', r);
-  $('#sources').innerHTML = item(r?.region === 'UT' ? 'src_roads_ut' : 'src_roads', 'roads', r) + item('src_weather', 'wx') + item('src_alerts', 'alerts')
+  const roadsItem = r?.region === 'CA' ? item('src_roads_ca', 'roads', r) : item(r?.region === 'UT' ? 'src_roads_ut' : 'src_roads', 'roads', r);
+  $('#sources').innerHTML = roadsItem + item('src_weather', 'wx') + item('src_alerts', 'alerts')
     + `<span class="${cls(fi)}">${esc(t('intel_h'))}: ${esc(fi.text)}${state.intel.at ? ` · ${esc(fmtTime(state.intel.at))} · ${esc(via(state.intel.mode))}` : ''}</span>`
     + (state.camsAt ? `<span class="${ageMin(state.camsAt) > 60 ? 'snap' : 'ok'}">${esc(t('cameras'))}: ${esc(t('cam_list'))} ${esc(ago(state.camsAt))}</span>` : '');
   $('#credits').innerHTML = state.cfg.resorts.filter(r => r.photo).map(r => `${esc(r.short)} ${esc(t('photo_by', r.photo.credit))}, <a href="${esc(r.photo.page)}" target="_blank" rel="noopener">Wikimedia Commons</a>, <a href="${esc(r.photo.licenseUrl)}" target="_blank" rel="noopener">${esc(r.photo.license)}</a>`).join(' · ');
@@ -983,7 +1005,7 @@ function goHome() {
   try { state.start = loadStart(state.cfg); } catch { state.start = { ...state.cfg.trip.origin, kind: 'preset' }; }
   state.manualStart = hasManualStart();
   if (!state.manualStart) autoLocate({ api: API, onUpdate: setStart, shouldStop: () => state.manualStart }).catch(() => {});
-  try { if ($('#start')) state.startUI = mountStartUI($('#start'), { cfg: state.cfg, t, L, getStart: () => state.start, getRegion: () => resort().region, onChange: setStart }); }
+  try { if ($('#start')) state.startUI = mountStartUI($('#start'), { cfg: state.cfg, t, L, getStart: () => state.start, getRegion: () => resort().region, getGateway: () => resort().gateway, onChange: setStart }); }
   catch (e) { console.warn('[ski] start UI failed:', e); }
   initDiscover({ compare: resortCompare, forecast, state, L, t, ui: UI, roadCheck, roadCount, reasonText, getJson, track, loadLeaflet, getStart: () => state.start, setStart, open: openResort, loadRoads: async () => { if (!state.roads.data) { try { await loadServer(); } catch {} } return state.roads; }, home: goHome, plan: openPlan, view: () => state.view });
   try { bind(); } catch (e) { console.warn('[ski] bind failed:', e); }

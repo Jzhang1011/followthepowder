@@ -5,10 +5,11 @@
 // 'failed' = nothing to serve).
 import { fetchAllIntel } from '../js/intel.js';
 import { openMeteoUrl, splitOpenMeteo, carsUrl, slimEvents, EVENT_CLASSES, nwsUrl, slimAlerts, wxGroupCfg,
-  utahCarsUrl, utahKeyedUrl, slimUtahEvents, slimUtahRoadConditions, slimUtahCameras, slimUtahPasses } from '../js/core.js';
+  utahCarsUrl, utahKeyedUrl, slimUtahEvents, slimUtahRoadConditions, slimUtahCameras, slimUtahPasses,
+  caRoadsUrl, CA_DISTRICTS, slimCaEvents } from '../js/core.js';
 
 export const UA = 'SkiDay ski dashboard (https://followthepowder.com/)';
-export const SOURCES = ['weather', 'roads', 'alerts', 'cameras', 'intel', 'utah-roads'];
+export const SOURCES = ['weather', 'roads', 'alerts', 'cameras', 'intel', 'utah-roads', 'ca-roads'];
 const now = () => new Date().toISOString();
 
 export function makeHttp({ tries = 3, timeoutMs = 25000 } = {}) {
@@ -111,6 +112,22 @@ export const collectors = {
       out.events.push(...slimUtahEvents(cfg, await http.getJson(utahCarsUrl(cfg))));
     }
     return out;
+  },
+  /**
+   * California roads: {events} from Caltrans CWWP2 (keyless JSON, no auth): chain controls (cc)
+   * + lane closures (lcs) for districts D3/D8/D9/D10. 8 files per tick, ~3.5 MB worst case, slimmed
+   * to events on our segments. No cameras/passes feed exists (unlike UDOT) — cameras stay null.
+   */
+  async 'ca-roads'(cfg, http) {
+    const cc = [], lcs = [];
+    for (const d of CA_DISTRICTS) {
+      for (const [feed, arr] of [['cc', cc], ['lcs', lcs]]) {
+        const j = await http.getJson(caRoadsUrl(d, feed));
+        if (!Array.isArray(j?.data)) throw new Error(`ca-roads: ${feed} D${d} has no data array`);
+        arr.push(...j.data);
+      }
+    }
+    return { events: slimCaEvents(cfg, { cc, lcs }) };
   }
 };
 
@@ -142,12 +159,12 @@ const meta = r => r ? { ok: !!r.ok, status: r.status, fetchedAt: r.fetchedAt, at
 
 /** Records -> the latest.json shape the page reads. */
 export function toLatest(rec, servedBy) {
-  const times = ['weather', 'roads', 'alerts', 'cameras', 'utah-roads'].map(k => rec[k]?.fetchedAt).filter(Boolean).sort();
+  const times = ['weather', 'roads', 'alerts', 'cameras', 'utah-roads', 'ca-roads'].map(k => rec[k]?.fetchedAt).filter(Boolean).sort();
   return {
     generatedAt: times[times.length - 1] || null, servedBy,
-    sources: { weather: meta(rec.weather), roads: meta(rec.roads), alerts: meta(rec.alerts), cameras: meta(rec.cameras), 'utah-roads': meta(rec['utah-roads']) },
+    sources: { weather: meta(rec.weather), roads: meta(rec.roads), alerts: meta(rec.alerts), cameras: meta(rec.cameras), 'utah-roads': meta(rec['utah-roads']), 'ca-roads': meta(rec['ca-roads']) },
     weather: rec.weather?.data || null, roads: rec.roads?.data || null, alerts: rec.alerts?.data || {}, cameras: rec.cameras?.data || null,
-    'utah-roads': rec['utah-roads']?.data || null
+    'utah-roads': rec['utah-roads']?.data || null, 'ca-roads': rec['ca-roads']?.data || null
   };
 }
 export const toIntel = (r, servedBy) => ({ generatedAt: r?.fetchedAt || null, attemptAt: r?.attemptAt || null, status: r?.status || 'failed', error: r?.error || null, servedBy, resorts: r?.data || {} });
@@ -156,7 +173,7 @@ export const toCameras = (r, cfg, servedBy) => ({ generatedAt: r?.fetchedAt || n
 /** latest.json (+ intel.json, cameras.json) on disk -> records, so the Node backup can merge too. */
 export function fromFiles(latest, intel, cams) {
   const rec = {};
-  for (const k of ['weather', 'roads', 'alerts', 'cameras', 'utah-roads']) {
+  for (const k of ['weather', 'roads', 'alerts', 'cameras', 'utah-roads', 'ca-roads']) {
     const s = latest?.sources?.[k]; const d = latest?.[k];
     const has = d != null && s?.ok !== false && !(k === 'alerts' && !Object.values(d).some(v => v));
     rec[k] = has ? { status: s?.status || 'ok', ok: true, fetchedAt: s?.fetchedAt || latest.generatedAt, attemptAt: s?.attemptAt || null, error: s?.error || null, data: d } : null;

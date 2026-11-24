@@ -36,6 +36,28 @@
     "lon": -111.9778
    },
    {
+    "id": "RNO",
+    "airport": true,
+    "region": "CA",
+    "name": {
+     "en": "Reno-Tahoe Airport (RNO)",
+     "zh": "\u96f7\u8bfa\u673a\u573a (RNO)"
+    },
+    "lat": 39.4986,
+    "lon": -119.7681
+   },
+   {
+    "id": "ONT",
+    "airport": true,
+    "region": "CA",
+    "name": {
+     "en": "Ontario Airport (ONT)",
+     "zh": "\u5b89\u5927\u7565\u673a\u573a (ONT)"
+    },
+    "lat": 34.056,
+    "lon": -117.601
+   },
+   {
     "id": "denver",
     "region": "CO",
     "name": {
@@ -831,6 +853,313 @@
     40.3656,
     -111.5556,
     40.3925
+   ]
+  },
+  "i580-reno": {
+   "name": {
+    "en": "I-580 through Reno",
+    "zh": "I-580 雷诺市区段"
+   },
+   "routes": [
+    "I-580",
+    "US-395"
+   ],
+   "bbox": [
+    -119.8363,
+    39.1109,
+    -119.7282,
+    39.5433
+   ]
+  },
+  "i80-reno-truckee": {
+   "name": {
+    "en": "I-80 Reno → Truckee",
+    "zh": "I-80 雷诺至特拉基段"
+   },
+   "routes": [
+    "I-80"
+   ],
+   "bbox": [
+    -120.2126,
+    39.3131,
+    -119.7764,
+    39.5484
+   ]
+  },
+  "i80-truckee-donner": {
+   "name": {
+    "en": "I-80 Truckee → Donner Summit",
+    "zh": "I-80 特拉基至唐纳山口段"
+   },
+   "routes": [
+    "I-80"
+   ],
+   "bbox": [
+    -120.2997,
+    39.3131,
+    -120.1926,
+    39.3428
+   ]
+  },
+  "ca89-tahoe-city": {
+   "name": {
+    "en": "CA-89 Truckee → Tahoe City → Palisades",
+    "zh": "CA-89 特拉基至太浩城至 Palisades"
+   },
+   "routes": [
+    "CA-89",
+    "SR-89",
+    "SR 89"
+   ],
+   "bbox": [
+    -120.2454,
+    39.1852,
+    -120.1882,
+    39.334
+   ]
+  },
+  "ca267-northstar": {
+   "name": {
+    "en": "CA-267 Truckee → Northstar",
+    "zh": "CA-267 特拉基至 Northstar"
+   },
+   "routes": [
+    "CA-267",
+    "SR-267",
+    "SR 267"
+   ],
+   "bbox": [
+    -120.1766,
+    39.2537,
+    -120.0934,
+    39.3467
+   ]
+  },
+  "us40-donner": {
+   "name": {
+    "en": "Donner Pass Road (historic US-40) → Sugar Bowl",
+    "zh": "唐纳山口路（旧 US-40）至 Sugar Bowl"
+   },
+   "routes": [
+    "US-40",
+    "Donner Pass Road",
+    "US 40 Hist"
+   ],
+   "bbox": [
+    -120.3474,
+    39.2946,
+    -120.2761,
+    39.3372
+   ]
+  },
+  "us395-north": {
+   "name": {
+    "en": "US-395 Carson City → CA-88 junction",
+    "zh": "US-395 卡森城至 CA-88 路口段"
+   },
+   "routes": [
+    "US-395"
+   ],
+   "bbox": [
+    -119.7901,
+    38.9508,
+    -119.7621,
+    39.1302
+   ]
+  },
+  "us395-south": {
+   "name": {
+    "en": "US-395 CA-88 junction → Mammoth Lakes",
+    "zh": "US-395 CA-88 路口至猛犸湖段"
+   },
+   "routes": [
+    "US-395"
+   ],
+   "bbox": [
+    -119.7895,
+    37.6312,
+    -118.9084,
+    38.9708
+   ]
+  },
+  "ca158-june-lake": {
+   "name": {
+    "en": "CA-158 June Lake Loop → June Mountain",
+    "zh": "CA-158 六月湖环线至 June Mountain"
+   },
+   "routes": [
+    "CA-158",
+    "SR-158",
+    "SR 158"
+   ],
+   "bbox": [
+    -119.1005,
+    37.7582,
+    -119.0438,
+    37.8227
+   ]
+  },
+  "ca203-mammoth": {
+   "name": {
+    "en": "CA-203 Mammoth Lakes → Mammoth Mountain",
+    "zh": "CA-203 猛犸湖至猛犸山"
+   },
+   "routes": [
+    "CA-203",
+    "SR-203",
+    "SR 203"
+   ],
+   "bbox": [
+    -118.9922,
+    37.6296,
+    -118.9103,
+    37.6588
+   ]
+  },
+  "lake-mary-rd": {
+   "name": {
+    "en": "Lake Mary Road → Mammoth Mountain",
+    "zh": "Lake Mary 路至猛犸山"
+   },
+   "routes": [
+    "Lake Mary Road"
+   ],
+   "bbox": [
+    -119.0309,
+    37.5958,
+    -118.9733,
+    37.6584
+   ]
+  },
+  "us50-reno": {
+   "name": {
+    "en": "US-50 Reno → South Lake Tahoe",
+    "zh": "US-50 雷诺至南太浩湖段"
+   },
+   "routes": [
+    "US-50"
+   ],
+   "bbox": [
+    -120.0969,
+    38.7905,
+    -119.7627,
+    39.133
+   ]
+  },
+  "ca88-kirkwood": {
+   "name": {
+    "en": "CA-88 Carson Pass → Kirkwood",
+    "zh": "CA-88 卡森山口至 Kirkwood"
+   },
+   "routes": [
+    "CA-88",
+    "SR-88",
+    "SR 88"
+   ],
+   "bbox": [
+    -120.0874,
+    38.6737,
+    -119.769,
+    38.9698
+   ]
+  },
+  "sr431-mt-rose": {
+   "name": {
+    "en": "SR-431 Mt. Rose Highway → Mt. Rose",
+    "zh": "SR-431 罗斯山公路至 Mt. Rose"
+   },
+   "routes": [
+    "SR-431",
+    "SR 431",
+    "Mt. Rose Highway"
+   ],
+   "bbox": [
+    -119.8967,
+    39.3164,
+    -119.7469,
+    39.4119
+   ]
+  },
+  "ont-airport": {
+   "name": {
+    "en": "ONT Airport → I-10 (South Haven Ave)",
+    "zh": "安大略机场至 I-10（South Haven 大道）"
+   },
+   "routes": [
+    "South Haven Avenue",
+    "I-10"
+   ],
+   "bbox": [
+    -117.6086,
+    34.0382,
+    -117.5656,
+    34.0747
+   ]
+  },
+  "i10-ontario": {
+   "name": {
+    "en": "I-10 Ontario → Redlands",
+    "zh": "I-10 安大略至雷德兰兹段"
+   },
+   "routes": [
+    "I-10"
+   ],
+   "bbox": [
+    -117.5855,
+    34.0534,
+    -117.1906,
+    34.0815
+   ]
+  },
+  "ca210-highland": {
+   "name": {
+    "en": "CA-210 Redlands → Highland",
+    "zh": "CA-210 雷德兰兹至海兰段"
+   },
+   "routes": [
+    "CA-210",
+    "SR-210",
+    "SR 210"
+   ],
+   "bbox": [
+    -117.2114,
+    34.0634,
+    -117.1888,
+    34.1361
+   ]
+  },
+  "ca330-running-springs": {
+   "name": {
+    "en": "CA-330 Highland → Running Springs",
+    "zh": "CA-330 海兰至 Running Springs"
+   },
+   "routes": [
+    "CA-330",
+    "SR-330",
+    "SR 330"
+   ],
+   "bbox": [
+    -117.2124,
+    34.1177,
+    -117.0971,
+    34.2185
+   ]
+  },
+  "ca18-san-bernardino": {
+   "name": {
+    "en": "CA-18 Running Springs → Big Bear Lake",
+    "zh": "CA-18 Running Springs 至大熊湖段"
+   },
+   "routes": [
+    "CA-18",
+    "SR-18",
+    "SR 18"
+   ],
+   "bbox": [
+    -117.116,
+    34.193,
+    -116.8503,
+    34.261
    ]
   }
  },
@@ -3362,7 +3691,740 @@
    "page": "https://commons.wikimedia.org/wiki/File:Sundance_Resort_at_night,_Jan_17.jpg",
    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
   }
- }
+ },
+  {
+   "id": "palisades",
+   "name": {
+    "en": "Palisades Tahoe",
+    "zh": "Palisades Tahoe（帕利塞兹太浩）"
+   },
+   "short": "Palisades",
+   "passes": [
+    "ikon"
+   ],
+   "region": "CA",
+   "tz": "America/Los_Angeles",
+   "lat": 39.196,
+   "lon": -120.235,
+   "baseElevM": 1890,
+   "summitElevM": 2758,
+   "driveMin": 68,
+   "driveSource": "OSRM route from RNO airport, no traffic (computed 2026-11-23)",
+   "gateway": "RNO",
+   "routeNote": {
+    "en": "RNO → I-580 N → I-80 W → CA-89 S to Palisades.",
+    "zh": "雷诺机场 → I-580 北 → I-80 西 → CA-89 南到 Palisades。"
+   },
+   "route": [
+    {
+     "seg": "i580-reno",
+     "closure": "caution"
+    },
+    {
+     "seg": "i80-reno-truckee",
+     "closure": "caution"
+    },
+    {
+     "seg": "ca89-tahoe-city",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.palisadestahoe.com/",
+    "webcams": "https://www.palisadestahoe.com/mountain-information/webcams",
+    "report": "https://www.palisadestahoe.com/mountain-information/mountain-report"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "img/cat/palisades.jpg",
+    "credit": "Jonnyboyca at English Wikipedia",
+    "license": "Public domain",
+    "page": "https://commons.wikimedia.org/wiki/File:TheVillageatSquawValley-exterior.jpg"
+   },
+   "parking": {
+    "lat": 39.196,
+    "lon": -120.235
+   },
+   "summitLat": 39.19828,
+   "summitLon": -120.28708,
+   "summitSource": "Summit 9,050 ft / 2,758 m (Palisades Tahoe)",
+   "baseSource": "Base 6,200 ft / 1,890 m (Palisades Tahoe)",
+   "wxGroup": 9
+  },
+  {
+   "id": "mammoth",
+   "name": {
+    "en": "Mammoth Mountain",
+    "zh": "Mammoth Mountain（猛犸山）"
+   },
+   "short": "Mammoth",
+   "passes": [
+    "ikon"
+   ],
+   "region": "CA",
+   "tz": "America/Los_Angeles",
+   "lat": 37.63056,
+   "lon": -119.0325,
+   "baseElevM": 2424,
+   "summitElevM": 3369,
+   "driveMin": 229,
+   "driveSource": "OSRM route from RNO airport, no traffic (computed 2026-11-23)",
+   "gateway": "RNO",
+   "routeNote": {
+    "en": "RNO → I-580 S → US-395 S → CA-203 W → Lake Mary Road S to Mammoth.",
+    "zh": "雷诺机场 → I-580 南 → US-395 南 → CA-203 西 → Lake Mary 路南到 Mammoth。"
+   },
+   "route": [
+    {
+     "seg": "i580-reno",
+     "closure": "caution"
+    },
+    {
+     "seg": "us395-north",
+     "closure": "caution"
+    },
+    {
+     "seg": "us395-south",
+     "closure": "caution"
+    },
+    {
+     "seg": "ca203-mammoth",
+     "closure": "caution"
+    },
+    {
+     "seg": "lake-mary-rd",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.mammothmountain.com/",
+    "webcams": "https://www.mammothmountain.com/on-the-mountain/mammoth-webcam",
+    "report": "https://www.mammothmountain.com/on-the-mountain/mountain-report"
+   },
+   "webcams": [
+    {
+     "name": {
+      "en": "Main Lodge",
+      "zh": "主旅馆"
+     },
+     "image": "https://media.mammothresorts.com/mmsa/mammoth/cams/Main_Broadway_1280x720.jpg"
+    },
+    {
+     "name": {
+      "en": "Unbound Main Park",
+      "zh": "Unbound 主公园"
+     },
+     "image": "https://media.mammothresorts.com/mmsa/mammoth/cams/Unbound_Main_Park_1_1280x720.jpg"
+    },
+    {
+     "name": {
+      "en": "McCoy Station",
+      "zh": "McCoy 站"
+     },
+     "image": "https://media.mammothresorts.com/mmsa/mammoth/cams/McCoy_Chair_23_Top_1280x720.jpg"
+    },
+    {
+     "name": {
+      "en": "Canyon Lodge",
+      "zh": "峡谷旅馆"
+     },
+     "image": "https://media.mammothresorts.com/mmsa/mammoth/cams/Canyon_Lincoln_Mountain_1280x720.jpg"
+    },
+    {
+     "name": {
+      "en": "The Village",
+      "zh": "山村"
+     },
+     "image": "https://media.mammothresorts.com/mmsa/mammoth/cams/Village_Village_1280x720.jpg"
+    }
+   ],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/46/Mammoth_Mountain_Eagle_Express.JPG/960px-Mammoth_Mountain_Eagle_Express.JPG",
+    "credit": "Karissa Kunihira",
+    "license": "CC BY 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Mammoth_Mountain_Eagle_Express.JPG"
+   },
+   "parking": {
+    "lat": 37.63056,
+    "lon": -119.0325
+   },
+   "summitLat": 37.63063,
+   "summitLon": -119.03263,
+   "summitSource": "Summit 11,053 ft / 3,369 m (Mammoth Mountain)",
+   "baseSource": "Base 7,953 ft / 2,424 m (Mammoth Mountain)",
+   "wxGroup": 11
+  },
+  {
+   "id": "june",
+   "name": {
+    "en": "June Mountain",
+    "zh": "June Mountain（六月山）"
+   },
+   "short": "June",
+   "passes": [
+    "ikon"
+   ],
+   "region": "CA",
+   "tz": "America/Los_Angeles",
+   "lat": 37.7683,
+   "lon": -119.0906,
+   "baseElevM": 2300,
+   "summitElevM": 3075,
+   "driveMin": 201,
+   "driveSource": "OSRM route from RNO airport, no traffic (computed 2026-11-23)",
+   "gateway": "RNO",
+   "routeNote": {
+    "en": "RNO → I-580 S → US-395 S → CA-158 S to June Mountain.",
+    "zh": "雷诺机场 → I-580 南 → US-395 南 → CA-158 南到 June Mountain。"
+   },
+   "route": [
+    {
+     "seg": "i580-reno",
+     "closure": "caution"
+    },
+    {
+     "seg": "us395-north",
+     "closure": "caution"
+    },
+    {
+     "seg": "us395-south",
+     "closure": "caution"
+    },
+    {
+     "seg": "ca158-june-lake",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.junemountain.com/",
+    "webcams": "https://www.junemountain.com/mountain-information/live-cams",
+    "report": "https://www.junemountain.com/mountain-information/mountain-report"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "img/cat/june.jpg",
+    "credit": "Eric T Gunther",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:June_Mountain_skiing.jpg"
+   },
+   "parking": {
+    "lat": 37.7683,
+    "lon": -119.0906
+   },
+   "summitLat": 37.73993,
+   "summitLon": -119.07014,
+   "summitSource": "Summit 10,090 ft / 3,075 m (June Mountain)",
+   "baseSource": "Base 7,545 ft / 2,300 m (June Mountain)",
+   "wxGroup": 11
+  },
+  {
+   "id": "big-bear",
+   "name": {
+    "en": "Big Bear Mountain Resort",
+    "zh": "Big Bear Mountain Resort（大熊山）"
+   },
+   "short": "Big Bear",
+   "passes": [
+    "ikon"
+   ],
+   "region": "CA",
+   "tz": "America/Los_Angeles",
+   "lat": 34.2267,
+   "lon": -116.8602,
+   "baseElevM": 2176,
+   "summitElevM": 2684,
+   "driveMin": 102,
+   "driveSource": "OSRM route from ONT airport, no traffic (computed 2026-11-23)",
+   "gateway": "ONT",
+   "routeNote": {
+    "en": "ONT → South Haven Ave E → I-10 E → CA-210 N → CA-330 E → CA-18 E to Big Bear.",
+    "zh": "安大略机场 → South Haven 大道东 → I-10 东 → CA-210 北 → CA-330 东 → CA-18 东到 Big Bear。"
+   },
+   "route": [
+    {
+     "seg": "ont-airport",
+     "closure": "caution"
+    },
+    {
+     "seg": "i10-ontario",
+     "closure": "caution"
+    },
+    {
+     "seg": "ca210-highland",
+     "closure": "caution"
+    },
+    {
+     "seg": "ca330-running-springs",
+     "closure": "caution"
+    },
+    {
+     "seg": "ca18-san-bernardino",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.bigbearmountainresort.com/",
+    "webcams": "https://www.bigbearmountainresort.com/webcams",
+    "report": "https://www.bigbearmountainresort.com/mountain-information"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e2/Bear_Mountain%2C_Big_Bear_Lake.jpg/960px-Bear_Mountain%2C_Big_Bear_Lake.jpg",
+    "credit": "Bear Mountain",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Bear_Mountain,_Big_Bear_Lake.jpg"
+   },
+   "parking": {
+    "lat": 34.2267,
+    "lon": -116.8602
+   },
+   "summitLat": 34.2267,
+   "summitLon": -116.8602,
+   "summitSource": "Summit 8,805 ft / 2,684 m (Big Bear Mountain Resort); summit point unverified — using base coordinates as weather point",
+   "baseSource": "Base 7,140 ft / 2,176 m (Big Bear Mountain Resort)",
+   "wxGroup": 11
+  },
+  {
+   "id": "snow-valley",
+   "name": {
+    "en": "Snow Valley",
+    "zh": "Snow Valley（雪谷）"
+   },
+   "short": "Snow Valley",
+   "passes": [
+    "ikon"
+   ],
+   "region": "CA",
+   "tz": "America/Los_Angeles",
+   "lat": 34.22337,
+   "lon": -117.03742,
+   "baseElevM": 2073,
+   "summitElevM": 2390,
+   "driveMin": 76,
+   "driveSource": "OSRM route from ONT airport, no traffic (computed 2026-11-23)",
+   "gateway": "ONT",
+   "routeNote": {
+    "en": "ONT → South Haven Ave E → I-10 E → CA-210 N → CA-330 E → CA-18 E to Snow Valley.",
+    "zh": "安大略机场 → South Haven 大道东 → I-10 东 → CA-210 北 → CA-330 东 → CA-18 东到 Snow Valley。"
+   },
+   "route": [
+    {
+     "seg": "ont-airport",
+     "closure": "caution"
+    },
+    {
+     "seg": "i10-ontario",
+     "closure": "caution"
+    },
+    {
+     "seg": "ca210-highland",
+     "closure": "caution"
+    },
+    {
+     "seg": "ca330-running-springs",
+     "closure": "caution"
+    },
+    {
+     "seg": "ca18-san-bernardino",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.bigbearmountainresort.com/",
+    "webcams": "https://www.bigbearmountainresort.com/webcams/snow-valley",
+    "report": "https://www.bigbearmountainresort.com/mountain-information"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "img/cat/snow-valley.jpg",
+    "credit": "Me",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Snow_Valley_CA_2010_1.jpg"
+   },
+   "parking": {
+    "lat": 34.22337,
+    "lon": -117.03742
+   },
+   "summitLat": 34.2039,
+   "summitLon": -117.03642,
+   "summitSource": "Summit 7,841 ft / 2,390 m (Snow Valley Mountain Resort)",
+   "baseSource": "Base 6,800 ft / 2,073 m (Snow Valley Mountain Resort)",
+   "wxGroup": 11
+  },
+  {
+   "id": "sierra-at-tahoe",
+   "name": {
+    "en": "Sierra-at-Tahoe",
+    "zh": "Sierra-at-Tahoe（塞拉太浩）"
+   },
+   "short": "Sierra-at-Tahoe",
+   "passes": [
+    "ikon"
+   ],
+   "region": "CA",
+   "tz": "America/Los_Angeles",
+   "lat": 38.8002,
+   "lon": -120.0806,
+   "baseElevM": 2024,
+   "summitElevM": 2698,
+   "driveMin": 109,
+   "driveSource": "OSRM route from RNO airport, no traffic (computed 2026-11-23)",
+   "gateway": "RNO",
+   "routeNote": {
+    "en": "RNO → I-580 S → US-50 S to Sierra-at-Tahoe.",
+    "zh": "雷诺机场 → I-580 南 → US-50 南到 Sierra-at-Tahoe。"
+   },
+   "route": [
+    {
+     "seg": "i580-reno",
+     "closure": "caution"
+    },
+    {
+     "seg": "us50-reno",
+     "closure": "caution"
+    }
+   ],
+   "links": {
+    "site": "https://www.sierraattahoe.com/",
+    "webcams": "https://sierraattahoe.com/live-cams/",
+    "report": "https://sierraattahoe.com/weather-snow-report/"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "img/cat/sierra-at-tahoe.jpg",
+    "credit": "LittleT889",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Sierra-at-Tahoe_2.jpg"
+   },
+   "parking": {
+    "lat": 38.8002,
+    "lon": -120.0806
+   },
+   "summitLat": 38.8002,
+   "summitLon": -120.0806,
+   "summitSource": "Summit 8,852 ft / 2,698 m (Sierra-at-Tahoe); summit point unverified — using base coordinates as weather point",
+   "baseSource": "Base 6,640 ft / 2,024 m (Sierra-at-Tahoe)",
+   "wxGroup": 10
+  },
+  {
+   "id": "heavenly",
+   "name": {
+    "en": "Heavenly",
+    "zh": "Heavenly（天堂山）"
+   },
+   "short": "Heavenly",
+   "passes": [
+    "epic"
+   ],
+   "region": "CA",
+   "tz": "America/Los_Angeles",
+   "lat": 38.9353,
+   "lon": -119.94,
+   "baseElevM": 2029,
+   "summitElevM": 3068,
+   "driveMin": 84,
+   "driveSource": "OSRM route from RNO airport, no traffic (computed 2026-11-23)",
+   "gateway": "RNO",
+   "routeNote": {
+    "en": "RNO → I-580 S → US-50 S to Heavenly.",
+    "zh": "雷诺机场 → I-580 南 → US-50 南到 Heavenly。"
+   },
+   "route": [
+    {
+     "seg": "i580-reno",
+     "closure": "caution"
+    },
+    {
+     "seg": "us50-reno",
+     "closure": "caution"
+    }
+   ],
+   "links": {
+    "site": "https://www.skiheavenly.com/",
+    "webcams": "https://www.skiheavenly.com/the-mountain/mountain-conditions/mountain-cams.aspx",
+    "report": "https://www.skiheavenly.com/the-mountain/mountain-conditions/snow-and-weather-report.aspx"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/97/Heavenly_Mountain_Resort%2C_Lake_Tahoe%2C_Nevada_%2821581093841%29.jpg/960px-Heavenly_Mountain_Resort%2C_Lake_Tahoe%2C_Nevada_%2821581093841%29.jpg",
+    "credit": "Ken Lund",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Heavenly_Mountain_Resort,_Lake_Tahoe,_Nevada_(21581093841).jpg"
+   },
+   "parking": {
+    "lat": 38.9353,
+    "lon": -119.94
+   },
+   "summitLat": 38.92284,
+   "summitLon": -119.89749,
+   "summitSource": "Summit 10,067 ft / 3,068 m (Heavenly Mountain Resort)",
+   "baseSource": "Base 6,657 ft / 2,029 m (Heavenly Mountain Resort)",
+   "wxGroup": 10
+  },
+  {
+   "id": "northstar",
+   "name": {
+    "en": "Northstar",
+    "zh": "Northstar（北极星）"
+   },
+   "short": "Northstar",
+   "passes": [
+    "epic"
+   ],
+   "region": "CA",
+   "tz": "America/Los_Angeles",
+   "lat": 39.264,
+   "lon": -120.125,
+   "baseElevM": 1929,
+   "summitElevM": 2624,
+   "driveMin": 62,
+   "driveSource": "OSRM route from RNO airport, no traffic (computed 2026-11-23)",
+   "gateway": "RNO",
+   "routeNote": {
+    "en": "RNO → I-580 N → I-80 W → CA-267 S to Northstar.",
+    "zh": "雷诺机场 → I-580 北 → I-80 西 → CA-267 南到 Northstar。"
+   },
+   "route": [
+    {
+     "seg": "i580-reno",
+     "closure": "caution"
+    },
+    {
+     "seg": "i80-reno-truckee",
+     "closure": "caution"
+    },
+    {
+     "seg": "ca267-northstar",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.northstarcalifornia.com/",
+    "webcams": "https://www.northstarcalifornia.com/the-mountain/mountain-conditions/mountain-cams.aspx",
+    "report": "https://www.northstarcalifornia.com/the-mountain/mountain-conditions/snow-and-weather-report.aspx"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "img/cat/northstar.jpg",
+    "credit": "Leijurv",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Northstar_California_East_Ridge_2019.jpg"
+   },
+   "parking": {
+    "lat": 39.264,
+    "lon": -120.125
+   },
+   "summitLat": 39.24157,
+   "summitLon": -119.13964,
+   "summitSource": "Summit 8,610 ft / 2,624 m (Northstar California)",
+   "baseSource": "Base 6,330 ft / 1,929 m (Northstar California)",
+   "wxGroup": 9
+  },
+  {
+   "id": "kirkwood",
+   "name": {
+    "en": "Kirkwood",
+    "zh": "Kirkwood（柯克伍德）"
+   },
+   "short": "Kirkwood",
+   "passes": [
+    "epic"
+   ],
+   "region": "CA",
+   "tz": "America/Los_Angeles",
+   "lat": 38.684,
+   "lon": -120.068,
+   "baseElevM": 2377,
+   "summitElevM": 2987,
+   "driveMin": 107,
+   "driveSource": "OSRM route from RNO airport, no traffic (computed 2026-11-23)",
+   "gateway": "RNO",
+   "routeNote": {
+    "en": "RNO → I-580 S → US-395 S → SR-88 S → CA-88 W to Kirkwood.",
+    "zh": "雷诺机场 → I-580 南 → US-395 南 → SR-88 南 → CA-88 西到 Kirkwood。"
+   },
+   "route": [
+    {
+     "seg": "i580-reno",
+     "closure": "caution"
+    },
+    {
+     "seg": "us395-north",
+     "closure": "caution"
+    },
+    {
+     "seg": "ca88-kirkwood",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.kirkwood.com/",
+    "webcams": "https://www.kirkwood.com/the-mountain/mountain-conditions/mountain-cams.aspx",
+    "report": "https://www.kirkwood.com/the-mountain/mountain-conditions/snow-and-weather-report.aspx"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/88/Kirkwood_Mountain_Resort%2C_Kirkwood%2C_California_%2821385611049%29.jpg/960px-Kirkwood_Mountain_Resort%2C_Kirkwood%2C_California_%2821385611049%29.jpg",
+    "credit": "Ken Lund",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Kirkwood_Mountain_Resort,_Kirkwood,_California_(21385611049).jpg"
+   },
+   "parking": {
+    "lat": 38.684,
+    "lon": -120.068
+   },
+   "summitLat": 38.66241,
+   "summitLon": -120.06046,
+   "summitSource": "Summit 9,800 ft / 2,987 m (Kirkwood Mountain Resort)",
+   "baseSource": "Base 7,800 ft / 2,377 m (Kirkwood Mountain Resort)",
+   "wxGroup": 10
+  },
+  {
+   "id": "sugar-bowl",
+   "name": {
+    "en": "Sugar Bowl",
+    "zh": "Sugar Bowl（糖碗）"
+   },
+   "short": "Sugar Bowl",
+   "passes": [],
+   "region": "CA",
+   "tz": "America/Los_Angeles",
+   "lat": 39.30444,
+   "lon": -120.33583,
+   "baseElevM": 2098,
+   "summitElevM": 2555,
+   "driveMin": 68,
+   "driveSource": "OSRM route from RNO airport, no traffic (computed 2026-11-23)",
+   "gateway": "RNO",
+   "routeNote": {
+    "en": "RNO → I-580 N → I-80 W → US 40 Hist W to Sugar Bowl.",
+    "zh": "雷诺机场 → I-580 北 → I-80 西 → US 40 Hist 西到 Sugar Bowl。"
+   },
+   "route": [
+    {
+     "seg": "i580-reno",
+     "closure": "caution"
+    },
+    {
+     "seg": "i80-reno-truckee",
+     "closure": "caution"
+    },
+    {
+     "seg": "i80-truckee-donner",
+     "closure": "caution"
+    },
+    {
+     "seg": "us40-donner",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.sugarbowl.com/",
+    "webcams": "https://www.sugarbowl.com/webcams",
+    "report": "https://www.sugarbowl.com/conditions"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "img/cat/sugar-bowl.jpg",
+    "credit": "Sugar Bowl Resort",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Sugar_Bowl_Ski_Resort_Modern_Lodge.jpg"
+   },
+   "parking": {
+    "lat": 39.30444,
+    "lon": -120.33583
+   },
+   "summitLat": 39.28776,
+   "summitLon": -120.32846,
+   "summitSource": "Summit 8,383 ft / 2,555 m (Sugar Bowl Resort)",
+   "baseSource": "Base 6,883 ft / 2,098 m (Sugar Bowl Resort)",
+   "wxGroup": 9
+  },
+  {
+   "id": "mt-rose",
+   "name": {
+    "en": "Mt. Rose",
+    "zh": "Mt. Rose（罗斯山）"
+   },
+   "short": "Mt. Rose",
+   "passes": [],
+   "region": "CA",
+   "tz": "America/Los_Angeles",
+   "lat": 39.32917,
+   "lon": -119.88583,
+   "baseElevM": 2518,
+   "summitElevM": 2957,
+   "driveMin": 35,
+   "driveSource": "OSRM route from RNO airport, no traffic (computed 2026-11-23)",
+   "gateway": "RNO",
+   "routeNote": {
+    "en": "RNO → I-580 S → SR-431 W to Mt. Rose.",
+    "zh": "雷诺机场 → I-580 南 → SR-431 西到 Mt. Rose。"
+   },
+   "route": [
+    {
+     "seg": "i580-reno",
+     "closure": "caution"
+    },
+    {
+     "seg": "sr431-mt-rose",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.skirose.com/",
+    "webcams": "https://skirose.com/the-mountain-web-cams/",
+    "report": "https://skirose.com/snow-report/"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "img/cat/mt-rose.jpg",
+    "credit": "Patrick Nouhailler's…",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Mount_Rose_Ski_Tahoe_-_panoramio_(1).jpg"
+   },
+   "parking": {
+    "lat": 39.32917,
+    "lon": -119.88583
+   },
+   "summitLat": 39.31269,
+   "summitLon": -119.8838,
+   "summitSource": "Summit 9,700 ft / 2,957 m (Mt. Rose Ski Tahoe)",
+   "baseSource": "Base 8,260 ft / 2,518 m (Mt. Rose Ski Tahoe)",
+   "wxGroup": 9
+  }
  ],
  "cameras": [
   {

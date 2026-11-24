@@ -809,7 +809,7 @@
    "summitElevM": 2758,
    "tz": "America/Los_Angeles",
    "url": "https://www.palisadestahoe.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Palisades_Tahoe",
    "photo": {
     "src": "img/cat/palisades.jpg",
@@ -844,7 +844,7 @@
    "summitElevM": 3369,
    "tz": "America/Los_Angeles",
    "url": "https://www.mammothmountain.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Mammoth_Mountain_Resort",
    "report": {
     "p": "mtnpowder",
@@ -871,7 +871,7 @@
    "summitElevM": 3075,
    "tz": "America/Los_Angeles",
    "url": "https://www.junemountain.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/June_Mountain_ski_area",
    "photo": {
     "src": "img/cat/june.jpg",
@@ -908,7 +908,7 @@
    "summitElevM": 2684,
    "tz": "America/Los_Angeles",
    "url": "https://www.bigbearmountainresort.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Bear_Mountain_(ski_area)",
    "report": {
     "p": "mtnpowder",
@@ -936,7 +936,7 @@
    "summitElevM": 2390,
    "tz": "America/Los_Angeles",
    "url": "https://www.bigbearmountainresort.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Snow_Valley_Mountain_Resort",
    "photo": {
     "src": "img/cat/snow-valley.jpg",
@@ -965,7 +965,7 @@
    "summitElevM": 2698,
    "tz": "America/Los_Angeles",
    "url": "https://www.sierraattahoe.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Sierra-at-Tahoe",
    "photo": {
     "src": "img/cat/sierra-at-tahoe.jpg",
@@ -991,11 +991,11 @@
    ],
    "lat": 38.9353,
    "lon": -119.94,
-   "baseElevM": 1907,
+   "baseElevM": 2029,
    "summitElevM": 3068,
    "tz": "America/Los_Angeles",
    "url": "https://www.skiheavenly.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Heavenly_Mountain_Resort",
    "report": {
     "p": "vail",
@@ -1024,7 +1024,7 @@
    "summitElevM": 2624,
    "tz": "America/Los_Angeles",
    "url": "https://www.northstarcalifornia.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Northstar_California",
    "photo": {
     "src": "img/cat/northstar.jpg",
@@ -1059,7 +1059,7 @@
    "summitElevM": 2987,
    "tz": "America/Los_Angeles",
    "url": "https://www.kirkwood.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Kirkwood_Mountain_Resort",
    "report": {
     "p": "vail",
@@ -1084,7 +1084,7 @@
    "summitElevM": 2555,
    "tz": "America/Los_Angeles",
    "url": "https://www.sugarbowl.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Sugar_Bowl_Ski_Resort",
    "photo": {
     "src": "img/cat/sugar-bowl.jpg",
@@ -1112,7 +1112,7 @@
    "summitElevM": 2957,
    "tz": "America/Los_Angeles",
    "url": "https://www.skirose.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Mount_Rose_Ski_Tahoe",
    "photo": {
     "src": "img/cat/mt-rose.jpg",

@@ -28,7 +28,7 @@ export function openMeteoUrl(cfg) {
   const p = new URLSearchParams({
     latitude: lat.join(','), longitude: lon.join(','), elevation: elev.join(','),
     hourly: HOURLY.join(','), daily: DAILY.join(','),
-    timezone: cfg.trip.timezone || 'America/Denver', forecast_days: '10',
+    timezone: cfg.resorts[0]?.tz || cfg.trip.timezone || 'America/Denver', forecast_days: '10',
     wind_speed_unit: 'kmh', temperature_unit: 'celsius', precipitation_unit: 'mm'
   });
   return `${cfg.sources.weather}?${p}`;
@@ -197,6 +197,8 @@ export function slimEvents(cfg, cls, json) {
 /** Classify a chain-law event. */
 export function chainLevel(ev) {
   const s = `${ev.title} ${ev.tooltip} ${ev.detail}`.toLowerCase();
+  if (/\br-3\b/.test(s)) return 'nogo'; // Caltrans R-3: chains on every vehicle, no exceptions
+  if (/\br-[12]\b/.test(s)) return 'caution'; // Caltrans R-1 / R-2 chain controls
   if (/code\s*16|passenger vehicle chain law|chain law for all/.test(s)) return 'nogo';
   if (/code\s*15|traction law/.test(s)) return 'caution';
   if (/commercial|code\s*1[89]/.test(s)) return 'info';
@@ -334,6 +336,86 @@ export function slimUtahEvents(cfg, json, { keyed = false } = {}) {
   return out;
 }
 
+/* ---------- Caltrans (California) — CWWP2 keyless JSON, parallel to the Utah collector ---------- */
+export const CA_DISTRICTS = ['3', '8', '9', '10'];
+export function caRoadsUrl(district, feed) {
+  const p = String(district).padStart(2, '0');
+  return `https://cwwp2.dot.ca.gov/data/d${district}/${feed}/${feed}StatusD${p}.json`;
+}
+/** "YYYY-MM-DD" + "HH:MM:SS" in America/Los_Angeles (the feed carries no zone marker) -> epoch ms. */
+function pacificEpoch(dateStr, timeStr) {
+  const [y, mo, d] = String(dateStr || '').split('-').map(Number);
+  const [h, mi, s] = String(timeStr || '').split(':').map(Number);
+  if (!y || !mo || !d) return null;
+  const guess = Date.UTC(y, mo - 1, d, h || 0, mi || 0, s || 0);
+  const fmt = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const parts = Object.fromEntries(fmt.formatToParts(new Date(guess)).map(p => [p.type, p.value]));
+  const asUTC = Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute, +parts.second);
+  return guess - (asUTC - guess);
+}
+/**
+ * Normalize Caltrans CWWP2 chain controls (cc) + lane closures (lcs) into the slim event shape.
+ * `cc`/`lcs` are the `data` arrays from the district files (each entry wrapped: {cc:{...}} / {lcs:{...}}).
+ * Chain controls carry real levels R-0..R-3: R-0 means no controls (dropped — absence of a chain event
+ * is the all-clear here, unlike Utah where chain status is genuinely unreported). Lane closures are
+ * filtered to ones active at `nowS`; planned future closures are not "should I go today" data.
+ */
+export function slimCaEvents(cfg, { cc = [], lcs = [] } = {}, nowS = Date.now() / 1000) {
+  const out = [];
+  const toMs = v => { const n = typeof v === 'string' ? +v : v; return (typeof n === 'number' && n > 0) ? (n < 1e12 ? n * 1000 : n) : null; };
+  const where = (a, b) => { const s = [a, b].filter(Boolean).join(' → '); return s ? ` (${s})` : ''; };
+  for (const w of cc) {
+    const a = w?.cc; if (!a) continue;
+    const st = a.statusData?.status;
+    if (a.inService !== 'true' || !st || st === 'R-0') continue;
+    const loc = a.location || {};
+    const lon = parseFloat(loc.longitude), lat = parseFloat(loc.latitude);
+    const route = String(loc.route || '');
+    if (!Number.isFinite(lon) || !Number.isFinite(lat) || !route) continue;
+    const segs = utahSegIds(cfg, [route], lon, lat, null);
+    const sd = a.statusData || {};
+    const start = sd.statusTimestamp ? pacificEpoch(sd.statusTimestamp.statusDate, sd.statusTimestamp.statusTime) : null;
+    // "ROAD CLOSED" is a seasonal pass closure, not a chain control: it belongs in roadClosures
+    // (a full closure can no-go a leg) rather than chainLaws (which only ever cautions).
+    const closed = /closed/i.test(st);
+    out.push({ id: `ca-cc-${a.index}`, cls: closed ? 'roadClosures' : 'chainLaws', segs, route, geo: [[+lon.toFixed(4), +lat.toFixed(4)]],
+      title: closed ? `Full closure — ${route}${loc.locationName ? ` (${loc.locationName})` : ''}`
+        : `Chain control ${st} — ${route}${loc.locationName ? ` (${loc.locationName})` : loc.nearbyPlace ? ` (${loc.nearbyPlace})` : ''}`,
+      tooltip: '', detail: [sd.statusDescription, loc.direction ? `${loc.direction}bound` : '', loc.postmile ? `postmile ${loc.postmile}` : ''].filter(Boolean).join(' · '),
+      eventType: null, priority: null, icon: null, updated: toMs(a.recordTimestamp?.recordEpoch), start });
+  }
+  for (const w of lcs) {
+    const a = w?.lcs; if (!a) continue;
+    // Rest-area closures are not road closures for a driver: skip them (facility "Rest Area"
+    // or a rest-area name on either end) so they never caution a route.
+    const loc = a.location || {}, b = loc.begin || {}, e = loc.end || {};
+    if (a.closure?.facility === 'Rest Area' || /rest area/i.test(`${b.beginLocationName || ''} ${e.endLocationName || ''}`)) continue;
+    const ct = a.closure?.closureTimestamp || {};
+    const start = toMs(ct.closureStartEpoch), end = ct.isClosureEndIndefinite === 'true' ? null : toMs(ct.closureEndEpoch);
+    if (start == null || start / 1000 > nowS || (end != null && end / 1000 < nowS)) continue;
+    const blon = parseFloat(b.beginLongitude), blat = parseFloat(b.beginLatitude), elon = parseFloat(e.endLongitude), elat = parseFloat(e.endLatitude);
+    const route = String(b.beginRoute || '');
+    if (!route || !Number.isFinite(blon) || !Number.isFinite(blat)) continue;
+    const geo = [[+blon.toFixed(4), +blat.toFixed(4)]];
+    if (Number.isFinite(elon) && Number.isFinite(elat)) geo.push([+elon.toFixed(4), +elat.toFixed(4)]);
+    // Segment match by the closure's midpoint, not its bounding box: a closure that merely
+    // overlaps a segment's bbox (e.g. the winter-closed north half of the SR-158 loop) must
+    // not flag the resort approach on the other side of it. The dynamic route path matches
+    // by geometry anyway; this is only the static fallback.
+    const mLon = geo.length > 1 ? (geo[0][0] + geo[1][0]) / 2 : geo[0][0];
+    const mLat = geo.length > 1 ? (geo[0][1] + geo[1][1]) / 2 : geo[0][1];
+    const segs = utahSegIds(cfg, [route], mLon, mLat, null);
+    const toc = a.closure?.typeOfClosure || '';
+    const kind = toc === 'Full' ? 'Full closure' : toc === 'Lane' ? 'Lane closed' : (toc || 'Road work');
+    out.push({ id: `ca-lcs-${a.index}`, cls: 'roadClosures', segs, route, geo,
+      title: `${kind} — ${route}${where(b.beginLocationName, e.endLocationName)}`,
+      tooltip: loc.travelFlowDirection || '',
+      detail: [a.closure?.typeOfWork, a.closure?.lanesClosed ? `${a.closure.lanesClosed} lane(s) closed` : ''].filter(Boolean).join(' · '),
+      eventType: null, priority: null, icon: null, updated: toMs(a.recordTimestamp?.recordEpoch), start, end });
+  }
+  return out;
+}
+
 /** Road-condition segments that are icy / snow-covered, plus any non-'none' Restriction (traction/chain).
  *  Restriction values are unverified live (all 'none' at probe time) — the raw value goes into the title,
  *  so the UI shows whatever UDOT reports and chainLevel() can match 'traction law' / 'code 15/16' when present. */
@@ -449,7 +531,7 @@ export function verdictFor(cfg, resort, { roads, alerts, days, intel = null, now
   const segIds = resort.route.map(r => r.seg);
 
   if (!roads || !roads.ok) {
-    reasons.push({ level: 'unknown', kind: 'roads', key: resort.region === 'UT' ? 'r_roads_unavailable_ut' : 'r_roads_unavailable' });
+    reasons.push({ level: 'unknown', kind: 'roads', key: resort.region === 'UT' ? 'r_roads_unavailable_ut' : resort.region === 'CA' ? 'r_roads_unavailable_ca' : 'r_roads_unavailable' });
   } else {
     for (const leg of resort.route) {
       const evs = roads.events.filter(e => e.segs.includes(leg.seg));
@@ -475,11 +557,13 @@ export function verdictFor(cfg, resort, { roads, alerts, days, intel = null, now
       }
     }
     const main = reasons.filter(r => r.seg && r.level !== 'info');
-    // Utah feeds carry no chain/traction-law type: absence of a chain event is not evidence there is
-    // none, so say so (info) instead of the Colorado 'no chain law' all-clear.
+    // When the road feed carries chain data (Colorado CDOT, California Caltrans), the absence of a
+    // chain event is positive evidence there is no chain law: say so (go). Utah feeds carry no
+    // chain/traction-law type, so absence there is only "not reported" (info).
     if (!main.some(r => r.kind === 'chain')) {
-      if (resort.region === 'UT') reasons.push({ level: 'info', kind: 'chain', key: 'r_chain_unknown' });
-      else reasons.push({ level: 'go', kind: 'chain', key: 'r_no_chain' });
+      if (roads.chainKnown) reasons.push({ level: 'go', kind: 'chain', key: 'r_no_chain' });
+      else if (resort.region === 'UT') reasons.push({ level: 'info', kind: 'chain', key: 'r_chain_unknown' });
+      else reasons.push({ level: 'info', kind: 'chain', key: 'r_chain_unknown_ca' });
     }
     if (!main.some(r => r.kind === 'closure')) reasons.push({ level: 'go', kind: 'closure', key: 'r_no_closure' });
     if (!main.some(r => r.kind === 'incident')) reasons.push({ level: 'go', kind: 'incident', key: 'r_no_incident' });
