@@ -1,12 +1,12 @@
 import { openMeteoUrl, splitOpenMeteo, dailyRows, hourlyRows, weatherEmoji, carsUrl, slimEvents, EVENT_CLASSES,
   nwsUrl, slimAlerts, verdictFor, outfitFor, recommendFrom, fmt, wxGroupOf, wxGroupCfg, wxGroupCount,
   utahCarsUrl, slimUtahEvents, caRoadsUrl, CA_DISTRICTS, slimCaEvents,
-  c2cUrl, slimNeEvents, ny511Url, slimNyEvents, massdotUrl, slimMaEvents } from './core.js?v=b97e1fa25c';
-import { STR, PACK_DEFAULT } from './i18n.js?v=b97e1fa25c';
-import { selectCameras, routeSegments, inCO, inUT } from './route.js?v=b97e1fa25c';
-import { dl, initAnalytics, selectResort, resortCompare, forecast, gear, startSet, pageView } from './analytics.js?v=b97e1fa25c';
-import { loadStart, saveStart, closestAirport, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=b97e1fa25c';
-import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=b97e1fa25c';
+  c2cUrl, slimNeEvents, ny511Url, slimNyEvents, massdotUrl, slimMaEvents } from './core.js?v=e5736c6b05';
+import { STR, PACK_DEFAULT } from './i18n.js?v=e5736c6b05';
+import { selectCameras, routeSegments, inCO, inUT } from './route.js?v=e5736c6b05';
+import { dl, initAnalytics, selectResort, resortCompare, forecast, gear, startSet, pageView } from './analytics.js?v=e5736c6b05';
+import { loadStart, saveStart, closestAirport, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=e5736c6b05';
+import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=e5736c6b05';
 
 const LS = {
   get: (k, d) => { try { const v = localStorage.getItem('ski.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -456,7 +456,7 @@ function renderVerdict() {
       ${UI.grow(t('g_chain'), esc(ch.txt), ch.cls)}
       ${UI.grow(t('g_closure'), esc(cl.txt), cl.cls)}
       ${UI.grow(t('g_incident'), esc(inc.txt), inc.cls)}
-    </ul><p class="hp-src">${esc(t(ut ? 'g_src_ut' : ca ? 'g_src_ca' : 'g_src', roadsOk ? ago(slot.at) : t('unavailable')))} · <a href="#roads">${esc(t('g_more'))} ↓</a></p>`;
+    </ul><p class="hp-src">${esc(t(ut ? 'g_src_ut' : ca ? 'g_src_ca' : ne ? 'g_src_ne' : 'g_src', roadsOk ? ago(slot.at) : t('unavailable')))} · <a href="#roads">${esc(t('g_more'))} ↓</a></p>`;
 
   // What you should know before heading out: Mountain / Road / Weather
   const item = x => ({ level: x.level, text: reasonText(x), src: srcOf(x, r),
@@ -656,6 +656,10 @@ function routeNoteHtml(r) {
   } else if (r.region === 'CA') {
     // No cameras in the Caltrans feed; road status begins at the California state line.
     if (!c.route.startsInCA) bits.push(`<p class="rnote warn">🗺️ ${esc(t('outside_ca', km(c.route.caEntryAlongM || 0)))}</p>`);
+  } else if (r.region === 'NE') {
+    // No "outside" note: the Northeast corridor is covered end to end by
+    // Tri-State 511 (VT/NH/ME), 511NY (NY) and MassDOT (MA), so road status
+    // begins at the departure, not at a state line.
   } else {
     if (!c.route.startsInCO) bits.push(`<p class="rnote warn">🗺️ ${esc(t('outside_co', km(c.route.coEntryAlongM || 0)))}</p>`);
     if (c.leaves) bits.push(`<p class="rnote warn">🗺️ ${esc(t('leaves_co'))}</p>`);
