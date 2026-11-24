@@ -1,8 +1,8 @@
 // Resort discovery (default home) + basic resort view for catalog resorts without a full dashboard.
 // Data: data/catalog.json (static, verified) + api/catalog-conditions.json (Open-Meteo model, refreshed hourly by
 // the ski-data Worker; resort-published base depth / terrain open / lifts / 24 h snow where SkiDay reads a public feed) + api/forecast.json?r=<id> (basic view).
-import { fmt, weatherEmoji, chainLevel, recommendFrom, visLevel } from './core.js?v=97a776c584';
-import { getRoute, getTable } from './start.js?v=97a776c584';
+import { fmt, weatherEmoji, chainLevel, recommendFrom, visLevel } from './core.js?v=e5b2cdca3d';
+import { getRoute, getTable } from './start.js?v=e5b2cdca3d';
 
 const S = {
   en: {
@@ -115,7 +115,7 @@ Object.assign(S.en, {
   b_src_rep: 'Lifts, runs, terrain, base and new snow: {0}, updated {1}. Temperature: Open-Meteo model at the summit ({2}).',
   b_src_none: 'SkiDay can’t read a lift or terrain report for this resort, so those show “Not reported”. New snow and temperature: Open-Meteo model at the summit ({0}).',
   b_norep: 'SkiDay can’t read this resort’s lift and terrain report. Check the official snow report.', b_nostatus: 'The resort’s report doesn’t say whether lifts are running.',
-  b_noroads: 'No road reports here: SkiDay’s live road data covers Colorado, Utah and California. Check the state DOT or 511 before you go.',
+  b_noroads: 'No road reports here: SkiDay’s live road data covers Colorado, Utah, California and the Northeast. Check the state DOT or 511 before you go.',
   b_roads_out: 'Road reports', b_roads_out_v: 'Colorado only (CDOT)', b_traffic_link: 'Check live traffic in Google Maps', b_drive_src: 'Drive: OSRM road-network estimate from {0}.',
   b_heavy: 'Heavy snow today: {0}, expect slow driving', b_nws: 'Weather alerts (National Weather Service) are only checked on SkiDay’s full dashboards.',
   b_rest_co: 'CDOT road data and the Open-Meteo forecast', b_rest: 'the Open-Meteo forecast', b_map: 'Route map', b_wait_route: 'Waiting for the drive estimate', b_wx_wait: 'Forecast loading…'
@@ -125,7 +125,7 @@ Object.assign(S.zh, {
   b_src_rep: '缆车、雪道、地形、雪底和新雪：{0}，更新于 {1}。气温：Open-Meteo 模型（山顶，{2}）。',
   b_src_none: 'SkiDay 读取不到此雪场的缆车或地形报告，所以显示“未公布”。新雪和气温：Open-Meteo 模型（山顶，{0}）。',
   b_norep: 'SkiDay 读取不到此雪场的缆车和地形报告。请查看官方雪况报告。', b_nostatus: '雪场报告没有说明缆车是否运行。',
-  b_noroads: '这里没有路况：SkiDay 的实时路况数据覆盖科罗拉多、犹他和加州。出发前请查看当地交通部门或 511。',
+  b_noroads: '这里没有路况：SkiDay 的实时路况数据覆盖科罗拉多、犹他、加州和东北地区。出发前请查看当地交通部门或 511。',
   b_roads_out: '路况', b_roads_out_v: '仅科罗拉多（CDOT）', b_traffic_link: '在 Google 地图查看实时路况', b_drive_src: '车程：OSRM 道路网络估算，从 {0} 出发。',
   b_heavy: '今天大雪：{0}，开车会慢', b_nws: '天气预警（美国国家气象局）只在 SkiDay 的完整看板中检查。',
   b_rest_co: 'CDOT 路况和 Open-Meteo 预报', b_rest: 'Open-Meteo 预报', b_map: '路线地图', b_wait_route: '等待车程估算', b_wx_wait: '正在加载预报…'
@@ -438,7 +438,7 @@ function renderBar(meta) {
   $('#d-bar').innerHTML = `
     <button type="button" class="dftog" data-ftog aria-expanded="${!!D.fopen}">⚙︎ ${esc(tr('d_filters'))}${nf ? ` <b>${nf}</b>` : ''}</button>
     <label class="ff"><span>${esc(tr('d_region'))}</span><select data-f="region">${opt('', tr('d_allr'), f.region)}${D.cat.regions.map(g => opt(g.id, `${g[X.state.lang] || g.en} (${D.cat.resorts.filter(r => r.region === g.id).length})`, f.region)).join('')}</select></label>
-    <label class="ff"><span>${esc(tr('d_pass'))}</span><select data-f="pass">${opt('', tr('d_allp'), f.pass)}${opt('ikon', 'Ikon', f.pass)}${opt('epic', 'Epic', f.pass)}${opt('other', tr('d_other'), f.pass)}</select></label>
+    <label class="ff"><span>${esc(tr('d_pass'))}</span><select data-f="pass">${opt('', tr('d_allp'), f.pass)}${opt('ikon', 'Ikon', f.pass)}${opt('epic', 'Epic', f.pass)}${opt('indy', 'Indy', f.pass)}${opt('other', tr('d_other'), f.pass)}</select></label>
     <label class="ff"><span>${esc(tr('d_status'))}</span><select data-f="status">${opt('', tr('d_any'), f.status)}${opt('open', tr('d_open_only'), f.status)}${opt('notclosed', tr('d_hide_closed'), f.status)}</select></label>
     <label class="ff"><span>${esc(tr('d_dist'))}</span><select data-f="dist">${opt('', tr('d_any'), f.dist)}${dists.map(([v, l]) => opt(v, tr('d_within', l), f.dist)).join('')}</select></label>
     ${meta.sortable ? `<label><span>${esc(tr('d_sort'))}</span><select id="d-sort">${['score', 'snow', 'fcst', 'base', 'terrain', 'open', 'close'].map(k => opt(k, tr('s_' + k), D.sort)).join('')}</select></label>` : ''}

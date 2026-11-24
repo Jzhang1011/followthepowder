@@ -58,6 +58,39 @@
     "lon": -117.601
    },
    {
+    "id": "BOS",
+    "airport": true,
+    "region": "NE",
+    "name": {
+     "en": "Boston Logan Airport (BOS)",
+     "zh": "波士顿洛根机场 (BOS)"
+    },
+    "lat": 42.36561,
+    "lon": -71.00956
+   },
+   {
+    "id": "ALB",
+    "airport": true,
+    "region": "NE",
+    "name": {
+     "en": "Albany Airport (ALB)",
+     "zh": "奥尔巴尼机场 (ALB)"
+    },
+    "lat": 42.74812,
+    "lon": -73.80298
+   },
+   {
+    "id": "BTV",
+    "airport": true,
+    "region": "NE",
+    "name": {
+     "en": "Burlington Airport (BTV)",
+     "zh": "伯灵顿机场 (BTV)"
+    },
+    "lat": 44.47186,
+    "lon": -73.15328
+   },
+   {
     "id": "denver",
     "region": "CO",
     "name": {
@@ -1160,6 +1193,861 @@
     34.193,
     -116.8503,
     34.261
+   ]
+  },
+  "bos-airport-i93": {
+   "name": {
+    "en": "BOS Airport → I-93 (MA-1A)",
+    "zh": "波士顿洛根机场至 I-93（MA-1A）"
+   },
+   "routes": [
+    "MA-1A"
+   ],
+   "bbox": [
+    -71.0649,
+    42.3528,
+    -71.0068,
+    42.384
+   ]
+  },
+  "bos-airport-ma2": {
+   "name": {
+    "en": "BOS Airport → MA-2 (MA-1A + Boston streets)",
+    "zh": "波士顿洛根机场至 MA-2（MA-1A + 波士顿市区道路）"
+   },
+   "routes": [
+    "MA-1A"
+   ],
+   "bbox": [
+    -71.1656,
+    42.3523,
+    -71.0068,
+    42.4187
+   ]
+  },
+  "bos-airport-us1": {
+   "name": {
+    "en": "BOS Airport → US-1 (Pearl St + Boston streets)",
+    "zh": "波士顿洛根机场至 US-1（Pearl 街 + 波士顿市区道路）"
+   },
+   "routes": [
+    "Pearl Street"
+   ],
+   "bbox": [
+    -71.0495,
+    42.3564,
+    -71.0068,
+    42.4076
+   ]
+  },
+  "i93-boston-nh": {
+   "name": {
+    "en": "I-93 Boston → I-89 junction",
+    "zh": "I-93 波士顿至 I-89 路口段"
+   },
+   "routes": [
+    "I-93"
+   ],
+   "bbox": [
+    -71.5336,
+    42.3523,
+    -71.0449,
+    43.1758
+   ]
+  },
+  "i93-nh-loon": {
+   "name": {
+    "en": "I-93 I-89 junction → Loon",
+    "zh": "I-93 I-89 路口至 Loon 段"
+   },
+   "routes": [
+    "I-93"
+   ],
+   "bbox": [
+    -71.70169,
+    43.16116,
+    -71.51248,
+    43.99488
+   ]
+  },
+  "i93-loon-jay": {
+   "name": {
+    "en": "I-93 Loon → I-91 junction",
+    "zh": "I-93 Loon 至 I-91 路口段"
+   },
+   "routes": [
+    "I-93"
+   ],
+   "bbox": [
+    -72.02852,
+    43.97488,
+    -71.66055,
+    44.43836
+   ]
+  },
+  "i89-killington": {
+   "name": {
+    "en": "I-89 → US-4 (Killington)",
+    "zh": "I-89 至 US-4（Killington）"
+   },
+   "routes": [
+    "I-89"
+   ],
+   "bbox": [
+    -72.42955,
+    43.15582,
+    -71.51362,
+    43.67704
+   ]
+  },
+  "i89-sugarbush": {
+   "name": {
+    "en": "I-89 Killington exit → Sugarbush",
+    "zh": "I-89 Killington 出口至 Sugarbush"
+   },
+   "routes": [
+    "I-89"
+   ],
+   "bbox": [
+    -72.63572,
+    43.65515,
+    -72.37289,
+    44.1245
+   ]
+  },
+  "i89-stowe": {
+   "name": {
+    "en": "I-89 Sugarbush exit → VT-100 (Stowe)",
+    "zh": "I-89 Sugarbush 出口至 VT-100（Stowe）"
+   },
+   "routes": [
+    "I-89"
+   ],
+   "bbox": [
+    -72.75966,
+    44.10623,
+    -72.56543,
+    44.35395
+   ]
+  },
+  "i91-white-river": {
+   "name": {
+    "en": "I-91 I-93 junction → VT-58 (Jay Peak)",
+    "zh": "I-91 I-93 路口至 VT-58（Jay Peak）"
+   },
+   "routes": [
+    "I-91"
+   ],
+   "bbox": [
+    -72.22584,
+    44.38956,
+    -71.99654,
+    44.81933
+   ]
+  },
+  "i91-okemo": {
+   "name": {
+    "en": "I-91 → US-5 (Okemo)",
+    "zh": "I-91 至 US-5（Okemo）"
+   },
+   "routes": [
+    "I-91"
+   ],
+   "bbox": [
+    -72.48616,
+    43.08589,
+    -72.4438,
+    43.17374
+   ]
+  },
+  "us4-killington": {
+   "name": {
+    "en": "US-4 Woodstock → Killington Road",
+    "zh": "US-4 伍德斯托克至 Killington 路"
+   },
+   "routes": [
+    "US-4"
+   ],
+   "bbox": [
+    -72.80072,
+    43.57605,
+    -72.40955,
+    43.67499
+   ]
+  },
+  "killington-rd": {
+   "name": {
+    "en": "Killington Road → Killington",
+    "zh": "Killington 路至 Killington"
+   },
+   "routes": [
+    "Killington Road"
+   ],
+   "bbox": [
+    -72.80976,
+    43.61605,
+    -72.77731,
+    43.66808
+   ]
+  },
+  "vt64-vt12a": {
+   "name": {
+    "en": "VT-64 + VT-12A → Warren (Sugarbush)",
+    "zh": "VT-64 + VT-12A 至沃伦（Sugarbush）"
+   },
+   "routes": [
+    "VT-64",
+    "VT-12A"
+   ],
+   "bbox": [
+    -72.7432,
+    44.0832,
+    -72.5958,
+    44.133
+   ]
+  },
+  "warren-mtn-rd": {
+   "name": {
+    "en": "Warren Mountain Road",
+    "zh": "Warren Mountain 路"
+   },
+   "routes": [
+    "Warren Mountain Road"
+   ],
+   "bbox": [
+    -72.78943,
+    44.08316,
+    -72.72323,
+    44.12522
+   ]
+  },
+  "roxbury-mtn-rd": {
+   "name": {
+    "en": "Roxbury Mountain Road → Sugarbush",
+    "zh": "Roxbury Mountain 路至 Sugarbush"
+   },
+   "routes": [
+    "Roxbury Mountain Road",
+    "Roxburry Mountain Road"
+   ],
+   "bbox": [
+    -72.90907,
+    44.09297,
+    -72.76943,
+    44.14712
+   ]
+  },
+  "vt100-stowe": {
+   "name": {
+    "en": "VT-100 → VT-108 (Stowe)",
+    "zh": "VT-100 至 VT-108（Stowe）"
+   },
+   "routes": [
+    "VT-100"
+   ],
+   "bbox": [
+    -72.75966,
+    44.33395,
+    -72.70184,
+    44.48437
+   ]
+  },
+  "vt108-stowe": {
+   "name": {
+    "en": "VT-108 → Stowe",
+    "zh": "VT-108 至 Stowe"
+   },
+   "routes": [
+    "VT-108"
+   ],
+   "bbox": [
+    -72.79799,
+    44.46437,
+    -72.70623,
+    44.54279
+   ]
+  },
+  "ma2-mohawk": {
+   "name": {
+    "en": "MA-2 Mohawk Trail → MA-140",
+    "zh": "MA-2 莫霍克景观路至 MA-140"
+   },
+   "routes": [
+    "MA-2"
+   ],
+   "bbox": [
+    -71.938,
+    42.3927,
+    -71.1456,
+    42.5682
+   ]
+  },
+  "ma140-ma12": {
+   "name": {
+    "en": "MA-140 + MA-12",
+    "zh": "MA-140 + MA-12 段"
+   },
+   "routes": [
+    "MA-140",
+    "MA-12"
+   ],
+   "bbox": [
+    -72.0914,
+    42.5481,
+    -71.918,
+    42.7263
+   ]
+  },
+  "nh12-south": {
+   "name": {
+    "en": "NH-12 → NH-9 junction",
+    "zh": "NH-12 至 NH-9 路口段"
+   },
+   "routes": [
+    "NH-12"
+   ],
+   "bbox": [
+    -72.3101,
+    42.7063,
+    -72.0714,
+    42.9331
+   ]
+  },
+  "nh12-north": {
+   "name": {
+    "en": "NH-12 NH-9 junction → I-91 (Okemo)",
+    "zh": "NH-12 NH-9 路口至 I-91（Okemo）"
+   },
+   "routes": [
+    "NH-12"
+   ],
+   "bbox": [
+    -72.46422,
+    42.91319,
+    -72.28531,
+    43.10589
+   ]
+  },
+  "nh9-stratton": {
+   "name": {
+    "en": "NH-9 → VT-30 (Stratton)",
+    "zh": "NH-9 至 VT-30（Stratton）"
+   },
+   "routes": [
+    "NH-9"
+   ],
+   "bbox": [
+    -72.5662,
+    42.87404,
+    -72.2901,
+    42.94057
+   ]
+  },
+  "nh9-mount-snow": {
+   "name": {
+    "en": "NH-9 → VT-9 (Mount Snow)",
+    "zh": "NH-9 至 VT-9（Mount Snow）"
+   },
+   "routes": [
+    "NH-9"
+   ],
+   "bbox": [
+    -72.59128,
+    42.84766,
+    -72.2901,
+    42.94057
+   ]
+  },
+  "middle-rd": {
+   "name": {
+    "en": "Middle Road → VT-30",
+    "zh": "Middle 路至 VT-30"
+   },
+   "routes": [
+    "Middle Road"
+   ],
+   "bbox": [
+    -72.62217,
+    42.89423,
+    -72.53901,
+    42.94706
+   ]
+  },
+  "vt30-stratton": {
+   "name": {
+    "en": "VT-30 → Stratton Access Road",
+    "zh": "VT-30 至 Stratton Mountain 进山路"
+   },
+   "routes": [
+    "VT-30"
+   ],
+   "bbox": [
+    -72.88374,
+    42.92659,
+    -72.60217,
+    43.15621
+   ]
+  },
+  "stratton-access-rd": {
+   "name": {
+    "en": "Stratton Mountain Access Road",
+    "zh": "Stratton Mountain 进山路"
+   },
+   "routes": [
+    "Stratton Mountain Access Road"
+   ],
+   "bbox": [
+    -72.92301,
+    43.10394,
+    -72.86374,
+    43.15465
+   ]
+  },
+  "us5-vt103": {
+   "name": {
+    "en": "US-5 → VT-103 (Okemo)",
+    "zh": "US-5 至 VT-103（Okemo）"
+   },
+   "routes": [
+    "US-5"
+   ],
+   "bbox": [
+    -72.59819,
+    43.15374,
+    -72.44805,
+    43.26825
+   ]
+  },
+  "vt103-okemo": {
+   "name": {
+    "en": "VT-103 → Okemo",
+    "zh": "VT-103 至 Okemo"
+   },
+   "routes": [
+    "VT-103"
+   ],
+   "bbox": [
+    -72.72667,
+    43.24825,
+    -72.57819,
+    43.41105
+   ]
+  },
+  "vt9-mount-snow": {
+   "name": {
+    "en": "VT-9 → NF-71 (Mount Snow)",
+    "zh": "VT-9 至 NF-71（Mount Snow）"
+   },
+   "routes": [
+    "VT-9"
+   ],
+   "bbox": [
+    -72.96224,
+    42.84011,
+    -72.57003,
+    42.89961
+   ]
+  },
+  "nf71-mount-snow": {
+   "name": {
+    "en": "NF-71 → Mount Snow",
+    "zh": "NF-71 至 Mount Snow"
+   },
+   "routes": [
+    "NF-71"
+   ],
+   "bbox": [
+    -72.99712,
+    42.87961,
+    -72.91143,
+    42.98573
+   ]
+  },
+  "us1-boston": {
+   "name": {
+    "en": "US-1 Boston → I-95",
+    "zh": "US-1 波士顿至 I-95 段"
+   },
+   "routes": [
+    "US-1"
+   ],
+   "bbox": [
+    -71.0483,
+    42.3876,
+    -70.9768,
+    42.5502
+   ]
+  },
+  "i95-maine": {
+   "name": {
+    "en": "I-95 → ME-26 / US-202",
+    "zh": "I-95 至 ME-26 / US-202 段"
+   },
+   "routes": [
+    "I-95"
+   ],
+   "bbox": [
+    -70.9968,
+    42.5302,
+    -70.2555,
+    44.0472
+   ]
+  },
+  "me26-sunday-river": {
+   "name": {
+    "en": "ME-26 → Sunday River",
+    "zh": "ME-26 至 Sunday River"
+   },
+   "routes": [
+    "ME-26"
+   ],
+   "bbox": [
+    -70.8054,
+    43.8732,
+    -70.3281,
+    44.4298
+   ]
+  },
+  "oxford-st": {
+   "name": {
+    "en": "Oxford Street, Bethel",
+    "zh": "Oxford 街（伯特利）"
+   },
+   "routes": [
+    "Oxford Street"
+   ],
+   "bbox": [
+    -70.52936,
+    44.17717,
+    -70.49759,
+    44.23221
+   ]
+  },
+  "us2-bethel": {
+   "name": {
+    "en": "US-2 → Sunday River",
+    "zh": "US-2 至 Sunday River"
+   },
+   "routes": [
+    "US-2",
+    "ME-5",
+    "ME-26"
+   ],
+   "bbox": [
+    -70.86629,
+    44.4023,
+    -70.7854,
+    44.4836
+   ]
+  },
+  "us202-me4": {
+   "name": {
+    "en": "US-202 / ME-4 → ME-4",
+    "zh": "US-202 / ME-4 至 ME-4 段"
+   },
+   "routes": [
+    "US-202",
+    "ME-4"
+   ],
+   "bbox": [
+    -70.27551,
+    44.02609,
+    -70.22044,
+    44.10796
+   ]
+  },
+  "me4-farmington": {
+   "name": {
+    "en": "ME-4 → US-2",
+    "zh": "ME-4 至 US-2 段"
+   },
+   "routes": [
+    "ME-4"
+   ],
+   "bbox": [
+    -70.28204,
+    44.08796,
+    -70.1806,
+    44.59094
+   ]
+  },
+  "us2-farmington": {
+   "name": {
+    "en": "US-2, Farmington → ME-4 (Sugarloaf)",
+    "zh": "US-2 法明顿至 ME-4（Sugarloaf）"
+   },
+   "routes": [
+    "US-2"
+   ],
+   "bbox": [
+    -70.23421,
+    44.57092,
+    -70.1395,
+    44.67291
+   ]
+  },
+  "me4-kingfield": {
+   "name": {
+    "en": "ME-4 US-2 → ME-27",
+    "zh": "ME-4 US-2 至 ME-27 段"
+   },
+   "routes": [
+    "ME-4",
+    "ME-27",
+    "ME-43"
+   ],
+   "bbox": [
+    -70.17314,
+    44.65291,
+    -70.13714,
+    44.71306
+   ]
+  },
+  "me27-kingfield": {
+   "name": {
+    "en": "ME-27 → ME-16",
+    "zh": "ME-27 至 ME-16 段"
+   },
+   "routes": [
+    "ME-27"
+   ],
+   "bbox": [
+    -70.18671,
+    44.69306,
+    -70.0914,
+    45.04209
+   ]
+  },
+  "me16-caribou": {
+   "name": {
+    "en": "ME-16 → Caribou Valley Road",
+    "zh": "ME-16 至 Caribou Valley 路"
+   },
+   "routes": [
+    "ME-16",
+    "ME-27"
+   ],
+   "bbox": [
+    -70.36289,
+    45.0221,
+    -70.16671,
+    45.10439
+   ]
+  },
+  "caribou-valley-rd": {
+   "name": {
+    "en": "Caribou Valley Road → Sugarloaf",
+    "zh": "Caribou Valley 路至 Sugarloaf"
+   },
+   "routes": [
+    "Caribou Valley Road"
+   ],
+   "bbox": [
+    -70.36632,
+    44.99696,
+    -70.31728,
+    45.07649
+   ]
+  },
+  "tripoli-rd-loon": {
+   "name": {
+    "en": "Tripoli Road → Loon (folded into I-93 in the leg model)",
+    "zh": "Tripoli 路至 Loon"
+   },
+   "routes": [
+    "Tripoli Road",
+    "607"
+   ],
+   "bbox": [
+    -71.68491,
+    43.97488,
+    -71.61164,
+    44.02971
+   ]
+  },
+  "vt58-jay": {
+   "name": {
+    "en": "VT-58 → Black Falls Road (Jay Peak)",
+    "zh": "VT-58 至 Black Falls 路（Jay Peak）"
+   },
+   "routes": [
+    "VT-58"
+   ],
+   "bbox": [
+    -72.6496,
+    44.78747,
+    -72.20583,
+    44.91301
+   ]
+  },
+  "black-falls-rd": {
+   "name": {
+    "en": "Black Falls Road → Jay Peak",
+    "zh": "Black Falls 路至 Jay Peak"
+   },
+   "routes": [
+    "Black Falls Road"
+   ],
+   "bbox": [
+    -72.6496,
+    44.89301,
+    -72.5453,
+    44.94422
+   ]
+  },
+  "alb-airport": {
+   "name": {
+    "en": "ALB Airport → I-87 (NY-155)",
+    "zh": "奥尔巴尼机场至 I-87（NY-155）"
+   },
+   "routes": [
+    "NY-155"
+   ],
+   "bbox": [
+    -73.81094,
+    42.72843,
+    -73.77107,
+    42.76121
+   ]
+  },
+  "i87-catskills": {
+   "name": {
+    "en": "I-87 ALB → US-9W (Hunter)",
+    "zh": "I-87 奥尔巴尼至 US-9W（Hunter）"
+   },
+   "routes": [
+    "I-87"
+   ],
+   "bbox": [
+    -73.85879,
+    42.38399,
+    -73.7689,
+    42.74843
+   ]
+  },
+  "us9w-catskills": {
+   "name": {
+    "en": "US-9W → NY-23A (Hunter)",
+    "zh": "US-9W 至 NY-23A（Hunter）"
+   },
+   "routes": [
+    "US-9W"
+   ],
+   "bbox": [
+    -73.89808,
+    42.20396,
+    -73.81919,
+    42.4043
+   ]
+  },
+  "ny23a-hunter": {
+   "name": {
+    "en": "NY-23A → Hunter Mountain",
+    "zh": "NY-23A 至 Hunter Mountain"
+   },
+   "routes": [
+    "NY-23A",
+    "County Road 83",
+    "CR-83",
+    "Red Schoolhouse Road"
+   ],
+   "bbox": [
+    -74.2405,
+    42.16479,
+    -73.87808,
+    42.22396
+   ]
+  },
+  "btv-airport": {
+   "name": {
+    "en": "BTV Airport → US-2 (I-89)",
+    "zh": "伯灵顿机场至 US-2（I-89）"
+   },
+   "routes": [
+    "I-89"
+   ],
+   "bbox": [
+    -73.20753,
+    44.45756,
+    -73.14615,
+    44.60169
+   ]
+  },
+  "us2-ferry": {
+   "name": {
+    "en": "US-2 Burlington → Plattsburgh, incl. Grand Isle ferry",
+    "zh": "US-2 伯灵顿至普拉茨堡（含 Grand Isle 轮渡）"
+   },
+   "routes": [
+    "US-2"
+   ],
+   "bbox": [
+    -73.39354,
+    44.5799,
+    -73.15876,
+    44.71057
+   ]
+  },
+  "macdonough-hwy": {
+   "name": {
+    "en": "Commodore Thomas MacDonough Hwy, Plattsburgh",
+    "zh": "Commodore Thomas MacDonough 公路（普拉茨堡）"
+   },
+   "routes": [
+    "Commodore Thomas MacDonough Highway",
+    "Commodore Thomas Macdonough Highway"
+   ],
+   "bbox": [
+    -73.4509,
+    44.68842,
+    -73.37354,
+    44.74041
+   ]
+  },
+  "i87-plattsburgh": {
+   "name": {
+    "en": "I-87 Plattsburgh → NY-9N (Whiteface)",
+    "zh": "I-87 普拉茨堡至 NY-9N（Whiteface）"
+   },
+   "routes": [
+    "I-87"
+   ],
+   "bbox": [
+    -73.51448,
+    44.48359,
+    -73.4288,
+    44.74192
+   ]
+  },
+  "ny9n-whiteface": {
+   "name": {
+    "en": "NY-9N → NY-86 (Whiteface)",
+    "zh": "NY-9N 至 NY-86（Whiteface）"
+   },
+   "routes": [
+    "NY-9N"
+   ],
+   "bbox": [
+    -73.73768,
+    44.3653,
+    -73.49133,
+    44.50529
+   ]
+  },
+  "ny86-ny431": {
+   "name": {
+    "en": "NY-86 + NY-431 → Whiteface",
+    "zh": "NY-86 + NY-431 至 Whiteface"
+   },
+   "routes": [
+    "NY-86",
+    "NY-431"
+   ],
+   "bbox": [
+    -73.9228,
+    44.3572,
+    -73.7177,
+    44.4125
    ]
   }
  },
@@ -4424,6 +5312,900 @@
    "summitSource": "Summit 9,700 ft / 2,957 m (Mt. Rose Ski Tahoe)",
    "baseSource": "Base 8,260 ft / 2,518 m (Mt. Rose Ski Tahoe)",
    "wxGroup": 9
+  },
+  {
+   "id": "killington",
+   "name": {
+    "en": "Killington",
+    "zh": "Killington（基林顿）"
+   },
+   "short": "Killington",
+   "passes": [
+    "ikon"
+   ],
+   "region": "NE",
+   "tz": "America/New_York",
+   "lat": 43.626,
+   "lon": -72.798,
+   "baseElevM": 355,
+   "summitElevM": 1293,
+   "driveMin": 220,
+   "driveSource": "OSRM route from BOS airport, no traffic (computed 2026-11-24)",
+   "gateway": "BOS",
+   "routeNote": {
+    "en": "BOS → MA-1A W → I-93 N → I-89 W → US-4 W → Killington Road S to Killington.",
+    "zh": "波士顿洛根机场 → MA-1A 西 → I-93 北 → I-89 西 → US-4 西 → Killington Road 南到 Killington。"
+   },
+   "route": [
+    {
+     "seg": "bos-airport-i93",
+     "closure": "caution"
+    },
+    {
+     "seg": "i93-boston-nh",
+     "closure": "caution"
+    },
+    {
+     "seg": "i89-killington",
+     "closure": "caution"
+    },
+    {
+     "seg": "us4-killington",
+     "closure": "caution"
+    },
+    {
+     "seg": "killington-rd",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.killington.com/",
+    "webcams": "https://www.killington.com/webcams",
+    "report": "https://www.killington.com/mountain-report/"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "img/cat/killington.jpg",
+    "credit": "Doodybutch",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Killington_Resort_2018-03-18.jpg"
+   },
+   "parking": {
+    "lat": 43.626,
+    "lon": -72.798
+   },
+   "summitLat": 43.60455,
+   "summitLon": -72.82015,
+   "summitSource": "Summit 4,241 ft / 1,293 m (Killington)",
+   "baseSource": "Base 1,165 ft / 355 m (Killington, Skyeship)",
+   "wxGroup": 12
+  },
+  {
+   "id": "sugarbush",
+   "name": {
+    "en": "Sugarbush",
+    "zh": "Sugarbush（糖枫山）"
+   },
+   "short": "Sugarbush",
+   "passes": [
+    "ikon"
+   ],
+   "region": "NE",
+   "tz": "America/New_York",
+   "lat": 44.13722,
+   "lon": -72.90667,
+   "baseElevM": 452,
+   "summitElevM": 1244,
+   "driveMin": 252,
+   "driveSource": "OSRM route from BOS airport, no traffic (computed 2026-11-24)",
+   "gateway": "BOS",
+   "routeNote": {
+    "en": "BOS → MA-1A W → I-93 N → I-89 N → VT-64 W → VT-12A W → Warren Mountain Road W → Roxbury Mountain Road W to Sugarbush.",
+    "zh": "波士顿洛根机场 → MA-1A 西 → I-93 北 → I-89 北 → VT-64 西 → VT-12A 西 → Warren Mountain Road 西 → Roxbury Mountain Road 西到 Sugarbush。"
+   },
+   "route": [
+    {
+     "seg": "bos-airport-i93",
+     "closure": "caution"
+    },
+    {
+     "seg": "i93-boston-nh",
+     "closure": "caution"
+    },
+    {
+     "seg": "i89-sugarbush",
+     "closure": "caution"
+    },
+    {
+     "seg": "vt64-vt12a",
+     "closure": "caution"
+    },
+    {
+     "seg": "warren-mtn-rd",
+     "closure": "caution"
+    },
+    {
+     "seg": "roxbury-mtn-rd",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.sugarbush.com/",
+    "webcams": "https://www.sugarbush.com/mountain/webcams",
+    "report": "https://www.sugarbush.com/mountain/conditions"
+   },
+   "webcams": [
+    {
+     "name": {
+      "en": "Mt. Ellen Scenic",
+      "zh": "艾伦峰景观"
+     },
+     "image": "https://assets2.webcam.io/w/z7DpwM/latest.jpg"
+    }
+   ],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "img/cat/sugarbush.jpg",
+    "credit": "Mrtrek1701 at English Wikipedia",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Mt_Ellen,_Sugarbush.jpg"
+   },
+   "parking": {
+    "lat": 44.13722,
+    "lon": -72.90667
+   },
+   "summitLat": 44.16013,
+   "summitLon": -72.92887,
+   "summitSource": "Summit 4,083 ft / 1,244 m (Sugarbush Resort)",
+   "baseSource": "Base 1,483 ft / 452 m (Sugarbush Resort)",
+   "wxGroup": 13
+  },
+  {
+   "id": "stratton",
+   "name": {
+    "en": "Stratton",
+    "zh": "Stratton（斯特拉顿）"
+   },
+   "short": "Stratton",
+   "passes": [
+    "ikon"
+   ],
+   "region": "NE",
+   "tz": "America/New_York",
+   "lat": 43.11417,
+   "lon": -72.90667,
+   "baseElevM": 571,
+   "summitElevM": 1181,
+   "driveMin": 215,
+   "driveSource": "OSRM route from BOS airport, no traffic (computed 2026-11-24)",
+   "gateway": "BOS",
+   "routeNote": {
+    "en": "BOS → MA-1A W → MA-2 W → MA-140 N → MA-12 N → NH-12 N → NH-9 W → Middle Road W → VT-30 N → Stratton Mountain Access Road S to Stratton.",
+    "zh": "波士顿洛根机场 → MA-1A 西 → MA-2 西 → MA-140 北 → MA-12 北 → NH-12 北 → NH-9 西 → Middle Road 西 → VT-30 北 → Stratton Mountain Access Road 南到 Stratton。"
+   },
+   "route": [
+    {
+     "seg": "bos-airport-ma2",
+     "closure": "caution"
+    },
+    {
+     "seg": "ma2-mohawk",
+     "closure": "caution"
+    },
+    {
+     "seg": "ma140-ma12",
+     "closure": "caution"
+    },
+    {
+     "seg": "nh12-south",
+     "closure": "caution"
+    },
+    {
+     "seg": "nh9-stratton",
+     "closure": "caution"
+    },
+    {
+     "seg": "middle-rd",
+     "closure": "caution"
+    },
+    {
+     "seg": "vt30-stratton",
+     "closure": "caution"
+    },
+    {
+     "seg": "stratton-access-rd",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.stratton.com/",
+    "webcams": "https://www.stratton.com/the-mountain/webcams",
+    "report": "https://www.stratton.com/the-mountain/mountain-report"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/55/Skiing_for_Thanksgiving_%283075768874%29.jpg/960px-Skiing_for_Thanksgiving_%283075768874%29.jpg",
+    "credit": "Rudi Riet",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Skiing_for_Thanksgiving_(3075768874).jpg"
+   },
+   "parking": {
+    "lat": 43.11417,
+    "lon": -72.90667
+   },
+   "summitLat": 43.09575,
+   "summitLon": -72.92103,
+   "summitSource": "Summit 3,875 ft / 1,181 m (Stratton Mountain Resort)",
+   "baseSource": "Base 1,872 ft / 571 m (Stratton Mountain Resort)",
+   "wxGroup": 12
+  },
+  {
+   "id": "sunday-river",
+   "name": {
+    "en": "Sunday River",
+    "zh": "Sunday River（桑迪河）"
+   },
+   "short": "Sunday River",
+   "passes": [
+    "ikon"
+   ],
+   "region": "NE",
+   "tz": "America/New_York",
+   "lat": 44.4734,
+   "lon": -70.8569,
+   "baseElevM": 244,
+   "summitElevM": 957,
+   "driveMin": 232,
+   "driveSource": "OSRM route from BOS airport, no traffic (computed 2026-11-24)",
+   "gateway": "BOS",
+   "routeNote": {
+    "en": "BOS → Pearl Street N → US-1 N → I-95 N → ME-26 N → Oxford Street N → ME-26 W → US-2 N to Sunday River.",
+    "zh": "波士顿洛根机场 → Pearl Street 北 → US-1 北 → I-95 北 → ME-26 北 → Oxford Street 北 → ME-26 西 → US-2 北到 Sunday River。"
+   },
+   "route": [
+    {
+     "seg": "bos-airport-us1",
+     "closure": "caution"
+    },
+    {
+     "seg": "us1-boston",
+     "closure": "caution"
+    },
+    {
+     "seg": "i95-maine",
+     "closure": "caution"
+    },
+    {
+     "seg": "me26-sunday-river",
+     "closure": "caution"
+    },
+    {
+     "seg": "oxford-st",
+     "closure": "caution"
+    },
+    {
+     "seg": "us2-bethel",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.sundayriver.com/",
+    "webcams": "https://www.sundayriver.com/mountain-report",
+    "report": "https://www.sundayriver.com/mountain-report"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "img/cat/sunday-river.jpg",
+    "credit": "Tv.Rule",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Chondola-scenic-ride-fall.jpg"
+   },
+   "parking": {
+    "lat": 44.4734,
+    "lon": -70.8569
+   },
+   "summitLat": 44.4734,
+   "summitLon": -70.8569,
+   "summitSource": "Summit point unverified — using base coordinates as weather point (OZ on Black Mountain, resort-local name; no GNIS/OSM point)",
+   "baseSource": "Base 800 ft / 244 m (Sunday River)",
+   "wxGroup": 14
+  },
+  {
+   "id": "sugarloaf",
+   "name": {
+    "en": "Sugarloaf",
+    "zh": "Sugarloaf（糖块山）"
+   },
+   "short": "Sugarloaf",
+   "passes": [
+    "ikon"
+   ],
+   "region": "NE",
+   "tz": "America/New_York",
+   "lat": 45.03139,
+   "lon": -70.31306,
+   "baseElevM": 432,
+   "summitElevM": 1291,
+   "driveMin": 367,
+   "driveSource": "OSRM route from BOS airport, no traffic (computed 2026-11-24)",
+   "gateway": "BOS",
+   "routeNote": {
+    "en": "BOS → Pearl Street N → US-1 N → I-95 N → US-202 N → ME-4 N → US-2 N → ME-4 N → ME-27 N → ME-16 W → Caribou Valley Road S to Sugarloaf.",
+    "zh": "波士顿洛根机场 → Pearl Street 北 → US-1 北 → I-95 北 → US-202 北 → ME-4 北 → US-2 北 → ME-4 北 → ME-27 北 → ME-16 西 → Caribou Valley Road 南到 Sugarloaf。"
+   },
+   "route": [
+    {
+     "seg": "bos-airport-us1",
+     "closure": "caution"
+    },
+    {
+     "seg": "us1-boston",
+     "closure": "caution"
+    },
+    {
+     "seg": "i95-maine",
+     "closure": "caution"
+    },
+    {
+     "seg": "us202-me4",
+     "closure": "caution"
+    },
+    {
+     "seg": "me4-farmington",
+     "closure": "caution"
+    },
+    {
+     "seg": "us2-farmington",
+     "closure": "caution"
+    },
+    {
+     "seg": "me4-kingfield",
+     "closure": "caution"
+    },
+    {
+     "seg": "me27-kingfield",
+     "closure": "caution"
+    },
+    {
+     "seg": "me16-caribou",
+     "closure": "caution"
+    },
+    {
+     "seg": "caribou-valley-rd",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.sugarloaf.com/",
+    "webcams": "https://www.sugarloaf.com/mountain-report",
+    "report": "https://www.sugarloaf.com/mountain-report"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f7/Sugarloaf_ski_resort_Maine.JPG/960px-Sugarloaf_ski_resort_Maine.JPG",
+    "credit": "petersent",
+    "license": "Public domain",
+    "licenseUrl": "https://en.wikipedia.org/wiki/Public_domain",
+    "page": "https://commons.wikimedia.org/wiki/File:Sugarloaf_ski_resort_Maine.JPG"
+   },
+   "parking": {
+    "lat": 45.03139,
+    "lon": -70.31306
+   },
+   "summitLat": 45.03168,
+   "summitLon": -70.31333,
+   "summitSource": "Summit 4,237 ft / 1,291 m (Sugarloaf)",
+   "baseSource": "Base 1,417 ft / 432 m (Sugarloaf)",
+   "wxGroup": 14
+  },
+  {
+   "id": "loon",
+   "name": {
+    "en": "Loon",
+    "zh": "Loon（卢恩）"
+   },
+   "short": "Loon",
+   "passes": [
+    "ikon"
+   ],
+   "region": "NE",
+   "tz": "America/New_York",
+   "lat": 44.03611,
+   "lon": -71.62167,
+   "baseElevM": 262,
+   "summitElevM": 930,
+   "driveMin": 180,
+   "driveSource": "OSRM route from BOS airport, no traffic (computed 2026-11-24)",
+   "gateway": "BOS",
+   "routeNote": {
+    "en": "BOS → MA-1A W → I-93 N to Loon.",
+    "zh": "波士顿洛根机场 → MA-1A 西 → I-93 北到 Loon。"
+   },
+   "route": [
+    {
+     "seg": "bos-airport-i93",
+     "closure": "caution"
+    },
+    {
+     "seg": "i93-nh-loon",
+     "closure": "caution"
+    },
+    {
+     "seg": "tripoli-rd-loon",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.loonmtn.com/",
+    "webcams": "https://www.loonmtn.com/mountain-report",
+    "report": "https://www.loonmtn.com/mountain-report"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6c/Loonmtn_northpeak.JPG/960px-Loonmtn_northpeak.JPG",
+    "credit": "Luinfana",
+    "license": "Public domain",
+    "licenseUrl": "https://en.wikipedia.org/wiki/Public_domain",
+    "page": "https://commons.wikimedia.org/wiki/File:Loonmtn_northpeak.JPG"
+   },
+   "parking": {
+    "lat": 44.03611,
+    "lon": -71.62167
+   },
+   "summitLat": 44.03505,
+   "summitLon": -71.61992,
+   "summitSource": "Summit 3,050 ft / 930 m (Loon Mountain Resort, North Peak)",
+   "baseSource": "Base 860 ft / 262 m (Loon Mountain Resort)",
+   "wxGroup": 13
+  },
+  {
+   "id": "stowe",
+   "name": {
+    "en": "Stowe",
+    "zh": "Stowe（斯托）"
+   },
+   "short": "Stowe",
+   "passes": [
+    "epic"
+   ],
+   "region": "NE",
+   "tz": "America/New_York",
+   "lat": 44.53194,
+   "lon": -72.7875,
+   "baseElevM": 475,
+   "summitElevM": 1134,
+   "driveMin": 262,
+   "driveSource": "OSRM route from BOS airport, no traffic (computed 2026-11-24)",
+   "gateway": "BOS",
+   "routeNote": {
+    "en": "BOS → MA-1A W → I-93 N → I-89 N → VT-100 N → VT-108 N to Stowe.",
+    "zh": "波士顿洛根机场 → MA-1A 西 → I-93 北 → I-89 北 → VT-100 北 → VT-108 北到 Stowe。"
+   },
+   "route": [
+    {
+     "seg": "bos-airport-i93",
+     "closure": "caution"
+    },
+    {
+     "seg": "i93-boston-nh",
+     "closure": "caution"
+    },
+    {
+     "seg": "i89-stowe",
+     "closure": "caution"
+    },
+    {
+     "seg": "vt100-stowe",
+     "closure": "caution"
+    },
+    {
+     "seg": "vt108-stowe",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.stowe.com/",
+    "webcams": "https://www.stowe.com/the-mountain/mountain-conditions/mountain-cams.aspx",
+    "report": "https://www.stowe.com/the-mountain/mountain-conditions/snow-and-weather-report.aspx"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/80/Stowe-snapshot.jpg/960px-Stowe-snapshot.jpg",
+    "credit": "Ams100272",
+    "license": "Public domain",
+    "licenseUrl": "https://en.wikipedia.org/wiki/Public_domain",
+    "page": "https://commons.wikimedia.org/wiki/File:Stowe-snapshot.jpg"
+   },
+   "parking": {
+    "lat": 44.53194,
+    "lon": -72.7875
+   },
+   "summitLat": 44.53763,
+   "summitLon": -72.81421,
+   "summitSource": "Summit 3,719 ft / 1,134 m (Stowe Mountain Resort, top of lifts)",
+   "baseSource": "Base 1,559 ft / 475 m (Stowe Mountain Resort)",
+   "wxGroup": 13
+  },
+  {
+   "id": "okemo",
+   "name": {
+    "en": "Okemo",
+    "zh": "Okemo（奥基莫）"
+   },
+   "short": "Okemo",
+   "passes": [
+    "epic"
+   ],
+   "region": "NE",
+   "tz": "America/New_York",
+   "lat": 43.40139,
+   "lon": -72.71667,
+   "baseElevM": 349,
+   "summitElevM": 1019,
+   "driveMin": 198,
+   "driveSource": "OSRM route from BOS airport, no traffic (computed 2026-11-24)",
+   "gateway": "BOS",
+   "routeNote": {
+    "en": "BOS → MA-1A W → MA-2 W → MA-140 N → MA-12 N → NH-12 N → I-91 N → US-5 N → VT-103 N to Okemo.",
+    "zh": "波士顿洛根机场 → MA-1A 西 → MA-2 西 → MA-140 北 → MA-12 北 → NH-12 北 → I-91 北 → US-5 北 → VT-103 北到 Okemo。"
+   },
+   "route": [
+    {
+     "seg": "bos-airport-ma2",
+     "closure": "caution"
+    },
+    {
+     "seg": "ma2-mohawk",
+     "closure": "caution"
+    },
+    {
+     "seg": "ma140-ma12",
+     "closure": "caution"
+    },
+    {
+     "seg": "nh12-north",
+     "closure": "caution"
+    },
+    {
+     "seg": "i91-okemo",
+     "closure": "caution"
+    },
+    {
+     "seg": "us5-vt103",
+     "closure": "caution"
+    },
+    {
+     "seg": "vt103-okemo",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.okemo.com/",
+    "webcams": "https://www.okemo.com/the-mountain/mountain-conditions/mountain-cams.aspx",
+    "report": "https://www.okemo.com/the-mountain/mountain-conditions/snow-and-weather-report.aspx"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "img/cat/okemo.jpg",
+    "credit": "Jrclark (talk)",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Okemo-2005-0316a.jpg"
+   },
+   "parking": {
+    "lat": 43.40139,
+    "lon": -72.71667
+   },
+   "summitLat": 43.40396,
+   "summitLon": -72.75149,
+   "summitSource": "Summit 3,344 ft / 1,019 m (Okemo Mountain Resort)",
+   "baseSource": "Base 1,144 ft / 349 m (Okemo Mountain Resort)",
+   "wxGroup": 12
+  },
+  {
+   "id": "mount-snow",
+   "name": {
+    "en": "Mount Snow",
+    "zh": "Mount Snow（雪山）"
+   },
+   "short": "Mount Snow",
+   "passes": [
+    "epic"
+   ],
+   "region": "NE",
+   "tz": "America/New_York",
+   "lat": 42.959,
+   "lon": -72.922,
+   "baseElevM": 579,
+   "summitElevM": 1097,
+   "driveMin": 250,
+   "driveSource": "OSRM route from BOS airport, no traffic (computed 2026-11-24)",
+   "gateway": "BOS",
+   "routeNote": {
+    "en": "BOS → MA-1A W → MA-2 W → MA-140 N → MA-12 N → NH-12 N → NH-9 W → VT-9 W → NF-71 N to Mount Snow.",
+    "zh": "波士顿洛根机场 → MA-1A 西 → MA-2 西 → MA-140 北 → MA-12 北 → NH-12 北 → NH-9 西 → VT-9 西 → NF-71 北到 Mount Snow。"
+   },
+   "route": [
+    {
+     "seg": "bos-airport-ma2",
+     "closure": "caution"
+    },
+    {
+     "seg": "ma2-mohawk",
+     "closure": "caution"
+    },
+    {
+     "seg": "ma140-ma12",
+     "closure": "caution"
+    },
+    {
+     "seg": "nh12-south",
+     "closure": "caution"
+    },
+    {
+     "seg": "nh9-mount-snow",
+     "closure": "caution"
+    },
+    {
+     "seg": "vt9-mount-snow",
+     "closure": "caution"
+    },
+    {
+     "seg": "nf71-mount-snow",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.mountsnow.com/",
+    "webcams": "https://www.mountsnow.com/the-mountain/mountain-conditions/mountain-cams.aspx",
+    "report": "https://www.mountsnow.com/the-mountain/mountain-conditions/weather-report.aspx"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "img/cat/mount-snow.jpg",
+    "credit": "Mount Snow",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:MountSnowWinter.jpg"
+   },
+   "parking": {
+    "lat": 42.959,
+    "lon": -72.922
+   },
+   "summitLat": 42.95925,
+   "summitLon": -72.92376,
+   "summitSource": "Summit 3,600 ft / 1,097 m (Mount Snow)",
+   "baseSource": "Base 1,900 ft / 579 m (Mount Snow)",
+   "wxGroup": 12
+  },
+  {
+   "id": "hunter",
+   "name": {
+    "en": "Hunter Mountain",
+    "zh": "Hunter Mountain（猎人山）"
+   },
+   "short": "Hunter",
+   "passes": [
+    "epic"
+   ],
+   "region": "NE",
+   "tz": "America/New_York",
+   "lat": 42.20028,
+   "lon": -74.23028,
+   "baseElevM": 488,
+   "summitElevM": 975,
+   "driveMin": 112,
+   "driveSource": "OSRM route from ALB airport, no traffic (computed 2026-11-24)",
+   "gateway": "ALB",
+   "routeNote": {
+    "en": "ALB → NY-155 S → I-87 S → US-9W S → NY-23A W to Hunter Mountain.",
+    "zh": "奥尔巴尼机场 → NY-155 南 → I-87 南 → US-9W 南 → NY-23A 西到 Hunter Mountain。"
+   },
+   "route": [
+    {
+     "seg": "alb-airport",
+     "closure": "caution"
+    },
+    {
+     "seg": "i87-catskills",
+     "closure": "caution"
+    },
+    {
+     "seg": "us9w-catskills",
+     "closure": "caution"
+    },
+    {
+     "seg": "ny23a-hunter",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.huntermtn.com/",
+    "webcams": "https://www.huntermtn.com/the-mountain/mountain-conditions/mountain-cams.aspx",
+    "report": "https://www.huntermtn.com/the-mountain/mountain-conditions/snow-and-weather-report.aspx"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "img/cat/hunter.jpg",
+    "credit": "Ryssby at English Wikipedia",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Hunter_Mountain.jpg"
+   },
+   "parking": {
+    "lat": 42.20028,
+    "lon": -74.23028
+   },
+   "summitLat": 42.20121,
+   "summitLon": -74.23064,
+   "summitSource": "Summit 3,200 ft / 975 m (Hunter Mountain ski area)",
+   "baseSource": "Base 1,600 ft / 488 m (Hunter Mountain ski area)",
+   "wxGroup": 14
+  },
+  {
+   "id": "jay-peak",
+   "name": {
+    "en": "Jay Peak",
+    "zh": "Jay Peak（杰伊峰）"
+   },
+   "short": "Jay Peak",
+   "passes": [
+    "indy"
+   ],
+   "region": "NE",
+   "tz": "America/New_York",
+   "lat": 44.92944,
+   "lon": -72.53222,
+   "baseElevM": 533,
+   "summitElevM": 1177,
+   "driveMin": 319,
+   "driveSource": "OSRM route from BOS airport, no traffic (computed 2026-11-24)",
+   "gateway": "BOS",
+   "routeNote": {
+    "en": "BOS → MA-1A W → I-93 N → I-91 N → VT-58 W → Black Falls Road E to Jay Peak.",
+    "zh": "波士顿洛根机场 → MA-1A 西 → I-93 北 → I-91 北 → VT-58 西 → Black Falls Road 东到 Jay Peak。"
+   },
+   "route": [
+    {
+     "seg": "bos-airport-i93",
+     "closure": "caution"
+    },
+    {
+     "seg": "i93-loon-jay",
+     "closure": "caution"
+    },
+    {
+     "seg": "i91-white-river",
+     "closure": "caution"
+    },
+    {
+     "seg": "vt58-jay",
+     "closure": "caution"
+    },
+    {
+     "seg": "black-falls-rd",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.jaypeakresort.com/",
+    "webcams": "https://www.jaypeakresort.com/cams",
+    "report": "https://www.jaypeakresort.com/conditions"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a4/Jay_Peak.JPG/960px-Jay_Peak.JPG",
+    "credit": "Hanumanix",
+    "license": "Public domain",
+    "licenseUrl": "https://en.wikipedia.org/wiki/Public_domain",
+    "page": "https://commons.wikimedia.org/wiki/File:Jay_Peak.JPG"
+   },
+   "parking": {
+    "lat": 44.92944,
+    "lon": -72.53222
+   },
+   "summitLat": 44.92423,
+   "summitLon": -72.52569,
+   "summitSource": "Summit 3,862 ft / 1,177 m (Jay Peak Resort)",
+   "baseSource": "Base 1,750 ft / 533 m (Jay Peak Resort)",
+   "wxGroup": 13
+  },
+  {
+   "id": "whiteface",
+   "name": {
+    "en": "Whiteface",
+    "zh": "Whiteface（白脸山）"
+   },
+   "short": "Whiteface",
+   "passes": [],
+   "region": "NE",
+   "tz": "America/New_York",
+   "lat": 44.36583,
+   "lon": -73.90278,
+   "baseElevM": 372,
+   "summitElevM": 1337,
+   "driveMin": 136,
+   "driveSource": "OSRM route from BTV airport, no traffic (computed 2026-11-24)",
+   "gateway": "BTV",
+   "routeNote": {
+    "en": "BTV → I-89 N → US-2 W (incl. Grand Isle–Plattsburgh ferry) → Commodore Thomas MacDonough Highway W → I-87 S → NY-9N W → NY-86 W → NY-431 W to Whiteface.",
+    "zh": "伯灵顿机场 → I-89 北 → US-2 西（含 Grand Isle–Plattsburgh 轮渡） → Commodore Thomas MacDonough Highway 西 → I-87 南 → NY-9N 西 → NY-86 西 → NY-431 西到 Whiteface。"
+   },
+   "route": [
+    {
+     "seg": "btv-airport",
+     "closure": "caution"
+    },
+    {
+     "seg": "us2-ferry",
+     "closure": "caution"
+    },
+    {
+     "seg": "macdonough-hwy",
+     "closure": "caution"
+    },
+    {
+     "seg": "i87-plattsburgh",
+     "closure": "caution"
+    },
+    {
+     "seg": "ny9n-whiteface",
+     "closure": "caution"
+    },
+    {
+     "seg": "ny86-ny431",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://whiteface.com/",
+    "webcams": "https://whiteface.com/webcams",
+    "report": "https://whiteface.com/conditions"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "img/cat/whiteface.jpg",
+    "credit": "Mwanner",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Whiteface_Mountain_from_Lake_Placid_Airport.JPG"
+   },
+   "parking": {
+    "lat": 44.36583,
+    "lon": -73.90278
+   },
+   "summitLat": 44.36445,
+   "summitLon": -73.89945,
+   "summitSource": "Summit 4,386 ft / 1,337 m (Whiteface Mountain Ski Area, lift-served)",
+   "baseSource": "Base 1,220 ft / 372 m (Whiteface Mountain Ski Area)",
+   "wxGroup": 14
   }
  ],
  "cameras": [

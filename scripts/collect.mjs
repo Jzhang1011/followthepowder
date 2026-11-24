@@ -6,10 +6,11 @@
 import { fetchAllIntel } from '../js/intel.js';
 import { openMeteoUrl, splitOpenMeteo, carsUrl, slimEvents, EVENT_CLASSES, nwsUrl, slimAlerts, wxGroupCfg,
   utahCarsUrl, utahKeyedUrl, slimUtahEvents, slimUtahRoadConditions, slimUtahCameras, slimUtahPasses,
-  caRoadsUrl, CA_DISTRICTS, slimCaEvents } from '../js/core.js';
+  caRoadsUrl, CA_DISTRICTS, slimCaEvents,
+  c2cUrl, slimNeEvents, ny511Url, slimNyEvents, massdotUrl, slimMaEvents } from '../js/core.js';
 
 export const UA = 'SkiDay ski dashboard (https://followthepowder.com/)';
-export const SOURCES = ['weather', 'roads', 'alerts', 'cameras', 'intel', 'utah-roads', 'ca-roads'];
+export const SOURCES = ['weather', 'roads', 'alerts', 'cameras', 'intel', 'utah-roads', 'ca-roads', 'ne-roads', 'ny-roads', 'ma-roads'];
 const now = () => new Date().toISOString();
 
 export function makeHttp({ tries = 3, timeoutMs = 25000 } = {}) {
@@ -128,6 +129,33 @@ export const collectors = {
       }
     }
     return { events: slimCaEvents(cfg, { cc, lcs }) };
+  },
+  /**
+   * Northeast roads, three sources (no single feed covers all five states):
+   * ne-roads = Compass C2C incidents + lane closures (VT/NH/ME, keyless XML, two calls —
+   * a combined dataTypes list is unverified); ny-roads = 511NY CARS closures + winter
+   * driving + incidents (NY, keyless GeoJSON; the 18.4 MB winter file is filtered to the
+   * ski corridors before storage); ma-roads = MassDOT ERS planned events (MA, keyless
+   * XML, thin). No cameras/passes feed is wired in v1 — events only (CA precedent).
+   * The winter fetch is the flaky one (18 MB); if it fails, closures + incidents still land.
+   */
+  async 'ne-roads'(cfg, http) {
+    const xml = { Accept: 'application/xml, text/xml, */*' };
+    const inc = await http.getText(c2cUrl('incidentData'), xml);
+    const lcs = await http.getText(c2cUrl('laneClosureData'), xml);
+    return { events: slimNeEvents(cfg, inc, lcs) };
+  },
+  async 'ny-roads'(cfg, http) {
+    const closures = await http.getJson(ny511Url('closures'));
+    const incidents = await http.getJson(ny511Url('incidents'));
+    let winter = { features: [] };
+    try { winter = await http.getJson(ny511Url('winterDriving')); }
+    catch (e) { console.warn?.(`[ski] ny winterDriving failed, keeping closures+incidents: ${e.message || e}`); }
+    return { events: slimNyEvents(cfg, { closures, winter, incidents }) };
+  },
+  async 'ma-roads'(cfg, http) {
+    const xml = await http.getText(massdotUrl(), { Accept: 'application/xml, text/xml, */*' });
+    return { events: slimMaEvents(cfg, xml) };
   }
 };
 
@@ -159,12 +187,13 @@ const meta = r => r ? { ok: !!r.ok, status: r.status, fetchedAt: r.fetchedAt, at
 
 /** Records -> the latest.json shape the page reads. */
 export function toLatest(rec, servedBy) {
-  const times = ['weather', 'roads', 'alerts', 'cameras', 'utah-roads', 'ca-roads'].map(k => rec[k]?.fetchedAt).filter(Boolean).sort();
+  const times = ['weather', 'roads', 'alerts', 'cameras', 'utah-roads', 'ca-roads', 'ne-roads', 'ny-roads', 'ma-roads'].map(k => rec[k]?.fetchedAt).filter(Boolean).sort();
   return {
     generatedAt: times[times.length - 1] || null, servedBy,
-    sources: { weather: meta(rec.weather), roads: meta(rec.roads), alerts: meta(rec.alerts), cameras: meta(rec.cameras), 'utah-roads': meta(rec['utah-roads']), 'ca-roads': meta(rec['ca-roads']) },
+    sources: { weather: meta(rec.weather), roads: meta(rec.roads), alerts: meta(rec.alerts), cameras: meta(rec.cameras), 'utah-roads': meta(rec['utah-roads']), 'ca-roads': meta(rec['ca-roads']), 'ne-roads': meta(rec['ne-roads']), 'ny-roads': meta(rec['ny-roads']), 'ma-roads': meta(rec['ma-roads']) },
     weather: rec.weather?.data || null, roads: rec.roads?.data || null, alerts: rec.alerts?.data || {}, cameras: rec.cameras?.data || null,
-    'utah-roads': rec['utah-roads']?.data || null, 'ca-roads': rec['ca-roads']?.data || null
+    'utah-roads': rec['utah-roads']?.data || null, 'ca-roads': rec['ca-roads']?.data || null,
+    'ne-roads': rec['ne-roads']?.data || null, 'ny-roads': rec['ny-roads']?.data || null, 'ma-roads': rec['ma-roads']?.data || null
   };
 }
 export const toIntel = (r, servedBy) => ({ generatedAt: r?.fetchedAt || null, attemptAt: r?.attemptAt || null, status: r?.status || 'failed', error: r?.error || null, servedBy, resorts: r?.data || {} });
@@ -173,7 +202,7 @@ export const toCameras = (r, cfg, servedBy) => ({ generatedAt: r?.fetchedAt || n
 /** latest.json (+ intel.json, cameras.json) on disk -> records, so the Node backup can merge too. */
 export function fromFiles(latest, intel, cams) {
   const rec = {};
-  for (const k of ['weather', 'roads', 'alerts', 'cameras', 'utah-roads', 'ca-roads']) {
+  for (const k of ['weather', 'roads', 'alerts', 'cameras', 'utah-roads', 'ca-roads', 'ne-roads', 'ny-roads', 'ma-roads']) {
     const s = latest?.sources?.[k]; const d = latest?.[k];
     const has = d != null && s?.ok !== false && !(k === 'alerts' && !Object.values(d).some(v => v));
     rec[k] = has ? { status: s?.status || 'ok', ok: true, fetchedAt: s?.fetchedAt || latest.generatedAt, attemptAt: s?.attemptAt || null, error: s?.error || null, data: d } : null;

@@ -416,6 +416,238 @@ export function slimCaEvents(cfg, { cc = [], lcs = [] } = {}, nowS = Date.now() 
   return out;
 }
 
+/* ---------- Northeast roads — Compass C2C (VT/NH/ME), 511NY CARS (NY), MassDOT ERS (MA) ---------- */
+// No single feed covers the Northeast, so the worker keeps three sources (ne-roads, ny-roads,
+// ma-roads) and the page merges them into one slot. None of the three reports chain / traction
+// law (zero hits for "chain"/"traction" in every live feed file), so no NE event ever carries
+// cls 'chainLaws' — the chain display reads "Not reported in the Northeast" (see verdictFor).
+// Every NE slim event carries `src` ('ne' | 'ny' | 'ma') so the UI can name its feed.
+
+/** C2C / ERS XML is parsed with small tag extractors — neither the Worker nor the Node backup has a DOMParser. */
+function xmlDecode(s) { return String(s || '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&'); }
+function xmlTag(xml, tag) { const m = String(xml || '').match(new RegExp(`<${tag}(?:\\s[^>]*)?>([\\s\\S]*?)</${tag}>`)); return m ? xmlDecode(m[1].trim()) : ''; }
+function xmlAttr(tagStr, attr) { const m = String(tagStr || '').match(new RegExp(`${attr}="([^"]*)"`)); return m ? m[1] : ''; }
+function xmlRecords(xml, tag) { const out = []; const re = new RegExp(`<${tag}\\b([^>]*)>([\\s\\S]*?)</${tag}>`, 'g'); let m; while ((m = re.exec(String(xml || '')))) out.push({ attrs: m[1], body: m[2] }); return out; }
+/** ISO timestamps with over-long fractions (C2C emits 7 digits) -> epoch ms; null when unparseable. */
+function parseIsoTs(s) { if (!s) return null; const t = Date.parse(String(s).replace(/(\.\d{3})\d+/, '$1')); return Number.isFinite(t) ? t : null; }
+/** Integer microdegrees (C2C) -> decimal degrees. */
+const udeg = s => { const n = parseInt(String(s || '').replace(/[^0-9-]/g, ''), 10); return Number.isFinite(n) ? n / 1e6 : null; };
+/** "2026-11-25 at 09:00" in America/New_York (MassDOT ERS) -> epoch ms; falls back to ISO parse. */
+function easternEpoch(s) {
+  const m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})\s+at\s+(\d{1,2}):(\d{2})/);
+  if (!m) return parseIsoTs(s);
+  const [, y, mo, d, h, mi] = m;
+  const guess = Date.UTC(+y, +mo - 1, +d, +h, +mi);
+  const fmt = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+  const parts = Object.fromEntries(fmt.formatToParts(new Date(guess)).map(p => [p.type, p.value]));
+  const asUTC = Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute);
+  return guess - (asUTC - guess);
+}
+/** Canonical route number: 'NH 135' / 'US 4' / 'VT-31' -> 'NH-135' / 'US-4' / 'VT-31'. */
+function normNeRoad(s) {
+  const t = String(s || '').trim().replace(/\s+/g, ' ');
+  const m = t.match(/^(I|US|SR|VT|NH|ME|MA|NY)\s*-?\s*(\d+[A-Z]?)$/i);
+  return m ? `${m[1].toUpperCase()}-${m[2].toUpperCase()}` : t;
+}
+/** Route tokens out of free text: 'I-89 SB in Royalton', 'Fore River Bridge (3A)' -> ['I-89'], ['MA-3A']. */
+function neRouteTokens(s) {
+  const out = [];
+  for (const m of String(s || '').matchAll(/\b(?:I|US|SR|VT|NH|ME|MA|NY)[- ]?\d+[A-Z]?\b/gi)) out.push(normNeRoad(m[0]));
+  const paren = String(s || '').match(/\((\d+[A-Z]?)\)/);
+  if (paren) out.push(`MA-${paren[1]}`);
+  return out;
+}
+const c2cDir = d => { const t = String(d || '').trim(); if (!t) return ''; return /^[NSEW]B$/i.test(t) ? dirWord(t) : `${t.toLowerCase()}bound`; };
+const firstLine = s => String(s || '').split('\n')[0].trim();
+
+export const C2C_NETWORKS = 'Vermont,NewHampshire,Maine';
+/** Compass C2C: one call per dataType — a combined dataTypes list is unverified. Keyless XML. */
+export function c2cUrl(dataType) {
+  return `https://nec-por.ne-compass.com/NEC.XmlDataPortal/api/c2c?networks=${C2C_NETWORKS}&dataTypes=${dataType}`;
+}
+/** 511NY CARS: closures carry the site config's maxBeginDateOffset; winter/incidents take no extra params. Keyless GeoJSON. */
+export function ny511Url(cls) {
+  const base = 'https://api-511x-nysdot.carsprogram.org/events/map-features';
+  return cls === 'closures' ? `${base}?eventClassifications=closures&maxBeginDateOffset=300000` : `${base}?eventClassifications=${cls}`;
+}
+/** MassDOT Planned Roadway Events XML (ERS). Plain HTTP — the HTTPS variant is unverified. */
+export function massdotUrl() { return 'http://events.massdot.evbg.net/'; }
+
+/**
+ * Normalize C2C incidentData + laneClosureData into the slim event shape.
+ * Incidents are roadReports (the feed holds ~5 across three states). Lane closures are
+ * roadClosures, but only when a lane is still Blocked: a reopened road has every lane Cleared,
+ * while a live restriction (seasonal closure, crossover, one-lane bridge) still blocks one.
+ * Without an affectedLanesDetail block the record is kept. Geometry: start/end points for
+ * incidents, start + midpoint polyline + end for closures (sampled to 40 pts).
+ */
+export function slimNeEvents(cfg, incidentXml, closureXml) {
+  const out = [];
+  const loc = (body, which) => {
+    const b = xmlTag(body, which);
+    return { roadway: xmlTag(b, 'roadway'), dir: xmlTag(b, 'direction'), city: xmlTag(b, 'city'),
+      lat: udeg(xmlTag(b, 'lat')), lon: udeg(xmlTag(b, 'lon')) };
+  };
+  for (const rec of xmlRecords(incidentXml, 'incident')) {
+    const b = rec.body, s = loc(b, 'startLocation'), e = loc(b, 'endLocation');
+    if (!Number.isFinite(s.lat) || !Number.isFinite(s.lon)) continue;
+    const desc = xmlTag(b, 'desc');
+    const tokens = [...new Set([normNeRoad(s.roadway), ...neRouteTokens(desc)].filter(Boolean))];
+    const geo = [[+s.lon.toFixed(4), +s.lat.toFixed(4)]];
+    if (Number.isFinite(e.lat) && Number.isFinite(e.lon)) geo.push([+e.lon.toFixed(4), +e.lat.toFixed(4)]);
+    const segs = utahSegIds(cfg, tokens, s.lon, s.lat, null);
+    out.push({ id: `c2c-${xmlAttr(rec.attrs, 'id') || `inc-${out.length}`}`, cls: 'roadReports', segs,
+      route: tokens[0] || '', geo,
+      title: firstLine(desc) || `Incident — ${s.roadway || 'Tri-State'}`,
+      tooltip: c2cDir(s.dir),
+      detail: [desc, [s.city, e.city].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(' → ')].filter(Boolean).join(' · ').slice(0, 600),
+      eventType: null, priority: null, icon: null,
+      updated: parseIsoTs(xmlTag(b, 'lastUpdatedTimestamp')), start: parseIsoTs(xmlTag(b, 'createdTimestamp')), src: 'ne' });
+  }
+  for (const rec of xmlRecords(closureXml, 'laneClosure')) {
+    const b = rec.body;
+    // NOTE: <status> carries no signal here — live closures (VT-108 Smugglers Notch seasonal
+    // closure, VT-65 floating bridge, the I-89 Royalton crossover) all read "Opened". The
+    // discriminator is the lane state: a reopened road (Frank J. Wood Bridge) has every lane
+    // Cleared, a live restriction still has a Blocked lane.
+    const ald = xmlTag(b, 'affectedLanesDetail');
+    if (ald && !/status="Blocked"/.test(ald)) continue; // every lane cleared
+    const s = loc(b, 'startLocation'), e = loc(b, 'endLocation');
+    if (!Number.isFinite(s.lat) || !Number.isFinite(s.lon)) continue;
+    const desc = xmlTag(b, 'desc');
+    const tokens = [...new Set([normNeRoad(s.roadway), ...neRouteTokens(desc)].filter(Boolean))];
+    const pts = [[s.lon, s.lat]];
+    for (const p of xmlRecords(xmlTag(b, 'midpoints'), 'point')) {
+      const la = udeg(xmlTag(p.body, 'lat')), lo = udeg(xmlTag(p.body, 'lon'));
+      if (Number.isFinite(la) && Number.isFinite(lo)) pts.push([lo, la]);
+    }
+    if (Number.isFinite(e.lat) && Number.isFinite(e.lon)) pts.push([e.lon, e.lat]);
+    const geo = sampleGeo(pts.map(p => [+p[0].toFixed(4), +p[1].toFixed(4)]));
+    // Segment match by the closure's midpoint, not its bounding box: a closure that merely
+    // overlaps a segment's bbox must not flag the resort approach on the other side of it.
+    // (Same rule as slimCaEvents: the VT-108 Smugglers Notch seasonal closure's southern tip
+    // touches the Stowe access segment, but its midpoint is in the Notch — it must not nogo Stowe.)
+    const mLon = (pts[0][0] + pts[pts.length - 1][0]) / 2, mLat = (pts[0][1] + pts[pts.length - 1][1]) / 2;
+    const segs = utahSegIds(cfg, tokens, mLon, mLat, null);
+    const full = /road closed|closed to (all )?traffic|full closure|is closed for/i.test(desc);
+    const where = [s.city, e.city].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(' → ');
+    out.push({ id: `c2c-${xmlAttr(rec.attrs, 'id') || `lc-${out.length}`}`, cls: 'roadClosures', segs,
+      route: tokens[0] || '', geo,
+      title: `${full ? 'Road closed' : 'Lane closed'} — ${tokens[0] || s.roadway || 'Tri-State'}${where ? ` (${where})` : ''}`,
+      tooltip: c2cDir(s.dir),
+      detail: desc.slice(0, 600),
+      eventType: null, priority: null, icon: null,
+      updated: parseIsoTs(xmlTag(b, 'lastUpdatedTimestamp')), start: parseIsoTs(xmlTag(b, 'createdTimestamp')), src: 'ne' });
+  }
+  return out;
+}
+
+// Ski-corridor routes for the NY winter filter (§1.7 note 5): the report's list plus every route
+// the NE segments already name. The raw winter file is 18.4 MB / 495 features per tick, so the
+// corridor + condition filter runs before the KV write, never after.
+const NY_CORRIDOR_EXTRA = ['I-87', 'NY 86', 'NY 73', 'NY 28', 'NY 30', 'I-90', 'NY 8', 'NY 12', 'NY 9N'];
+/** NY winter condition codes (category 57): 2 clear/dry, 3 wet, 4 snow/ice. Codes 1 (update pending)
+ *  and 26 (no active reporting, 411 of 495) mean unknown — never "clear" — so they are dropped. */
+const NY_WINTER_OK = { 2: 'Generally Clear and Dry', 3: 'Wet', 4: 'Snow/Ice' };
+/**
+ * Normalize 511NY closures + winter driving + incidents into the slim event shape.
+ * Closures/incidents: active only (the files carry inactive records, some from 2024).
+ * Winter: corridor routes + real conditions only (see NY_WINTER_OK); geometry is the full
+ * MultiLineString polyline, sampled to 40 points, and the segment match uses its bbox.
+ */
+export function slimNyEvents(cfg, { closures = {}, winter = {}, incidents = {} } = {}) {
+  const out = [];
+  const toMs = v => (typeof v === 'number' && v > 0 ? v : null);
+  const geoOf = f => {
+    const pts = [];
+    const walk = c => { if (typeof c[0] === 'number') pts.push([+c[0].toFixed(4), +c[1].toFixed(4)]); else c.forEach(walk); };
+    if (f.geometry?.coordinates) walk(f.geometry.coordinates);
+    return pts;
+  };
+  const corridor = new Set([...Object.values(cfg.segments).flatMap(s => s.routes), ...NY_CORRIDOR_EXTRA].map(normNeRoad));
+  for (const f of (closures.features || [])) {
+    const p = f.properties || {};
+    if (p.active !== true) continue;
+    const route = normNeRoad(p.route || (p.title || '').split(':')[0]);
+    const pts = geoOf(f);
+    const bb = boundsOf(f);
+    const segs = utahSegIds(cfg, route ? [route] : [], null, null, bb);
+    if (!segs.length && !pts.length) continue;
+    out.push({ id: `ny-${p.id}`, cls: 'roadClosures', segs, route, geo: sampleGeo(pts),
+      title: p.title || p.tooltip || `Road closure — ${route}`,
+      tooltip: p.tooltip || '',
+      detail: stripHtml(p.description || '').slice(0, 600),
+      eventType: p.eventType || null, priority: p.priority ?? null, icon: p.icon || null,
+      updated: toMs(p.updated), start: toMs(p.startTime?.time), src: 'ny' });
+  }
+  for (const f of (winter.features || [])) {
+    const p = f.properties || {};
+    const code = p.eventReport?.headlinePhrase?.code;
+    if (!(code in NY_WINTER_OK) || p.active !== true) continue;
+    const route = normNeRoad(p.route || p.eventReport?.location?.routeDesignator || '');
+    if (!route || !corridor.has(route)) continue; // outside the ski corridors — dropped before storage
+    const pts = geoOf(f);
+    const bb = boundsOf(f);
+    const segs = utahSegIds(cfg, [route], null, null, bb);
+    if (!segs.length && !pts.length) continue;
+    out.push({ id: `ny-w-${p.id}`, cls: 'winterDriving', segs, route, geo: sampleGeo(pts),
+      title: p.title || `${route}: ${NY_WINTER_OK[code]}.`,
+      tooltip: p.tooltip || '',
+      detail: '',
+      eventType: p.eventType || null, priority: p.priority ?? null, icon: p.icon || null,
+      updated: toMs(p.updated), start: toMs(p.eventReport?.beginTime?.time), src: 'ny' });
+  }
+  for (const f of (incidents.features || [])) {
+    const p = f.properties || {};
+    if (p.active !== true) continue;
+    const route = normNeRoad(p.route || (p.title || '').split(':')[0]);
+    const pts = geoOf(f);
+    const bb = boundsOf(f);
+    const segs = utahSegIds(cfg, route ? [route] : [], null, null, bb);
+    if (!segs.length && !pts.length) continue;
+    out.push({ id: `ny-i-${p.id}`, cls: 'roadReports', segs, route, geo: sampleGeo(pts),
+      title: p.title || p.tooltip || `Incident — ${route}`,
+      tooltip: p.tooltip || '',
+      detail: stripHtml(p.description || '').slice(0, 600),
+      eventType: p.eventType || null, priority: p.priority ?? null, icon: p.icon || null,
+      updated: toMs(p.updated), start: toMs(p.startTime?.time), src: 'ny' });
+  }
+  return out;
+}
+
+/**
+ * Normalize MassDOT ERS planned roadway events into the slim event shape. The feed is thin
+ * (2 events at probe time) and MA is drive-through only for every NE resort, so events match
+ * by point/bbox and mostly carry no segment. RoadwayName is free text ("Fore River Bridge (3A)");
+ * only Open events inside their window count — planned future lifts are not today's drive data.
+ */
+export function slimMaEvents(cfg, xml, nowMs = Date.now()) {
+  const out = [];
+  for (const rec of xmlRecords(xml, 'Event')) {
+    const b = rec.body;
+    if (!/open/i.test(xmlTag(b, 'EventStatus'))) continue;
+    const start = easternEpoch(xmlTag(b, 'EventStartDate'));
+    const end = easternEpoch(xmlTag(b, 'EventEndDate'));
+    if (start != null && start > nowMs) continue;
+    if (end != null && end < nowMs) continue;
+    const lat = parseFloat(xmlTag(b, 'PrimaryLatitude')), lon = parseFloat(xmlTag(b, 'PrimaryLongitude'));
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+    const road = xmlTag(b, 'RoadwayName');
+    const tokens = [...new Set(neRouteTokens(road))];
+    const segs = utahSegIds(cfg, tokens, lon, lat, null);
+    const sub = xmlTag(b, 'EventSubType'), lane = xmlTag(b, 'LaneBlockageDescription');
+    out.push({ id: `ma-${xmlTag(b, 'EventId') || `ev-${out.length}`}`, cls: 'roadReports', segs,
+      route: tokens[0] || road, geo: [[+lon.toFixed(4), +lat.toFixed(4)]],
+      title: [sub, road].filter(Boolean).join(' — ') || `MassDOT event — ${road}`,
+      tooltip: xmlTag(b, 'Direction'),
+      detail: [xmlTag(b, 'LocationDescription'), lane].filter(Boolean).join(' · ').slice(0, 600),
+      eventType: null, priority: null, icon: null,
+      updated: parseIsoTs(xmlTag(b, 'LastUpdate')), start, src: 'ma' });
+  }
+  return out;
+}
+
+
 /** Road-condition segments that are icy / snow-covered, plus any non-'none' Restriction (traction/chain).
  *  Restriction values are unverified live (all 'none' at probe time) — the raw value goes into the title,
  *  so the UI shows whatever UDOT reports and chainLevel() can match 'traction law' / 'code 15/16' when present. */
@@ -531,7 +763,7 @@ export function verdictFor(cfg, resort, { roads, alerts, days, intel = null, now
   const segIds = resort.route.map(r => r.seg);
 
   if (!roads || !roads.ok) {
-    reasons.push({ level: 'unknown', kind: 'roads', key: resort.region === 'UT' ? 'r_roads_unavailable_ut' : resort.region === 'CA' ? 'r_roads_unavailable_ca' : 'r_roads_unavailable' });
+    reasons.push({ level: 'unknown', kind: 'roads', key: resort.region === 'UT' ? 'r_roads_unavailable_ut' : resort.region === 'CA' ? 'r_roads_unavailable_ca' : resort.region === 'NE' ? 'r_roads_unavailable_ne' : 'r_roads_unavailable' });
   } else {
     for (const leg of resort.route) {
       const evs = roads.events.filter(e => e.segs.includes(leg.seg));
@@ -559,10 +791,12 @@ export function verdictFor(cfg, resort, { roads, alerts, days, intel = null, now
     const main = reasons.filter(r => r.seg && r.level !== 'info');
     // When the road feed carries chain data (Colorado CDOT, California Caltrans), the absence of a
     // chain event is positive evidence there is no chain law: say so (go). Utah feeds carry no
-    // chain/traction-law type, so absence there is only "not reported" (info).
+    // chain/traction-law type, and no Northeast feed reports chain / traction law at all, so absence
+    // there is only "not reported" (info).
     if (!main.some(r => r.kind === 'chain')) {
       if (roads.chainKnown) reasons.push({ level: 'go', kind: 'chain', key: 'r_no_chain' });
       else if (resort.region === 'UT') reasons.push({ level: 'info', kind: 'chain', key: 'r_chain_unknown' });
+      else if (resort.region === 'NE') reasons.push({ level: 'info', kind: 'chain', key: 'r_chain_unknown_ne' });
       else reasons.push({ level: 'info', kind: 'chain', key: 'r_chain_unknown_ca' });
     }
     if (!main.some(r => r.kind === 'closure')) reasons.push({ level: 'go', kind: 'closure', key: 'r_no_closure' });

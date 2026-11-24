@@ -7,6 +7,8 @@ export const UT_BOX = { w: -114.0529, e: -109.0418, s: 36.9975, n: 42.0017 };
 export const inUT = ([lon, lat]) => lon >= UT_BOX.w && lon <= UT_BOX.e && lat >= UT_BOX.s && lat <= UT_BOX.n;
 export const CA_BOX = { w: -124.4096, e: -114.1315, s: 32.5343, n: 42.0095 };
 export const inCA = ([lon, lat]) => lon >= CA_BOX.w && lon <= CA_BOX.e && lat >= CA_BOX.s && lat <= CA_BOX.n;
+export const NE_BOX = { w: -74.6, e: -69.9, s: 42.0, n: 45.2 };
+export const inNE = ([lon, lat]) => lon >= NE_BOX.w && lon <= NE_BOX.e && lat >= NE_BOX.s && lat <= NE_BOX.n;
 
 export function decodePolyline(str, precision = 6) {
   const f = 10 ** precision, out = [];
@@ -42,8 +44,9 @@ export function osrmTableUrl(base, from, tos) {
 const normRef = s => String(s || '').trim().replace(/^([A-Z]{1,3})[\s-]+(\d+[A-Z]?)$/i, (m, a, n) => `${a.toUpperCase()}-${n}`);
 /** Display aliases for refs that are the same road under two names, or read oddly verbatim:
  *  OSRM splits CA-88 into "SR-88" then "CA-88" (one road — merge the legs), and "US 40 Hist"
- *  is Donner Pass Road. Aliases apply to the leg key only; the raw refs still match events. */
-const REF_ALIAS = { 'SR-88': 'CA-88', 'US 40 Hist': 'Donner Pass Rd' };
+ *  is Donner Pass Road. OSRM also misspells Roxbury Mountain Road as "Roxburry" (Sugarbush approach).
+ *  Aliases apply to the leg key only; the raw refs still match events. */
+const REF_ALIAS = { 'SR-88': 'CA-88', 'US 40 Hist': 'Donner Pass Rd', 'Roxburry Mountain Road': 'Roxbury Mountain Road' };
 /** First ref of an OSRM step ("I 70; US 6" → "I-70"), else the street name. */
 function stepKey(s) {
   const ref = String(s.ref || '').split(';')[0].trim();
@@ -232,10 +235,10 @@ export function oppositeDirection(route, i, e) {
 }
 
 /** Turn a route into verdictFor-compatible {segments, legs[], events[]} with synthetic seg ids.
- *  `region` ('UT', 'CA' or 'CO', default 'CO') decides which state a leg is "outside" of: legs mostly
- *  outside the resort's home state get the unknown level (no DOT data there), as Colorado legs do today. */
+ *  `region` ('UT', 'CA', 'NE' or 'CO', default 'CO') decides which state a leg is "outside" of: legs mostly
+ *  outside the resort's home region get the unknown level (no DOT data there), as Colorado legs do today. */
 export function routeSegments(route, events, startLabel, region) {
-  const inHome = region === 'UT' ? inUT : region === 'CA' ? inCA : inCO;
+  const inHome = region === 'UT' ? inUT : region === 'CA' ? inCA : region === 'NE' ? inNE : inCO;
   const segments = {}, legs = [];
   route.legs.forEach((l, i) => {
     const id = `dyn-${i}`;

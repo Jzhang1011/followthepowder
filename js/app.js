@@ -1,11 +1,12 @@
 import { openMeteoUrl, splitOpenMeteo, dailyRows, hourlyRows, weatherEmoji, carsUrl, slimEvents, EVENT_CLASSES,
   nwsUrl, slimAlerts, verdictFor, outfitFor, recommendFrom, fmt, wxGroupOf, wxGroupCfg, wxGroupCount,
-  utahCarsUrl, slimUtahEvents, caRoadsUrl, CA_DISTRICTS, slimCaEvents } from './core.js?v=97a776c584';
-import { STR, PACK_DEFAULT } from './i18n.js?v=97a776c584';
-import { selectCameras, routeSegments, inCO, inUT } from './route.js?v=97a776c584';
-import { dl, initAnalytics, selectResort, resortCompare, forecast, gear, startSet, pageView } from './analytics.js?v=97a776c584';
-import { loadStart, saveStart, isDefaultStart, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=97a776c584';
-import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=97a776c584';
+  utahCarsUrl, slimUtahEvents, caRoadsUrl, CA_DISTRICTS, slimCaEvents,
+  c2cUrl, slimNeEvents, ny511Url, slimNyEvents, massdotUrl, slimMaEvents } from './core.js?v=e5b2cdca3d';
+import { STR, PACK_DEFAULT } from './i18n.js?v=e5b2cdca3d';
+import { selectCameras, routeSegments, inCO, inUT } from './route.js?v=e5b2cdca3d';
+import { dl, initAnalytics, selectResort, resortCompare, forecast, gear, startSet, pageView } from './analytics.js?v=e5b2cdca3d';
+import { loadStart, saveStart, isDefaultStart, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=e5b2cdca3d';
+import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=e5b2cdca3d';
 
 const LS = {
   get: (k, d) => { try { const v = localStorage.getItem('ski.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -20,6 +21,7 @@ const state = {
   wx: { data: null, mode: null, at: null }, wxG: {}, roads: { data: null, mode: null, at: null }, alerts: { data: null, mode: null, at: null },
   utahRoads: { data: null, mode: null, at: null }, // {events, cameras, passes} from the UDOT feeds; null until loaded
   caRoads: { data: null, mode: null, at: null }, // {events} from the Caltrans CWWP2 feeds; null until loaded
+  neRoads: { data: null, mode: null, at: null }, // {events} merged from ne-roads + ny-roads + ma-roads; null until loaded
   intel: { data: {}, at: null, mode: null }, cams: null, camsAt: null, start: null, routes: {}, camsAll: null, startUI: null, map: null, refreshing: false, lastLive: 0
 };
 
@@ -88,6 +90,14 @@ async function getJson(url, ms = 20000) {
     return await r.json();
   } finally { clearTimeout(tm); }
 }
+async function getText(url, ms = 20000) {
+  const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), ms);
+  try {
+    const r = await fetch(url, { signal: ctl.signal, cache: 'no-store' });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return await r.text();
+  } finally { clearTimeout(tm); }
+}
 
 /* ---------- Data loading ---------- */
 
@@ -95,7 +105,7 @@ async function getJson(url, ms = 20000) {
 // falling back to the git snapshot (data/*.json, GitHub Action backup). The browser only calls the
 // upstream APIs itself when neither copy is fresh enough (see LIMIT), so visitors share one fetch.
 const API = 'api/';
-const LIMIT = { wx: 180, roads: 30, utahRoads: 30, caRoads: 30, alerts: 30, intel: 120 }; // minutes before a copy counts as stale
+const LIMIT = { wx: 180, roads: 30, utahRoads: 30, caRoads: 30, neRoads: 30, alerts: 30, intel: 120 }; // minutes before a copy counts as stale
 const ageMin = at => { if (!at) return Infinity; const ms = typeof at === 'number' ? at : new Date(String(at).replace(/([+-]\d{2})(\d{2})$/, '$1:$2')).getTime(); return isNaN(ms) ? Infinity : (Date.now() - ms) / 60000; };
 const isStale = slot => !state[slot].data || ageMin(state[slot].at) > LIMIT[slot];
 
@@ -123,6 +133,12 @@ async function loadServer() {
     if (src.roads?.ok && s.roads) take('roads', s.roads.events, src.roads.fetchedAt, from, src.roads.status);
     if (src['utah-roads']?.ok && s['utah-roads']) take('utahRoads', s['utah-roads'], src['utah-roads'].fetchedAt, from, src['utah-roads'].status);
     if (src['ca-roads']?.ok && s['ca-roads']) take('caRoads', s['ca-roads'], src['ca-roads'].fetchedAt, from, src['ca-roads'].status);
+    const neKeys = ['ne-roads', 'ny-roads', 'ma-roads'];
+    if (neKeys.some(k => src[k]?.ok && s[k])) {
+      const evs = neKeys.flatMap(k => s[k]?.events || []);
+      const at = neKeys.map(k => src[k]?.fetchedAt).filter(Boolean).sort().pop();
+      take('neRoads', { events: evs }, at, from, neKeys.every(k => src[k]?.status === 'ok') ? 'ok' : 'stale');
+    }
     if (s.alerts && src.alerts?.ok !== false && Object.values(s.alerts).some(v => v)) take('alerts', s.alerts, src.alerts?.fetchedAt, from, src.alerts?.status);
     if (s.cameras) state.cams = s.cameras;
   }
@@ -159,11 +175,11 @@ async function loadWxGroups(groups) {
 }
 const otherWxGroups = () => { const cur = wxGroupOf(resort()); return Array.from({ length: wxGroupCount(state.cfg) }, (_, i) => i).filter(g => g !== cur && g > 0 && !wxFresh(g)); };
 
-/** The road-data slot for a resort: CDOT for Colorado, UDOT for Utah, Caltrans for California. */
-const roadsSlot = r => r?.region === 'UT' ? state.utahRoads : r?.region === 'CA' ? state.caRoads : state.roads;
+/** The road-data slot for a resort: CDOT for Colorado, UDOT for Utah, Caltrans for California, the three Northeast feeds merged for the Northeast. */
+const roadsSlot = r => r?.region === 'UT' ? state.utahRoads : r?.region === 'CA' ? state.caRoads : r?.region === 'NE' ? state.neRoads : state.roads;
 /** The slim events array for a resort's road slot (null when not loaded — the verdict then says roads
  *  are unavailable instead of a false all-clear). */
-const roadsEvents = r => r?.region === 'UT' ? (state.utahRoads.data?.events || null) : r?.region === 'CA' ? (state.caRoads.data?.events || null) : state.roads.data;
+const roadsEvents = r => r?.region === 'UT' ? (state.utahRoads.data?.events || null) : r?.region === 'CA' ? (state.caRoads.data?.events || null) : r?.region === 'NE' ? (state.neRoads.data?.events || null) : state.roads.data;
 
 /** Last resort: fetch upstream directly, only for sources with no fresh copy. */
 async function loadLiveFallback() {
@@ -172,13 +188,25 @@ async function loadLiveFallback() {
   if (!wxFresh(g)) { const gc = wxGroupCfg(cfg, g); jobs.push(getJson(openMeteoUrl(gc)).then(j => { const d = splitOpenMeteo(gc, j); if (!Object.keys(d).length) throw new Error('empty'); takeWx(g, d, new Date().toISOString(), 'live', 'ok'); })
     .catch(e => { state.wx.error = String(e.message || e); })); }
   const rr = resort().region;
-  if (isStale(rr === 'UT' ? 'utahRoads' : rr === 'CA' ? 'caRoads' : 'roads')) {
+  if (isStale(rr === 'UT' ? 'utahRoads' : rr === 'CA' ? 'caRoads' : rr === 'NE' ? 'neRoads' : 'roads')) {
     if (rr === 'UT') jobs.push(getJson(utahCarsUrl(cfg), 30000)
       .then(j => { state.utahRoads = { data: { events: slimUtahEvents(cfg, j), cameras: [], passes: [] }, mode: 'live', at: new Date().toISOString(), status: 'ok' }; })
       .catch(e => { state.utahRoads.error = String(e.message || e); }));
     else if (rr === 'CA') jobs.push(Promise.all(CA_DISTRICTS.flatMap(d => [getJson(caRoadsUrl(d, 'cc'), 30000), getJson(caRoadsUrl(d, 'lcs'), 30000)]))
       .then(all => { const cc = [], lcs = []; all.forEach((j, i) => (i % 2 === 0 ? cc : lcs).push(...(j.data || []))); state.caRoads = { data: { events: slimCaEvents(cfg, { cc, lcs }) }, mode: 'live', at: new Date().toISOString(), status: 'ok' }; })
       .catch(e => { state.caRoads.error = String(e.message || e); }));
+    else if (rr === 'NE') jobs.push((async () => {
+      // Each feed on its own: one failing must not drop the other two. The NY winter file
+      // (18 MB) is skipped here — closures + incidents only; the worker copy carries winter.
+      const parts = await Promise.allSettled([
+        Promise.all([getText(c2cUrl('incidentData'), 30000), getText(c2cUrl('laneClosureData'), 30000)]).then(([i, l]) => slimNeEvents(cfg, i, l)),
+        Promise.all([getJson(ny511Url('closures'), 30000), getJson(ny511Url('incidents'), 30000)]).then(([c, i]) => slimNyEvents(cfg, { closures: c, winter: { features: [] }, incidents: i })),
+        getText(massdotUrl(), 30000).then(x => slimMaEvents(cfg, x))
+      ]);
+      const evs = parts.flatMap(p => p.status === 'fulfilled' ? p.value : []);
+      if (parts.some(p => p.status === 'fulfilled')) state.neRoads = { data: { events: evs }, mode: 'live', at: new Date().toISOString(), status: 'ok' };
+      else state.neRoads.error = parts.map(p => String(p.reason?.message || p.reason)).join('; ');
+    })());
     else jobs.push(Promise.all(EVENT_CLASSES.map(c => getJson(carsUrl(cfg, c), 30000).then(j => slimEvents(cfg, c, j))))
       .then(all => { state.roads = { data: all.flat(), mode: 'live', at: new Date().toISOString(), status: 'ok' }; })
       .catch(e => { state.roads.error = String(e.message || e); }));
@@ -217,10 +245,10 @@ const ctxMemo = new Map();
 function ctxFor(r) {
   const rs = state.routes[r.id];
   if (!rs || rs.status !== 'ok') return null;
-  const ut = r.region === 'UT'; const ca = r.region === 'CA';
-  const evData = ut ? (state.utahRoads.data?.events || []) : ca ? (state.caRoads.data?.events || []) : (state.roads.data || []);
+  const ut = r.region === 'UT'; const ca = r.region === 'CA'; const ne = r.region === 'NE';
+  const evData = ut ? (state.utahRoads.data?.events || []) : ca ? (state.caRoads.data?.events || []) : ne ? (state.neRoads.data?.events || []) : (state.roads.data || []);
   const camData = ut ? (state.utahRoads.data?.cameras || null) : state.camsAll;
-  const key = `${rs.key}|${ut ? state.utahRoads.at : ca ? state.caRoads.at : state.roads.at}|${camData ? camData.length : 0}`;
+  const key = `${rs.key}|${ut ? state.utahRoads.at : ca ? state.caRoads.at : ne ? state.neRoads.at : state.roads.at}|${camData ? camData.length : 0}`;
   if (ctxMemo.get(r.id)?.key === key) return ctxMemo.get(r.id);
   const route = rs.route;
   const dyn = routeSegments(route, evData, undefined, r.region);
@@ -239,7 +267,7 @@ function verdict(r) {
   const cfg = c ? { ...state.cfg, segments: { ...state.cfg.segments, ...c.segments } } : state.cfg;
   const evs = roadsEvents(r);
   return verdictFor(cfg, c ? { ...r, route: c.legs } : r, {
-    roads: evs ? { ok: true, events: c ? c.events : evs, chainKnown: r.region !== 'UT' } : { ok: false },
+    roads: evs ? { ok: true, events: c ? c.events : evs, chainKnown: r.region !== 'UT' && r.region !== 'NE' } : { ok: false },
     alerts: state.alerts.data && state.alerts.data[r.id] ? { ok: true, list: state.alerts.data[r.id] } : { ok: false },
     days: daysFor(r), intel: intelFor(r)
   });
@@ -332,7 +360,13 @@ const SEV = { nogo: 0, caution: 1, unknown: 2, info: 3, go: 4 };
 const GROUP = { resort: 'mountain', chain: 'road', closure: 'road', incident: 'road', conditions: 'road', roads: 'road', nws: 'weather', snow: 'weather', wind: 'weather', cold: 'weather', vis: 'weather', weather: 'weather' };
 function srcOf(x, r) {
   if (x.kind === 'resort') return intelFor(r)?.source?.name || r.short;
-  if (GROUP[x.kind] === 'road') return r.region === 'UT' ? t('src_udot') : r.region === 'CA' ? t('src_caltrans') : t('src_cdot');
+  if (GROUP[x.kind] === 'road') {
+    const es = x.ev?.src; // Northeast events carry their feed origin ('ne' | 'ny' | 'ma')
+    if (es === 'ny') return t('src_511ny');
+    if (es === 'ma') return t('src_massdot');
+    if (es === 'ne') return t('src_tristate');
+    return r.region === 'UT' ? t('src_udot') : r.region === 'CA' ? t('src_caltrans') : r.region === 'NE' ? t('src_ne') : t('src_cdot');
+  }
   return x.kind === 'nws' ? t('src_nws') : t('src_om');
 }
 /* ---------- Shared resort-page components (full dashboards + basic catalog pages, via ctx.ui) ---------- */
@@ -362,7 +396,7 @@ function roadCheck(r, route) {
   if (!evs || !route) return null;
   const dyn = routeSegments(route, evs, undefined, r.region);
   const cfg = { ...state.cfg, segments: { ...state.cfg.segments, ...dyn.segments } };
-  const v = verdictFor(cfg, { ...r, route: dyn.legs }, { roads: { ok: true, events: dyn.events, chainKnown: r.region !== 'UT' }, alerts: { ok: true, list: [] }, days: null });
+  const v = verdictFor(cfg, { ...r, route: dyn.legs }, { roads: { ok: true, events: dyn.events, chainKnown: r.region !== 'UT' && r.region !== 'NE' }, alerts: { ok: true, list: [] }, days: null });
   const segN = id => { const sg = dyn.segments[id]; return sg ? `${sg.key} · ${km(sg.km * 1000)}` : id; };
   return { at: roadsSlot(r).at, reasons: v.reasons.filter(x => GROUP[x.kind] === 'road').map(x => ({ ...x, text: reasonText(x), segLabel: x.seg ? segN(x.seg) : '' })) };
 }
@@ -375,7 +409,7 @@ function renderVerdict() {
   $$('#hero-credit').innerHTML = r.photo ? `📷 ${esc(r.photo.credit)} · <a href="${esc(r.photo.page)}" target="_blank" rel="noopener">${esc(r.photo.license)}</a>` : '';
   const bad = [...v.reasons].filter(x => x.level === 'nogo' || x.level === 'caution').sort((a, b) => SEV[a.level] - SEV[b.level]);
   const when = i?.ok ? fmtTime([i.asOf, i.snowAsOf].filter(Boolean).sort((a, b) => ageMin(a) - ageMin(b))[0] || i.fetchedAt) : '';
-  const basis = rec.key === 'rec_noreport' ? (noFeed(r) ? t('intel_nofeed') : t('rec_noreport_sub')) : t('rec_basis', `${t('rec_src_rep', `${i.source?.name || r.short}, ${when}`)}, ${t(r.region === 'UT' ? 'rec_src_rest_ut' : r.region === 'CA' ? 'rec_src_rest_ca' : 'rec_src_rest')}`);
+  const basis = rec.key === 'rec_noreport' ? (noFeed(r) ? t('intel_nofeed') : t('rec_noreport_sub')) : t('rec_basis', `${t('rec_src_rep', `${i.source?.name || r.short}, ${when}`)}, ${t(r.region === 'UT' ? 'rec_src_rest_ut' : r.region === 'CA' ? 'rec_src_rest_ca' : r.region === 'NE' ? 'rec_src_rest_ne' : 'rec_src_rest')}`);
   $('#verdict').innerHTML = UI.rec(rec, bad.map(reasonText), basis);
 
   // A. Mountain conditions
@@ -397,17 +431,24 @@ function renderVerdict() {
   const dur = dm == null ? null : `${Math.floor(dm / 60)}h${String(dm % 60).padStart(2, '0')}`;
   const ut = r.region === 'UT';
   const ca = r.region === 'CA';
+  const ne = r.region === 'NE';
   const slot = roadsSlot(r);
-  const roadsOk = ut ? !!state.utahRoads.data?.events : !!state.roads.data;
+  const roadsOk = ut ? !!state.utahRoads.data?.events : ne ? !!state.neRoads.data?.events : !!state.roads.data;
   const cnt = kinds => roadCount(v.reasons, kinds, roadsOk);
   const ch0 = cnt(['chain']), cl = cnt(['closure']), inc = cnt(['incident', 'conditions']);
-  // Utah feeds carry no chain data: no chain reason on the route means "not reported", not "none".
-  const ch = (ut && !v.reasons.some(x => x.kind === 'chain' && x.seg)) ? { cls: 'unknown', txt: t('g_chain_na') } : ch0;
+  // Utah feeds carry no chain data, and no Northeast feed reports chain / traction law at all:
+  // no chain reason on the route means "not reported", not "none".
+  const ch = ((ut || ne) && !v.reasons.some(x => x.kind === 'chain' && x.seg)) ? { cls: 'unknown', txt: t(ne ? 'g_chain_na_ne' : 'g_chain_na') } : ch0;
   const traffic = ut
     ? `<a href="https://www.udottraffic.utah.gov/" target="_blank" rel="noopener">${esc(t('g_traffic_link_ut'))} ↗</a>`
     : ca
       ? `<a href="https://quickmap.dot.ca.gov/" target="_blank" rel="noopener">${esc(t('g_traffic_link_ca'))} ↗</a>`
-      : `<a href="https://www.cotrip.org/trip-planner" target="_blank" rel="noopener">${esc(t('g_traffic_link'))} ↗</a>`;
+      : ne
+        // NY resorts drive from Albany / Burlington: 511NY is their road source.
+        ? ((r.gateway === 'ALB' || r.gateway === 'BTV')
+          ? `<a href="https://511ny.org/" target="_blank" rel="noopener">${esc(t('g_traffic_link_ny'))} ↗</a>`
+          : `<a href="https://newengland511.org/" target="_blank" rel="noopener">${esc(t('g_traffic_link_ne'))} ↗</a>`)
+        : `<a href="https://www.cotrip.org/trip-planner" target="_blank" rel="noopener">${esc(t('g_traffic_link'))} ↗</a>`;
   $$('#getthere').innerHTML = `<ul class="glist">
       ${UI.grow(t('g_dist'), rs?.status === 'ok' ? esc(km(rs.route.distM)) : rs?.status === 'loading' ? `<span class="muted">${esc(t('route_loading'))}</span>` : '—')}
       ${UI.grow(t('g_time'), dur ? `~${esc(dur)}` : '—', '', esc(rs?.status === 'ok' ? t('g_time_note') : dur ? t(ut ? 'g_time_static_ut' : 'g_time_static') : ''))}
@@ -566,7 +607,7 @@ function freshness(kind, r) {
     return { cls: stale ? 'stale' : 'ok', text: stale ? t('b_cached', ago(at)) : t('b_report', ago(at)) };
   }
   if (kind === 'roads') {
-    const s = r?.region === 'UT' ? state.utahRoads : r?.region === 'CA' ? state.caRoads : state.roads;
+    const s = r?.region === 'UT' ? state.utahRoads : r?.region === 'CA' ? state.caRoads : r?.region === 'NE' ? state.neRoads : state.roads;
     if (!s?.data) return { cls: 'na', text: t('b_na') };
     if (ageMin(s.at) > LIMIT.roads || s.status === 'stale') return { cls: 'stale', text: t('b_cached', ago(s.at)) };
     return { cls: 'ok', text: t('b_live', ago(s.at)) };
@@ -645,7 +686,7 @@ function passBlock(r, c) {
 }
 
 function renderRoads() {
-  const r = resort(); const cfg = state.cfg; const ut = r.region === 'UT'; const ca = r.region === 'CA';
+  const r = resort(); const cfg = state.cfg; const ut = r.region === 'UT'; const ca = r.region === 'CA'; const ne = r.region === 'NE';
   const slot = roadsSlot(r);
   const evs = roadsEvents(r); const el = $('#roads');
   const c = ctxFor(r);
@@ -660,7 +701,7 @@ function renderRoads() {
     const segR = allR.filter(x => x.seg === leg.seg);
     const lvl = !evs || seg.outside ? 'unknown' : !segR.length ? 'go' : segR.some(x => x.level === 'nogo') ? 'nogo' : segR.some(x => x.level === 'caution') ? 'caution' : 'info';
     const nm = c ? `${esc(seg.key)} <small class="muted">· ${km(seg.km * 1000)}</small>` : esc(L(seg.name));
-    const name = `${nm}${seg.outside ? ` <small class="tag">${esc(t(ut ? 'outside_tag_ut' : ca ? 'outside_tag_ca' : 'outside_tag'))}</small>` : ''}${leg.alt ? ` <small class="muted">(${esc(t('alt'))})</small>` : ''}`;
+    const name = `${nm}${seg.outside ? ` <small class="tag">${esc(t(ut ? 'outside_tag_ut' : ca ? 'outside_tag_ca' : ne ? 'outside_tag_ne' : 'outside_tag'))}</small>` : ''}${leg.alt ? ` <small class="muted">(${esc(t('alt'))})</small>` : ''}`;
     return `<li class="rrow"><span class="pill-s p-${PILL[lvl]}">${esc(t(PILL[lvl]))}</span>${list.length
       ? `<details><summary>${name} <small class="muted">· ${list.length}</small></summary><ul class="evs">${list.map(e => `<li>${icon(e)} ${esc(e.tooltip || e.title)}${e.oppDir ? ` <small class="tag">${esc(t('opp_dir'))}</small>` : ''}<br><small class="muted">${esc(e.detail)}</small></li>`).join('')}</ul></details>`
       : `<span>${name}</span>`}</li>`;
@@ -676,26 +717,32 @@ function renderRoads() {
     const camHref = m => ut ? m.img : `https://www.cotrip.org/camera/${m.id}`;
     camsHtml = c.cams.length ? c.cams.map((m, i) => camTile({ href: camHref(m), img: m.img, name: camShort(m.name), title: m.name, ts: m.ts, broken: m.broken,
       extra: `<i class="num">${i + 1}</i><em class="km">${km(m.along)}</em>` })).join('')
-      : `<p class="muted">${esc(t(ut ? 'cams_none_ut' : ca ? 'cams_none_ca' : 'cams_none'))}</p>`;
+      : `<p class="muted">${esc(t(ut ? 'cams_none_ut' : ca ? 'cams_none_ca' : ne ? 'cams_none_ne' : 'cams_none'))}</p>`;
   } else {
     const meta = new Map((state.cams || []).map(x => [x.id, x]));
     const onRoute = new Set(r.route.map(x => x.seg));
     const list = ut ? [] : cfg.cameras.filter(x => onRoute.has(x.seg));
     camCount = list.length;
     camsHtml = list.length ? list.map(x => { const mm = meta.get(x.id); return camTile({ href: `https://www.cotrip.org/camera/${x.id}`, img: mm?.image || x.image, name: camShort(x.name), title: x.name, ts: mm?.ts, broken: mm?.broken }); }).join('')
-      : `<p class="muted">${esc(t(ut ? 'cams_none_ut' : ca ? 'cams_none_ca' : 'cams_none'))}</p>`;
+      : `<p class="muted">${esc(t(ut ? 'cams_none_ut' : ca ? 'cams_none_ca' : ne ? 'cams_none_ne' : 'cams_none'))}</p>`;
   }
   const from = c ? L(state.start.name) : L(state.cfg.trip.origin.name);
   const srcLine = ut
     ? `UDOT · ${slot.data ? `${esc(fmtTime(slot.at))} (${esc(ago(slot.at))})` : esc(t('unavailable'))}${c ? ` · ${esc(t('route_src'))} <a href="https://project-osrm.org/" target="_blank" rel="noopener">OSRM</a> (© OpenStreetMap)` : ''} · <a href="https://www.udottraffic.utah.gov/" target="_blank" rel="noopener">${esc(t('open_udot'))} ↗</a>`
     : ca
       ? `Caltrans · ${slot.data ? `${esc(fmtTime(slot.at))} (${esc(ago(slot.at))})` : esc(t('unavailable'))} · ${esc(t('route_src'))} <a href="https://project-osrm.org/" target="_blank" rel="noopener">OSRM</a> (© OpenStreetMap) · <a href="https://quickmap.dot.ca.gov/" target="_blank" rel="noopener">${esc(t('open_caltrans'))} ↗</a>`
-      : `CDOT COtrip · ${state.roads.data ? `${esc(fmtTime(state.roads.at))} (${esc(ago(state.roads.at))})` : esc(t('unavailable'))}${c ? ` · ${esc(t('route_src'))} <a href="https://project-osrm.org/" target="_blank" rel="noopener">OSRM</a> (© OpenStreetMap)` : ''} · <a href="https://www.cotrip.org/" target="_blank" rel="noopener">${esc(t('open_cotrip'))} ↗</a> · <a href="https://www.cotrip.org/road-conditions" target="_blank" rel="noopener">${esc(t('cotrip_cond'))} ↗</a>`;
+      : ne
+        ? `Tri-State 511 · 511NY · ${slot.data ? `${esc(fmtTime(slot.at))} (${esc(ago(slot.at))})` : esc(t('unavailable'))}${c ? ` · ${esc(t('route_src'))} <a href="https://project-osrm.org/" target="_blank" rel="noopener">OSRM</a> (© OpenStreetMap)` : ''} · <a href="https://newengland511.org/" target="_blank" rel="noopener">${esc(t('open_ne511'))} ↗</a> · <a href="https://511ny.org/" target="_blank" rel="noopener">${esc(t('open_511ny'))} ↗</a>`
+        : `CDOT COtrip · ${state.roads.data ? `${esc(fmtTime(state.roads.at))} (${esc(ago(state.roads.at))})` : esc(t('unavailable'))}${c ? ` · ${esc(t('route_src'))} <a href="https://project-osrm.org/" target="_blank" rel="noopener">OSRM</a> (© OpenStreetMap)` : ''} · <a href="https://www.cotrip.org/" target="_blank" rel="noopener">${esc(t('open_cotrip'))} ↗</a> · <a href="https://www.cotrip.org/road-conditions" target="_blank" rel="noopener">${esc(t('cotrip_cond'))} ↗</a>`;
   const driveLink = ut
     ? `<a href="https://www.udottraffic.utah.gov/" target="_blank" rel="noopener">${esc(t('open_udot'))} ↗</a>`
     : ca
       ? `<a href="https://quickmap.dot.ca.gov/" target="_blank" rel="noopener">${esc(t('open_caltrans'))} ↗</a>`
-      : `<a href="https://www.cotrip.org/trip-planner" target="_blank" rel="noopener">${esc(t('cotrip_tt'))} ↗</a>`;
+      : ne
+        ? ((r.gateway === 'ALB' || r.gateway === 'BTV')
+          ? `<a href="https://511ny.org/" target="_blank" rel="noopener">${esc(t('open_511ny'))} ↗</a>`
+          : `<a href="https://newengland511.org/" target="_blank" rel="noopener">${esc(t('open_ne511'))} ↗</a>`)
+        : `<a href="https://www.cotrip.org/trip-planner" target="_blank" rel="noopener">${esc(t('cotrip_tt'))} ↗</a>`;
   el.innerHTML = `<div class="sec-h"><h2>${esc(t('roads_h'))}</h2><span class="sub-h">${esc(from)} → ${esc(r.short)}${c ? ` · ${km(c.route.distM)}` : ''}</span>${badge('roads', r)}</div>
     ${routeNoteHtml(r)}
     ${c ? '' : `<details class="more"><summary>🧭 ${esc(t('route'))}</summary><p class="small">${esc(L(r.routeNote))}</p></details>`}
@@ -894,10 +941,10 @@ function renderSources() {
   const via = m => t(m === 'live' ? 'via_live' : m === 'server' ? 'via_server' : 'via_snapshot');
   const cls = f => f.cls === 'ok' ? 'ok' : f.cls === 'stale' ? 'snap' : 'bad';
   const r = resort();
-  const item = (k, slot, rr) => { const f = freshness(slot, rr), s = (slot === 'roads' && rr?.region === 'UT') ? state.utahRoads : (slot === 'roads' && rr?.region === 'CA') ? state.caRoads : state[slot];
+  const item = (k, slot, rr) => { const f = freshness(slot, rr), s = (slot === 'roads' && rr?.region === 'UT') ? state.utahRoads : (slot === 'roads' && rr?.region === 'CA') ? state.caRoads : (slot === 'roads' && rr?.region === 'NE') ? state.neRoads : state[slot];
     return `<span class="${cls(f)}">${esc(t(k))}: ${esc(f.text)}${s.data ? ` · ${esc(fmtTime(s.at))} · ${esc(via(s.mode))}` : ''}</span>`; };
   const fi = freshness('intel', r);
-  const roadsItem = r?.region === 'CA' ? item('src_roads_ca', 'roads', r) : item(r?.region === 'UT' ? 'src_roads_ut' : 'src_roads', 'roads', r);
+  const roadsItem = r?.region === 'CA' ? item('src_roads_ca', 'roads', r) : r?.region === 'NE' ? item('src_roads_ne', 'roads', r) : item(r?.region === 'UT' ? 'src_roads_ut' : 'src_roads', 'roads', r);
   $('#sources').innerHTML = roadsItem + item('src_weather', 'wx') + item('src_alerts', 'alerts')
     + `<span class="${cls(fi)}">${esc(t('intel_h'))}: ${esc(fi.text)}${state.intel.at ? ` · ${esc(fmtTime(state.intel.at))} · ${esc(via(state.intel.mode))}` : ''}</span>`
     + (state.camsAt ? `<span class="${ageMin(state.camsAt) > 60 ? 'snap' : 'ok'}">${esc(t('cameras'))}: ${esc(t('cam_list'))} ${esc(ago(state.camsAt))}</span>` : '');

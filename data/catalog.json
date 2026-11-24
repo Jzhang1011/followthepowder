@@ -1,7 +1,7 @@
 {
  "version": 1,
  "updated": "2026-11-18",
- "note": "Coordinates and elevations from each resort's Wikipedia infobox (src) unless detail=full (verified in resorts.json) or noted; pass membership from ikonpass.com and epicpass.com for the 2026/27 season. passes:[] = neither Ikon nor Epic. Photos: Wikimedia Commons, licence + author in photo{}; no photo = neutral placeholder.",
+ "note": "Coordinates and elevations from each resort's Wikipedia infobox (src) unless detail=full (verified in resorts.json) or noted; pass membership from ikonpass.com, epicpass.com and indypass.com for the 2026/27 season. passes:[] = none of Ikon, Epic or Indy. Photos: Wikimedia Commons, licence + author in photo{}; no photo = neutral placeholder.",
  "regions": [
   {
    "id": "colorado",
@@ -47,6 +47,10 @@
   {
    "id": "epic",
    "name": "Epic"
+  },
+  {
+   "id": "indy",
+   "name": "Indy"
   }
  ],
  "resorts": [
@@ -1981,7 +1985,7 @@
    "summitElevM": 1293,
    "tz": "America/New_York",
    "url": "https://www.killington.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Killington_Ski_Resort",
    "photo": {
     "src": "img/cat/killington.jpg",
@@ -2008,7 +2012,7 @@
    "summitElevM": 1244,
    "tz": "America/New_York",
    "url": "https://www.sugarbush.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Sugarbush_Resort",
    "photo": {
     "src": "img/cat/sugarbush.jpg",
@@ -2041,8 +2045,14 @@
    "summitElevM": 1181,
    "tz": "America/New_York",
    "url": "https://www.stratton.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Stratton_Mountain_Resort",
+   "photo": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/55/Skiing_for_Thanksgiving_%283075768874%29.jpg/960px-Skiing_for_Thanksgiving_%283075768874%29.jpg",
+    "credit": "Rudi Riet",
+    "license": "CC BY-SA 2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Skiing_for_Thanksgiving_(3075768874).jpg"
+   },
    "report": {
     "p": "mtnpowder",
     "ids": [
@@ -2068,7 +2078,7 @@
    "summitElevM": 957,
    "tz": "America/New_York",
    "url": "https://www.sundayriver.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Sunday_River_(ski_resort)",
    "photo": {
     "src": "img/cat/sunday-river.jpg",
@@ -2100,8 +2110,14 @@
    "summitElevM": 1291,
    "tz": "America/New_York",
    "url": "https://www.sugarloaf.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Sugarloaf_(ski_resort)",
+   "photo": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f7/Sugarloaf_ski_resort_Maine.JPG/960px-Sugarloaf_ski_resort_Maine.JPG",
+    "credit": "petersent",
+    "license": "Public domain",
+    "page": "https://commons.wikimedia.org/wiki/File:Sugarloaf_ski_resort_Maine.JPG"
+   },
    "report": {
     "p": "reportpal",
     "host": "www.sugarloaf.com",
@@ -2126,8 +2142,14 @@
    "summitElevM": 930,
    "tz": "America/New_York",
    "url": "https://www.loonmtn.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Loon_Mountain_Ski_Resort",
+   "photo": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6c/Loonmtn_northpeak.JPG/960px-Loonmtn_northpeak.JPG",
+    "credit": "Luinfana",
+    "license": "Public domain",
+    "page": "https://commons.wikimedia.org/wiki/File:Loonmtn_northpeak.JPG"
+   },
    "report": {
     "p": "reportpal",
     "host": "www.loonmtn.com",
@@ -2152,8 +2174,14 @@
    "summitElevM": 1134,
    "tz": "America/New_York",
    "url": "https://www.stowe.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Stowe_Mountain_Resort",
+   "photo": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/80/Stowe-snapshot.jpg/960px-Stowe-snapshot.jpg",
+    "credit": "Ams100272",
+    "license": "Public domain",
+    "page": "https://commons.wikimedia.org/wiki/File:Stowe-snapshot.jpg"
+   },
    "report": {
     "p": "vail",
     "host": "www.stowe.com",
@@ -2175,11 +2203,11 @@
    ],
    "lat": 43.40139,
    "lon": -72.71667,
-   "baseElevM": 346,
+   "baseElevM": 349,
    "summitElevM": 1019,
    "tz": "America/New_York",
    "url": "https://www.okemo.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Okemo_Mountain",
    "photo": {
     "src": "img/cat/okemo.jpg",
@@ -2212,7 +2240,7 @@
    "summitElevM": 1097,
    "tz": "America/New_York",
    "url": "https://www.mountsnow.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Mount_Snow",
    "photo": {
     "src": "img/cat/mount-snow.jpg",
@@ -2245,7 +2273,7 @@
    "summitElevM": 975,
    "tz": "America/New_York",
    "url": "https://www.huntermtn.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Hunter_Mountain_(ski_area)",
    "photo": {
     "src": "img/cat/hunter.jpg",
@@ -2269,15 +2297,23 @@
    "country": "US",
    "region": "northeast",
    "range": "Green Mountains",
-   "passes": [],
+   "passes": [
+    "indy"
+   ],
    "lat": 44.92944,
    "lon": -72.53222,
-   "baseElevM": 553,
+   "baseElevM": 533,
    "summitElevM": 1177,
    "tz": "America/New_York",
    "url": "https://www.jaypeakresort.com/",
-   "detail": "basic",
-   "src": "https://en.wikipedia.org/wiki/Jay_Peak_Resort"
+   "detail": "full",
+   "src": "https://en.wikipedia.org/wiki/Jay_Peak_Resort",
+   "photo": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a4/Jay_Peak.JPG/960px-Jay_Peak.JPG",
+    "credit": "Hanumanix",
+    "license": "Public domain",
+    "page": "https://commons.wikimedia.org/wiki/File:Jay_Peak.JPG"
+   }
   },
   {
    "id": "whiteface",
@@ -2297,7 +2333,7 @@
    "summitElevM": 1337,
    "tz": "America/New_York",
    "url": "https://www.whiteface.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Whiteface_Mountain",
    "photo": {
     "src": "img/cat/whiteface.jpg",

@@ -15,16 +15,16 @@ const CFG_URL = 'https://raw.githubusercontent.com/Jzhang1011/followthepowder/ma
 // Weather group 0 is src:weather (served in latest.json); groups 1.. are src:weather:g<N> (api/weather.json?g=N).
 const WXG = Math.max(4, wxGroupCount(bundledCfg)); // key space; the live cfg decides how many groups are refreshed
 const wxKey = g => g > 0 ? `weather:g${g}` : 'weather';
-const KEYS = ['weather', ...Array.from({ length: WXG - 1 }, (_, i) => wxKey(i + 1)), 'roads', 'alerts', 'cameras', 'camsall', 'intel', 'cotrip', 'utah-roads', 'ca-roads'];
+const KEYS = ['weather', ...Array.from({ length: WXG - 1 }, (_, i) => wxKey(i + 1)), 'roads', 'alerts', 'cameras', 'camsall', 'intel', 'cotrip', 'utah-roads', 'ca-roads', 'ne-roads', 'ny-roads', 'ma-roads'];
 /** What a cron tick (every 15 min, UTC) refreshes. */
 function plan(d) {
   const h = d.getUTCHours(), q = Math.floor(d.getUTCMinutes() / 15);
   if (h === 12 && q === 2) return SOURCES;                     // 12:30 UTC = 5:30 AM MST: everything
-  const out = ['roads', 'utah-roads', 'ca-roads', 'alerts', 'cameras'];    // every 15 min
+  const out = ['roads', 'utah-roads', 'ca-roads', 'ne-roads', 'ny-roads', 'ma-roads', 'alerts', 'cameras'];    // every 15 min
   if (q === 0) { out.push('weather'); if (h >= 12 && h <= 23) out.push('intel'); } // hourly; intel 5 AM–4 PM MST
   return out;
 }
-const PLAN = { cron: '*/15 * * * *', every15min: ['roads', 'utah-roads', 'ca-roads', 'alerts', 'cameras', 'catalog (1 of 4 slices: Open-Meteo + resort lift/terrain/snow feeds; each resort hourly)'], hourly: ['weather (group 0 here; groups 1.. fanned out, one self-request each)'], hourly_12_23_utc: ['intel'], daily_12_30_utc: SOURCES };
+const PLAN = { cron: '*/15 * * * *', every15min: ['roads', 'utah-roads', 'ca-roads', 'ne-roads', 'ny-roads', 'ma-roads', 'alerts', 'cameras', 'catalog (1 of 4 slices: Open-Meteo + resort lift/terrain/snow feeds; each resort hourly)'], hourly: ['weather (group 0 here; groups 1.. fanned out, one self-request each)'], hourly_12_23_utc: ['intel'], daily_12_30_utc: SOURCES };
 const TTL = 60; // seconds: browsers and the edge re-check every minute; data itself changes every 15–60 min
 
 async function loadCfg() {
@@ -101,7 +101,7 @@ const json = (body, status = 200, extra = {}) => new Response(JSON.stringify(bod
 
 async function serve(name, env, opt = {}) {
   if (name === 'latest') {
-    const rec = await readAll(env, ['weather', 'roads', 'alerts', 'cameras', 'utah-roads', 'ca-roads']);
+    const rec = await readAll(env, ['weather', 'roads', 'alerts', 'cameras', 'utah-roads', 'ca-roads', 'ne-roads', 'ny-roads', 'ma-roads']);
     if (!Object.values(rec).some(Boolean)) return json({ error: 'no data yet' }, 503);
     return json(toLatest(rec, 'ski-data-worker'));
   }
