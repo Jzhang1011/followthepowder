@@ -10,19 +10,19 @@
   })(window,document,'script','dataLayer','GTM-WQH2HB5M');</script>
   <!-- End Google Tag Manager -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>SkiDay</title>
-  <meta name="description" content="SkiDay: find a ski resort and check today's conditions. Search 75+ North American resorts (Ikon, Epic and more): new and forecast snow, resort-reported base depth, terrain open and lifts, favorites, map and a transparent ski-day score. Full go / no-go dashboards for A-Basin, Copper and Steamboat." />
+  <title>Follow the Powder</title>
+  <meta name="description" content="Follow the Powder: find a ski resort and check today's conditions. Search 75+ North American resorts (Ikon, Epic and more): new and forecast snow, resort-reported base depth, terrain open and lifts, favorites, map and a transparent ski-day score. Full go / no-go dashboards for 47 resorts across Colorado, Utah, California and the Northeast." />
   <link rel="canonical" href="https://followthepowder.com/" />
   <meta property="og:type" content="website" />
-  <meta property="og:site_name" content="SkiDay" />
-  <meta property="og:title" content="SkiDay" />
+  <meta property="og:site_name" content="Follow the Powder" />
+  <meta property="og:title" content="Follow the Powder" />
   <meta property="og:description" content="Find your next great ski day. Today's snow, base depth and terrain open for 75+ North American resorts." />
   <meta property="og:url" content="https://followthepowder.com/" />
   <meta name="twitter:card" content="summary" />
   <meta name="theme-color" content="#14283F" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛷️</text></svg>" />
   <link rel="preload" href="fonts/inter-latin-wght.woff2" as="font" type="font/woff2" crossorigin />
-  <link rel="stylesheet" href="css/ski.css?v=e5736c6b05" />
+  <link rel="stylesheet" href="css/ski.css?v=dbf22cfb21" />
 </head>
 <body>
   <!-- Google Tag Manager (noscript) -->
@@ -32,12 +32,30 @@
   <script>document.body.className = 'v-' + (/[?&]resort=/.test(location.search) ? 'dash' : /[?&]plan\b/.test(location.search) ? 'plan' : 'disc');</script>
   <header class="top">
     <div class="wrap top-row">
-      <a class="brand" href="./"><span class="logo" aria-hidden="true">⛷️</span><b data-i18n="title">SkiDay</b></a>
-      <nav class="tabs" id="nav" aria-label="Sections"></nav>
+      <a class="brand" href="./"><span class="logo" aria-hidden="true">⛷️</span><b data-i18n="title">Follow the Powder</b></a>
+      <nav class="mainnav" id="mainnav" aria-label="Follow the Powder">
+        <a href="./" data-home-link data-i18n="nav_resorts">Resorts</a>
+        <a href="/what-to-wear/" data-i18n="nav_wear">What to Wear</a>
+        <a href="/learn/" data-i18n="nav_learn">Learn</a>
+      </nav>
       <div class="toggles">
         <button id="btn-lang" class="pill" type="button" aria-label="Language">中文</button>
         <button id="btn-units" class="pill" type="button" aria-label="Units">°F</button>
+        <a class="plan-cta" href="?plan=1" data-plan-link><span data-i18n="nav_plan">Plan My Ski Day</span> →</a>
         <button id="btn-refresh" class="pill icon" type="button" aria-label="Refresh" title="Refresh">↻</button>
+        <button id="btn-menu" class="pill icon hamb" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mnav">☰</button>
+      </div>
+    </div>
+    <nav class="tabs wrap" id="nav" aria-label="Sections"></nav>
+    <div class="mnav wrap" id="mnav" hidden>
+      <a href="./" data-home-link data-i18n="nav_resorts">Resorts</a>
+      <a href="/what-to-wear/" data-i18n="nav_wear">What to Wear</a>
+      <a href="/learn/" data-i18n="nav_learn">Learn</a>
+      <a href="?plan=1" data-plan-link class="mnav-cta"><span data-i18n="nav_plan">Plan My Ski Day</span> →</a>
+      <div class="mnav-toggles">
+        <button id="m-units" class="pill" type="button" aria-label="Units">°F</button>
+        <button id="m-lang" class="pill" type="button" aria-label="Language">中文</button>
+        <button id="m-refresh" class="pill icon" type="button" aria-label="Refresh" title="Refresh">↻</button>
       </div>
     </div>
   </header>
@@ -78,23 +96,44 @@
   </main>
   <div class="wrap">
     <footer class="foot">
+      <div class="foot-grid">
+        <div class="foot-brand" id="foot-about">
+          <a class="brand" href="./"><span class="logo" aria-hidden="true">⛷️</span><b>Follow the Powder</b></a>
+          <p data-i18n="foot_about">Follow the Powder helps skiers decide where to ski, what conditions to expect, and what to wear — before leaving home.</p>
+        </div>
+        <nav class="foot-col" aria-label="Product">
+          <h3 data-i18n="foot_product">Product</h3>
+          <a href="./" data-home-link data-i18n="nav_resorts">Resorts</a>
+          <a href="/what-to-wear/" data-i18n="nav_wear">What to Wear</a>
+          <a href="/learn/" data-i18n="nav_learn">Learn</a>
+          <a href="?plan=1" data-plan-link data-i18n="nav_plan">Plan My Ski Day</a>
+        </nav>
+        <nav class="foot-col" aria-label="Company">
+          <h3 data-i18n="foot_company">Company</h3>
+          <a href="#foot-about" data-i18n="nav_about">About</a>
+          <a href="mailto:admin@followthepowder.com" data-i18n="nav_contact">Contact</a>
+          <a href="#privacy-note" data-i18n="nav_privacy">Privacy Policy</a>
+          <a href="#foot-terms" data-i18n="nav_terms">Terms of Use</a>
+        </nav>
+      </div>
       <div id="sources" class="sources"></div>
       <p data-i18n="footer"></p>
       <p data-i18n="footer_disc"></p>
-      <p class="small" data-i18n="privacy_note"></p>
+      <p class="small" data-i18n="privacy_note" id="privacy-note"></p>
+      <p class="small" id="foot-terms" data-i18n="foot_terms"></p>
       <p id="credits" class="small"></p>
     </footer>
   </div>
 
   <nav class="bnav" id="bnav" aria-label="Sections"></nav>
-  <script type="module" src="js/app.js?v=e5736c6b05"></script>
-  <script nomodule>document.getElementById('verdict').innerHTML='<p style="padding:16px">This browser is too old for SkiDay. Please update iOS / your browser.</p>';</script>
+  <script type="module" src="js/app.js?v=dbf22cfb21"></script>
+  <script nomodule>document.getElementById('verdict').innerHTML='<p style="padding:16px">This browser is too old for Follow the Powder. Please update iOS / your browser.</p>';</script>
   <script>
     // Safety net: if the app has not started after 12 s (blocked script, network or a JS error), say so instead of a blank page.
     setTimeout(function () {
       if (window.__skiReady) return;
       var v = document.getElementById(document.body.className.indexOf('v-dash') >= 0 ? 'verdict' : 'discover');
-      if (v) v.innerHTML = '<div class="why"><p><b>SkiDay could not finish loading.</b> Check your connection and <a href="" onclick="location.reload(true);return false">tap to reload</a>.</p></div>';
+      if (v) v.innerHTML = '<div class="why"><p><b>Follow the Powder could not finish loading.</b> Check your connection and <a href="" onclick="location.reload(true);return false">tap to reload</a>.</p></div>';
     }, 12000);
   </script>
 </body>

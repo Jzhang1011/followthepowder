@@ -13,5 +13,7 @@ for (const f of files) h.update(strip(readFileSync(join(root, f), 'utf8')));
 const v = h.digest('hex').slice(0, 10);
 const stamp = (f, re) => { const p = join(root, f); const s = readFileSync(p, 'utf8'); const o = s.replace(re, (m, a, b) => `${a}?v=${v}${b}`); if (o !== s) writeFileSync(p, o); };
 stamp('index.html', /((?:href|src)="(?:css\/ski\.css|js\/app\.js))(?:\?v=[A-Za-z0-9]+)?(")/g);
+stamp('what-to-wear/index.html', /((?:href|src)="\.\.\/(?:css\/ski\.css|js\/(?:site|wear-page)\.js))(?:\?v=[A-Za-z0-9]+)?(")/g);
+stamp('learn/index.html', /((?:href|src)="\.\.\/(?:css\/ski\.css|js\/site\.js))(?:\?v=[A-Za-z0-9]+)?(")/g);
 for (const f of files.filter(f => f.endsWith('.js'))) stamp(f, /(from '\.\/[a-z0-9]+\.js)(?:\?v=[A-Za-z0-9]+)?(')/g);
 console.log('stamped', v);

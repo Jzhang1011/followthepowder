@@ -1,12 +1,13 @@
 import { openMeteoUrl, splitOpenMeteo, dailyRows, hourlyRows, weatherEmoji, carsUrl, slimEvents, EVENT_CLASSES,
-  nwsUrl, slimAlerts, verdictFor, outfitFor, recommendFrom, fmt, wxGroupOf, wxGroupCfg, wxGroupCount,
+  nwsUrl, slimAlerts, verdictFor, recommendFrom, fmt, wxGroupOf, wxGroupCfg, wxGroupCount,
   utahCarsUrl, slimUtahEvents, caRoadsUrl, CA_DISTRICTS, slimCaEvents,
-  c2cUrl, slimNeEvents, ny511Url, slimNyEvents, massdotUrl, slimMaEvents } from './core.js?v=e5736c6b05';
-import { STR, PACK_DEFAULT } from './i18n.js?v=e5736c6b05';
-import { selectCameras, routeSegments, inCO, inUT } from './route.js?v=e5736c6b05';
-import { dl, initAnalytics, selectResort, resortCompare, forecast, gear, startSet, pageView } from './analytics.js?v=e5736c6b05';
-import { loadStart, saveStart, closestAirport, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=e5736c6b05';
-import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=e5736c6b05';
+  c2cUrl, slimNeEvents, ny511Url, slimNyEvents, massdotUrl, slimMaEvents } from './core.js?v=dbf22cfb21';
+import { STR, PACK_DEFAULT } from './i18n.js?v=dbf22cfb21';
+import { selectCameras, routeSegments, inCO, inUT } from './route.js?v=dbf22cfb21';
+import { dl, initAnalytics, selectResort, resortCompare, forecast, gear, startSet, pageView } from './analytics.js?v=dbf22cfb21';
+import { loadStart, saveStart, closestAirport, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=dbf22cfb21';
+import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=dbf22cfb21';
+import { wearCard } from './wear.js?v=dbf22cfb21';
 
 const LS = {
   get: (k, d) => { try { const v = localStorage.getItem('ski.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -32,6 +33,12 @@ const $ = s => document.querySelector(s);
 const GTM_EVENTS = {
   disc_tab: v => ({ event: 'tab_change', tab: v }),
   disc_search: () => ({ event: 'search' }),
+  homepage_resort_search: () => ({ event: 'homepage_resort_search' }),
+  homepage_resort_selected: v => ({ event: 'homepage_resort_selected', resort_id: v, resort_name: nameOf(v) }),
+  homepage_plan_ski_day_click: () => ({ event: 'homepage_plan_ski_day_click' }),
+  homepage_what_to_wear_click: () => ({ event: 'homepage_what_to_wear_click' }),
+  homepage_learn_click: () => ({ event: 'homepage_learn_click' }),
+  homepage_explore_resorts_click: () => ({ event: 'homepage_explore_resorts_click' }),
   disc_fav: (v, x) => ({ event: v === 'add' ? 'favorite_add' : 'favorite_remove', resort_id: x?.resort_id, resort_name: x?.resort_id ? nameOf(x.resort_id) : null }),
   disc_view: v => ({ event: 'list_map_toggle', action: v }),
   lang_toggle: v => ({ event: 'language_change', action: v })
@@ -328,10 +335,12 @@ const PILL = { go: 'pass', caution: 'watch', nogo: 'fail', unknown: 'unk', info:
 function renderChrome() {
   document.documentElement.lang = state.lang === 'zh' ? 'zh-CN' : 'en';
   document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
-  document.title = state.view === 'dash' && state.cfg ? `SkiDay · ${t('q_dyn', L(resort().name))}` : 'SkiDay';
+  document.title = state.view === 'dash' && state.cfg ? `Follow the Powder · ${t('q_dyn', L(resort().name))}` : 'Follow the Powder';
   $$('#get-h').textContent = `🚗 ${t('get_h')}`;
   $('#btn-lang').textContent = t('lang');
+  const ml = $('#m-lang'); if (ml) ml.textContent = t('lang');
   $('#btn-units').textContent = U() === 'imperial' ? '°F · in' : '°C · cm';
+  const mu = $('#m-units'); if (mu) mu.textContent = U() === 'imperial' ? '°F · in' : '°C · cm';
   const items = [['verdict', 'nav_verdict'], ['intel', 'nav_intel'], ['outlook', 'nav_outlook'], ['weather', 'nav_weather'], ['roads', 'nav_roads'], ['wear', 'nav_wear'], ['resorts', 'nav_resorts'], ['pack', 'nav_pack']];
   if (state.cfg?.shop?.enabled) items.push(['shop', 'nav_shop']);
   $('#nav').innerHTML = items.map(([id, k]) => `<a href="#${id}">${esc(t(k))}</a>`).join('');
@@ -865,38 +874,12 @@ async function loadCams() {
   ctxMemo.clear();
 }
 
-const WICON = { w_base_light: '👕', w_base_mid: '👕', w_base_heavy: '👕', w_mid_fleece_opt: '🧶', w_mid_fleece: '🧶', w_mid_puffy: '🧥', w_shell: '🧥', w_jacket_insulated: '🧥',
-  w_gaiter: '🧣', w_balaclava: '🥷', w_facemask: '😷', w_gloves: '🧤', w_gloves_warm: '🧤', w_mittens: '🧤', w_handwarmers: '🔥', w_toewarmers: '🔥', w_socks: '🧦', w_helmet_goggles: '🥽', w_spare_gloves: '🎒' };
-const NICON = { n_kid_breaks: '☕', n_frostbite: '👃', n_wind: '💨', n_snow_lens: '🟡', n_sun_lens: '🕶️', n_sunscreen: '🧴', n_warm_vent: '🌤️' };
-const BAND = { mild: '🙂', cold: '🥶', verycold: '❄️', extreme: '🧊', unknown: '?' };
-const LAYER = k => /^w_base/.test(k) ? 'base' : /^w_mid/.test(k) ? 'mid' : /^w_(shell|jacket)/.test(k) ? 'outer' : 'extra';
-
-function outfitCol(keys, who, aud) {
-  const g = { base: [], mid: [], outer: [], extra: [] };
-  keys.forEach(k => g[LAYER(k)].push(k));
-  const chip = k => `<button type="button" class="wi" data-k="${k}" title="${esc(t(k))}"><i>${WICON[k] || '•'}</i>${esc(t('s_' + k))}</button>`;
-  const CAT = { base: 'base_layer', mid: 'mid_layer', outer: 'outer_layer', extra: 'accessories' };
-  const det = l => g[l].length ? `<ul class="wdet" hidden>${g[l].map(k => `<li>${WICON[k] || '•'} ${esc(t(k))}</li>`).join('')}</ul>` : '';
-  const head = l => g[l].length ? `<button type="button" class="ln" data-wexp="${CAT[l]}" aria-expanded="false">${esc(t(l === 'extra' ? 'wear_extras' : 'wear_layers_' + l))} <span aria-hidden="true">▸</span></button>` : `<span class="ln">${esc(t(l === 'extra' ? 'wear_extras' : 'wear_layers_' + l))}</span>`;
-  return `<div class="wcol" data-aud="${aud}"><div class="who">${who}</div>
-    ${['base', 'mid', 'outer'].map(l => `<div class="layer l-${l}">${head(l)}${g[l].map(chip).join('') || '<span class="muted small">—</span>'}${det(l)}</div>`).join('')}
-    <div class="extras">${g.extra.length ? head('extra') : ''}${g.extra.map(chip).join('')}${det('extra')}</div></div>`;
-}
-
 function renderWear() {
   const r = resort(); const u = U(); const days = daysFor(r); const el = $('#wear');
   if (!days) { el.innerHTML = `<h2>${esc(t('wear_h'))}</h2><p class="muted">${esc(t('r_wx_unavailable'))}</p>`; return; }
-  const card = (d, i) => {
-    const o = outfitFor(d);
-    return `<article class="wcard band-${o.band}" data-day="${i === 0 ? 'today' : esc(d.date)}">
-      <header><b>${i === 0 ? esc(t('wear_today')) : esc(dayLabel(d.date, { weekday: 'short', month: 'numeric', day: 'numeric' }))}</b>
-        <span class="wtemp">${BAND[o.band]} ${fmt.temp(d.summit.feelsMin, u)}</span><span class="badge band-${o.band}">${esc(t('band_' + o.band))}</span></header>
-      <div class="wcols">${outfitCol(o.adult, '👩 ' + esc(t('adults')), 'adult')}${outfitCol(o.kid, '🧒 ' + esc(t('kids')), 'kid')}</div>
-      <div class="wnotes">${o.notes.map(k => `<span class="wi n" title="${esc(t(k))}"><i>${NICON[k] || '•'}</i>${esc(t('s_' + k))}</span>`).join('')}</div>
-    </article>`;
-  };
   el.innerHTML = `<h2>${esc(t('wear_h'))} · ${esc(r.short)}</h2>
-    <div class="scroll"><div class="wtrack">${days.slice(0, 7).map(card).join('')}</div></div>
+    <div class="scroll"><div class="wtrack">${days.slice(0, 7).map((d, i) => wearCard(d, i, { t, fmt, u, dayLabel })).join('')}</div></div>
+    <p><a class="dlink" href="/what-to-wear/?resort=${esc(r.id)}">${esc(t('wear_full'))} →</a></p>
     <p class="note">°=${esc(t('feels_top', '').replace(/\s+/g, ' ').trim())} · ${esc(t('wear_kid_plus'))}</p>`;
 }
 
@@ -977,8 +960,23 @@ function renderAll() {
 }
 
 function bind() {
-  $('#btn-lang').onclick = () => { state.lang = state.lang === 'zh' ? 'en' : 'zh'; LS.set('lang', state.lang); renderView(); track('lang_toggle', state.lang); };
-  $('#btn-units').onclick = () => { state.units = U() === 'imperial' ? 'metric' : 'imperial'; LS.set('units', state.units); renderView(); track('unit_toggle', state.units); forecast('unit_toggle', state.units); };
+  const toggleLang = () => { state.lang = state.lang === 'zh' ? 'en' : 'zh'; LS.set('lang', state.lang); renderView(); track('lang_toggle', state.lang); };
+  const toggleUnits = () => { state.units = U() === 'imperial' ? 'metric' : 'imperial'; LS.set('units', state.units); renderView(); track('unit_toggle', state.units); forecast('unit_toggle', state.units); };
+  $('#btn-lang').onclick = toggleLang;
+  const ml = $('#m-lang'); if (ml) ml.onclick = toggleLang;
+  $('#btn-units').onclick = toggleUnits;
+  const mu = $('#m-units'); if (mu) mu.onclick = toggleUnits;
+  const mr = $('#m-refresh'); if (mr) mr.onclick = () => $('#btn-refresh').click();
+  const menu = $('#mnav'), hamb = $('#btn-menu');
+  const closeMenu = () => { if (menu && !menu.hidden) { menu.hidden = true; hamb?.setAttribute('aria-expanded', 'false'); } };
+  if (hamb && menu) hamb.onclick = () => { const open = menu.hidden; menu.hidden = !open; hamb.setAttribute('aria-expanded', String(open)); };
+  document.addEventListener('click', e => {
+    const home = e.target.closest('[data-home-link]');
+    if (home) { e.preventDefault(); closeMenu(); goHome(); return; }
+    const plan = e.target.closest('[data-plan-link]');
+    if (plan) { e.preventDefault(); closeMenu(); track('homepage_plan_ski_day_click'); openPlan(); return; }
+    if (e.target.closest('#mnav a:not([data-home-link]):not([data-plan-link])')) closeMenu();
+  });
   $('#btn-refresh').onclick = () => { if (state.view === 'dash') refresh(); else { const b = $('#btn-refresh'); b.classList.add('spin'); loadConditions(true).finally(() => { b.classList.remove('spin'); renderView(); }); } };
   document.addEventListener('click', e => {
     const rc = e.target.closest('[data-resort]');

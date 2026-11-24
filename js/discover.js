@@ -1,13 +1,15 @@
 // Resort discovery (default home) + basic resort view for catalog resorts without a full dashboard.
 // Data: data/catalog.json (static, verified) + api/catalog-conditions.json (Open-Meteo model, refreshed hourly by
-// the ski-data Worker; resort-published base depth / terrain open / lifts / 24 h snow where SkiDay reads a public feed) + api/forecast.json?r=<id> (basic view).
-import { fmt, weatherEmoji, chainLevel, recommendFrom, visLevel } from './core.js?v=e5736c6b05';
-import { getRoute, getTable } from './start.js?v=e5736c6b05';
+// the ski-data Worker; resort-published base depth / terrain open / lifts / 24 h snow where Follow the Powder reads a public feed) + api/forecast.json?r=<id> (basic view).
+import { fmt, weatherEmoji, chainLevel, recommendFrom, visLevel } from './core.js?v=dbf22cfb21';
+import { STR } from './i18n.js?v=dbf22cfb21';
+import { getRoute, getTable } from './start.js?v=dbf22cfb21';
 
 const S = {
   en: {
-    d_title: 'Find your next great ski day.', d_sub: 'Compare ski resorts, discover where conditions are best, and plan your next mountain trip.',
-    d_plan: 'Plan a Ski Trip',
+    d_title: 'Make Every Ski Day Count.', d_sub: 'Know where to ski, what conditions to expect, and what to wear before you leave home.',
+    d_sec: 'Snow conditions · Weather · What to Wear · Travel',
+    d_plan: 'Plan My Ski Day',
     d_search: 'Search resort, town, state, range or pass…', d_near: 'Near Me', d_fav: 'Favorites', d_best: 'Best Conditions', d_explore: 'Explore Resorts',
     d_recent: 'Recently viewed', d_from: 'Distances from', d_useloc: 'Use my location', d_approx: 'Approximate location (from your network)', d_locating: 'Finding you…', d_loc_fail: 'Location unavailable; using your starting point.',
     d_filters: 'Filters', d_region: 'Region', d_pass: 'Pass', d_status: 'Status', d_dist: 'Distance', d_sort: 'Sort', d_all: 'All', d_allr: 'All regions', d_allp: 'All passes', d_other: 'Other', d_any: 'Any',
@@ -15,7 +17,7 @@ const S = {
     s_score: 'Best overall', s_snow: 'Most new snow (24 h)', s_close: 'Closest', s_fcst: 'Most snowfall (next 72 h)', s_base: 'Deepest base', s_terrain: 'Most terrain open', s_open: 'Open first',
     d_view: 'View conditions', d_addfav: 'Add to favorites', d_remfav: 'Remove from favorites', d_compare: 'Compare', d_compare_n: 'Compare {0}', d_clear: 'Clear',
     d_temp: 'summit now', d_new: 'new 24 h', d_fc72: 'next 72 h', d_drive: 'drive', d_nt: 'no traffic', d_straight: 'straight-line', d_wind: 'summit wind',
-    d_open: 'Open', d_closed: 'Closed', d_lifts: '{0}/{1} lifts', d_nolift: 'Lifts not reported', d_upd: 'Updated {0}', d_model: 'Snowfall forecast, temperature and wind: Open-Meteo model estimate. Base depth, terrain open, lifts and ✓ new snow: the resort’s own published report; “Not reported” when it doesn’t publish one SkiDay can read.',
+    d_open: 'Open', d_closed: 'Closed', d_lifts: '{0}/{1} lifts', d_nolift: 'Lifts not reported', d_upd: 'Updated {0}', d_model: 'Snowfall forecast, temperature and wind: Open-Meteo model estimate. Base depth, terrain open, lifts and ✓ new snow: the resort’s own published report; “Not reported” when it doesn’t publish one Follow the Powder can read.',
     d_base: 'base depth', d_terrain: 'terrain open', d_nr: 'Not reported', d_acres: '{0}/{1} acres open', d_trails: '{0}/{1} trails open', d_rep_src: 'Resort report: {0}', d_dist_start: 'Distance from start', d_rep: 'resort-reported',
     d_fav_empty: 'No favorites yet. Tap ☆ on any resort to save it here.', d_none: 'No resorts match these filters.', d_results: 'Results for “{0}”', d_nearby: 'Near {0}',
     d_cond_na: 'Conditions are temporarily unavailable. Resort details still work.', d_nresorts: '{0} resorts', d_full: 'Full dashboard', d_basic: 'Basic',
@@ -23,7 +25,7 @@ const S = {
     d_best_near: 'Best ski options today', d_near_h: 'Closest to you', d_drive_note: 'Sorted by straight-line distance from {0}. Open a resort for the drive time from there.',
     d_best_note: 'Ranked by ski-day score (snow, base depth, terrain open, weather and distance from {0}). Tap ⓘ Ski-day score for how it works.',
     d_explore_h: 'Explore by region', d_back: 'All resorts', d_cmp_h: 'Compare resorts', d_close: 'Close', d_score_s: 'score',
-    b_limited: 'Basic view: weather-model forecast only. SkiDay can’t read a published lift, terrain or snow report for this resort, and has no road data here. Always check the official snow report before you go.',
+    b_limited: 'Basic view: weather-model forecast only. Follow the Powder can’t read a published lift, terrain or snow report for this resort, and has no road data here. Always check the official snow report before you go.',
     b_limited_rep: 'Basic view: base depth, terrain open, lifts and ✓ new snow come from the resort’s own report ({0}); forecasts are Open-Meteo model estimates. No road data here. Always check the official snow report before you go.',
     b_now: 'Now', b_mid: 'mid-mountain', b_summit: 'summit', b_48: 'Next 48 hours', b_7d: '7-day forecast', b_day: 'Day', b_snow: 'Snow', b_hilo: 'High / low', b_wind: 'Wind',
     b_get: 'Getting there', b_links: 'Official links', b_site: 'Resort website', b_report: 'Snow report, lifts & webcams (official site)', b_dir: 'Directions (Google Maps)',
@@ -34,15 +36,26 @@ const S = {
     c_season_open: 'Season open', c_season_rep: 'Resort report updated {0}', c_season_old: 'No resort update since {0}', c_season_nr: 'Season status not reported',
     c_score_of: '/100', c_score_why: 'Why this score?', c_lt1: '<1%',
     x_snow: 'Snow (new 24 h + next 72 h)', x_base: 'Base depth', x_terrain: 'Terrain open', x_weather: 'Summit wind + temperature', x_dist: 'Distance from your start',
-    x_half: 'not reported, neutral half points', x_closed: 'Resort reports itself closed: score ×0.3', x_season: 'Base and terrain are compared with the deepest base and most terrain any resort reports today, so early-season numbers aren’t judged by mid-winter standards. Crowds are not included: SkiDay has no reliable crowd data.',
+    x_half: 'not reported, neutral half points', x_closed: 'Resort reports itself closed: score ×0.3', x_season: 'Base and terrain are compared with the deepest base and most terrain any resort reports today, so early-season numbers aren’t judged by mid-winter standards. Crowds are not included: Follow the Powder has no reliable crowd data.',
     x_pos: 'Helping', x_neg: 'Holding it back', x_mid: 'Neutral',
-    p_title: 'Plan a Ski Trip', p_soon: 'Coming soon', p_lead: 'Trip planning is the next part of SkiDay: choose dates, where you start and which passes you hold, and compare destinations for a multi-day trip.',
+    h_mtn_h: 'Find Your Mountain.', h_mtn_sub: 'Compare ski conditions and find the best mountain for your next ski day.',
+    h_mtn_all: 'Explore All Resorts', h_mtn_view: 'View Resort',
+    h_wear_h: 'Dress for the Mountain, Not Just the Forecast.', h_wear_sub: 'Get practical ski outfit recommendations based on mountain conditions, temperature, wind, and precipitation.',
+    h_wear_cta: 'Explore What to Wear',
+    h_wear_base: 'Base layer', h_wear_base_d: 'Wicks sweat to keep you dry.', h_wear_mid: 'Mid layer', h_wear_mid_d: 'Traps warmth — fleece or a puffy.', h_wear_outer: 'Outerwear', h_wear_outer_d: 'Shell or insulated jacket + ski pants.', h_wear_acc: 'Accessories', h_wear_acc_d: 'Gloves, goggles, helmet, socks and warmers.',
+    h_learn_cta: 'Explore Ski Guides',
+    h_how_h: 'Your Ski Day, Made Simpler.',
+    h_how_1t: 'Choose Your Mountain', h_how_1d: 'Select a resort or compare several mountains.',
+    h_how_2t: 'Understand the Conditions', h_how_2d: 'Review snow, temperature, wind, weather, and travel considerations.',
+    h_how_3t: 'Prepare for Your Day', h_how_3d: 'Get practical recommendations for what to wear and how to prepare.',
+    p_title: 'Plan a Ski Trip', p_soon: 'Coming soon', p_lead: 'Trip planning is the next part of Follow the Powder: choose dates, where you start and which passes you hold, and compare destinations for a multi-day trip.',
     p_now: 'You can already:', p_now1: 'See where conditions are best today', p_now2: 'Explore resorts by region and pass', p_now3: 'Compare up to four resorts side by side (tick “Compare” on any card)', p_now4: 'Open a resort for drive estimates from your starting point',
-    p_note: 'Nothing here is booked or saved for you. When planning launches it will use the same live data as the rest of SkiDay.', p_back: '← Back to Best Conditions'
+    p_note: 'Nothing here is booked or saved for you. When planning launches it will use the same live data as the rest of Follow the Powder.', p_back: '← Back to Best Conditions'
   },
   zh: {
-    d_title: '找到你的下一个好雪天。', d_sub: '对比雪场，看看哪里雪况最好，规划你的下一次进山之旅。',
-    d_plan: '规划滑雪旅行',
+    d_title: '让每一次滑雪都值得。', d_sub: '出发前就知道：去哪滑、会遇到什么雪况、该穿什么。',
+    d_sec: '雪况 · 天气 · 穿衣 · 交通',
+    d_plan: '规划滑雪日',
     d_search: '搜索雪场、城镇、州、山脉或雪票…', d_near: '附近', d_fav: '收藏', d_best: '最佳雪况', d_explore: '探索雪场',
     d_recent: '最近浏览', d_from: '距离起点', d_useloc: '使用我的位置', d_approx: '大致位置（根据你的网络）', d_locating: '定位中…', d_loc_fail: '无法定位，改用你的出发地。',
     d_filters: '筛选', d_region: '地区', d_pass: '雪票', d_status: '状态', d_dist: '距离', d_sort: '排序', d_all: '全部', d_allr: '全部地区', d_allp: '全部雪票', d_other: '其他', d_any: '不限',
@@ -58,7 +71,7 @@ const S = {
     d_best_near: '今天的最佳滑雪选择', d_near_h: '离你最近', d_drive_note: '按距 {0} 的直线距离排序。打开雪场可查看从出发地的车程。',
     d_best_note: '按滑雪日评分排序（降雪、雪底深度、雪道开放、天气和距 {0} 的远近）。点 ⓘ 滑雪日评分 查看算法。',
     d_explore_h: '按地区浏览', d_back: '全部雪场', d_cmp_h: '雪场对比', d_close: '关闭', d_score_s: '分',
-    b_limited: '基础视图：仅有天气模型预报。SkiDay 读取不到此雪场公布的缆车、雪道或雪况报告，也没有这里的路况数据。出发前请务必查看雪场官方雪况报告。',
+    b_limited: '基础视图：仅有天气模型预报。Follow the Powder 读取不到此雪场公布的缆车、雪道或雪况报告，也没有这里的路况数据。出发前请务必查看雪场官方雪况报告。',
     b_limited_rep: '基础视图：雪底深度、雪道开放、缆车和带 ✓ 的新雪来自雪场自己的报告（{0}）；预报为 Open-Meteo 模型估算。这里没有路况数据。出发前请务必查看雪场官方雪况报告。',
     b_now: '现在', b_mid: '半山', b_summit: '山顶', b_48: '未来 48 小时', b_7d: '7 天预报', b_day: '日期', b_snow: '降雪', b_hilo: '最高 / 最低', b_wind: '风',
     b_get: '怎么去', b_links: '官方链接', b_site: '雪场官网', b_report: '雪况、缆车和摄像头（官网）', b_dir: '导航（Google 地图）',
@@ -69,11 +82,21 @@ const S = {
     c_season_open: '雪季已开放', c_season_rep: '雪场报告更新于 {0}', c_season_old: '自 {0} 起雪场未更新报告', c_season_nr: '雪季状态未公布',
     c_score_of: '/100', c_score_why: '为什么是这个分数？', c_lt1: '<1%',
     x_snow: '降雪（24小时新雪 + 未来72小时）', x_base: '雪底深度', x_terrain: '雪道开放', x_weather: '山顶风速 + 气温', x_dist: '距出发地',
-    x_half: '未公布，按中性一半分计', x_closed: '雪场公布关闭：分数 ×0.3', x_season: '雪底和雪道开放与今天所有雪场公布的最好数值相比，所以初雪季的数字不会按隆冬标准评判。不含人流：SkiDay 没有可靠的人流数据。',
+    x_half: '未公布，按中性一半分计', x_closed: '雪场公布关闭：分数 ×0.3', x_season: '雪底和雪道开放与今天所有雪场公布的最好数值相比，所以初雪季的数字不会按隆冬标准评判。不含人流：Follow the Powder 没有可靠的人流数据。',
     x_pos: '加分', x_neg: '减分', x_mid: '中性',
-    p_title: '规划滑雪旅行', p_soon: '即将推出', p_lead: '行程规划是 SkiDay 的下一步：选择日期、出发地和你持有的雪票，对比多日旅行的目的地。',
+    h_mtn_h: '找到你的雪山。', h_mtn_sub: '对比各雪场雪况，找到最适合你下一次滑雪的雪山。',
+    h_mtn_all: '探索全部雪场', h_mtn_view: '查看雪场',
+    h_wear_h: '为高山穿衣，不只看天气预报。', h_wear_sub: '根据山上雪况、气温、风速和降水，获得实用的滑雪穿衣建议。',
+    h_wear_cta: '探索穿衣指南',
+    h_wear_base: '内层', h_wear_base_d: '排汗透气，保持干爽。', h_wear_mid: '中层', h_wear_mid_d: '锁住热量——抓绒或羽绒服。', h_wear_outer: '外层', h_wear_outer_d: '硬壳或保暖滑雪服 + 雪裤。', h_wear_acc: '配件', h_wear_acc_d: '手套、雪镜、头盔、滑雪袜和暖贴。',
+    h_learn_cta: '探索滑雪指南',
+    h_how_h: '滑雪日，就这么简单。',
+    h_how_1t: '选择雪场', h_how_1d: '选一个雪场，或对比几座雪山。',
+    h_how_2t: '了解雪况', h_how_2d: '查看降雪、气温、风、天气和交通情况。',
+    h_how_3t: '做好出发准备', h_how_3d: '获得穿衣和行前准备的实用建议。',
+    p_title: '规划滑雪旅行', p_soon: '即将推出', p_lead: '行程规划是 Follow the Powder 的下一步：选择日期、出发地和你持有的雪票，对比多日旅行的目的地。',
     p_now: '现在已经可以：', p_now1: '查看今天哪里雪况最好', p_now2: '按地区和雪票浏览雪场', p_now3: '最多对比四个雪场（在卡片上勾选“对比”）', p_now4: '打开雪场查看从出发地的车程估算',
-    p_note: '这里不会为你预订或保存任何内容。上线后将使用与 SkiDay 其他部分相同的实时数据。', p_back: '← 返回最佳雪况'
+    p_note: '这里不会为你预订或保存任何内容。上线后将使用与 Follow the Powder 其他部分相同的实时数据。', p_back: '← 返回最佳雪况'
   }
 };
 // Alternatives ("Not looking great here?") — stage 2.
@@ -82,7 +105,7 @@ Object.assign(S.en, {
   a_lead: 'Open resorts near {0} that look better or comparable today, ranked by ski-day score, drive from {1}, pass match and road reports.',
   a_none: 'Nothing nearby looks better than {0} right now.',
   a_none_why: 'Checked {0} resorts within reach: {1}.',
-  a_x_closed: '{0} closed', a_x_nr: '{0} without a report SkiDay can read', a_x_worse: '{0} looking worse today', a_x_road: '{0} with a CDOT closure or chain law nearby', a_x_wind: '{0} with strong summit gusts',
+  a_x_closed: '{0} closed', a_x_nr: '{0} without a report Follow the Powder can read', a_x_worse: '{0} looking worse today', a_x_road: '{0} with a CDOT closure or chain law nearby', a_x_wind: '{0} with strong summit gusts',
   a_drive_est: '≈ {0}', a_drive_osrm: 'drive · road estimate, no traffic', a_drive_line: 'drive · rough straight-line estimate',
   a_pass_same: 'Same pass ({0})', a_pass_diff: 'Different pass ({0})', a_pass_ticket: 'Lift ticket',
   a_terrain: 'terrain open', a_snow: 'new 24 h', a_view: 'View conditions',
@@ -98,7 +121,7 @@ Object.assign(S.zh, {
   a_lead: '{0} 附近今天看起来更好或相当的营业雪场，按滑雪日评分、从 {1} 出发的车程、雪票匹配和路况排序。',
   a_none: '附近暂时没有比 {0} 更好的选择。',
   a_none_why: '已检查可到达范围内的 {0} 个雪场：{1}。',
-  a_x_closed: '{0} 个公布关闭', a_x_nr: '{0} 个没有 SkiDay 可读取的报告', a_x_worse: '{0} 个今天看起来更差', a_x_road: '{0} 个附近有 CDOT 封路或链条法规', a_x_wind: '{0} 个山顶阵风强',
+  a_x_closed: '{0} 个公布关闭', a_x_nr: '{0} 个没有 Follow the Powder 可读取的报告', a_x_worse: '{0} 个今天看起来更差', a_x_road: '{0} 个附近有 CDOT 封路或链条法规', a_x_wind: '{0} 个山顶阵风强',
   a_drive_est: '约 {0}', a_drive_osrm: '车程 · 道路估算，不含路况', a_drive_line: '车程 · 按直线粗略估算',
   a_pass_same: '同一雪票（{0}）', a_pass_diff: '不同雪票（{0}）', a_pass_ticket: '单买缆车票',
   a_terrain: '地形开放', a_snow: '24小时新雪', a_view: '查看雪况',
@@ -113,21 +136,21 @@ Object.assign(S.zh, {
 Object.assign(S.en, {
   b_temp_now: 'Summit temp now · forecast', b_new_mod: 'New snow 24 h · model', b_new_rep: 'New snow 24 h · resort', b_lifts: 'Lifts operating', b_runs: 'Runs open', b_terrain: 'Terrain open', b_base: 'Base depth · resort',
   b_src_rep: 'Lifts, runs, terrain, base and new snow: {0}, updated {1}. Temperature: Open-Meteo model at the summit ({2}).',
-  b_src_none: 'SkiDay can’t read a lift or terrain report for this resort, so those show “Not reported”. New snow and temperature: Open-Meteo model at the summit ({0}).',
-  b_norep: 'SkiDay can’t read this resort’s lift and terrain report. Check the official snow report.', b_nostatus: 'The resort’s report doesn’t say whether lifts are running.',
-  b_noroads: 'No road reports here: SkiDay’s live road data covers Colorado, Utah, California and the Northeast. Check the state DOT or 511 before you go.',
+  b_src_none: 'Follow the Powder can’t read a lift or terrain report for this resort, so those show “Not reported”. New snow and temperature: Open-Meteo model at the summit ({0}).',
+  b_norep: 'Follow the Powder can’t read this resort’s lift and terrain report. Check the official snow report.', b_nostatus: 'The resort’s report doesn’t say whether lifts are running.',
+  b_noroads: 'No road reports here: Follow the Powder’s live road data covers Colorado, Utah, California and the Northeast. Check the state DOT or 511 before you go.',
   b_roads_out: 'Road reports', b_roads_out_v: 'Colorado only (CDOT)', b_traffic_link: 'Check live traffic in Google Maps', b_drive_src: 'Drive: OSRM road-network estimate from {0}.',
-  b_heavy: 'Heavy snow today: {0}, expect slow driving', b_nws: 'Weather alerts (National Weather Service) are only checked on SkiDay’s full dashboards.',
+  b_heavy: 'Heavy snow today: {0}, expect slow driving', b_nws: 'Weather alerts (National Weather Service) are only checked on Follow the Powder’s full dashboards.',
   b_rest_co: 'CDOT road data and the Open-Meteo forecast', b_rest: 'the Open-Meteo forecast', b_map: 'Route map', b_wait_route: 'Waiting for the drive estimate', b_wx_wait: 'Forecast loading…'
 });
 Object.assign(S.zh, {
   b_temp_now: '山顶现在 · 预报', b_new_mod: '24小时新雪 · 模型', b_new_rep: '24小时新雪 · 雪场', b_lifts: '缆车运行', b_runs: '雪道开放', b_terrain: '地形开放', b_base: '雪底深度 · 雪场',
   b_src_rep: '缆车、雪道、地形、雪底和新雪：{0}，更新于 {1}。气温：Open-Meteo 模型（山顶，{2}）。',
-  b_src_none: 'SkiDay 读取不到此雪场的缆车或地形报告，所以显示“未公布”。新雪和气温：Open-Meteo 模型（山顶，{0}）。',
-  b_norep: 'SkiDay 读取不到此雪场的缆车和地形报告。请查看官方雪况报告。', b_nostatus: '雪场报告没有说明缆车是否运行。',
-  b_noroads: '这里没有路况：SkiDay 的实时路况数据覆盖科罗拉多、犹他、加州和东北地区。出发前请查看当地交通部门或 511。',
+  b_src_none: 'Follow the Powder 读取不到此雪场的缆车或地形报告，所以显示“未公布”。新雪和气温：Open-Meteo 模型（山顶，{0}）。',
+  b_norep: 'Follow the Powder 读取不到此雪场的缆车和地形报告。请查看官方雪况报告。', b_nostatus: '雪场报告没有说明缆车是否运行。',
+  b_noroads: '这里没有路况：Follow the Powder 的实时路况数据覆盖科罗拉多、犹他、加州和东北地区。出发前请查看当地交通部门或 511。',
   b_roads_out: '路况', b_roads_out_v: '仅科罗拉多（CDOT）', b_traffic_link: '在 Google 地图查看实时路况', b_drive_src: '车程：OSRM 道路网络估算，从 {0} 出发。',
-  b_heavy: '今天大雪：{0}，开车会慢', b_nws: '天气预警（美国国家气象局）只在 SkiDay 的完整看板中检查。',
+  b_heavy: '今天大雪：{0}，开车会慢', b_nws: '天气预警（美国国家气象局）只在 Follow the Powder 的完整看板中检查。',
   b_rest_co: 'CDOT 路况和 Open-Meteo 预报', b_rest: 'Open-Meteo 预报', b_map: '路线地图', b_wait_route: '等待车程估算', b_wx_wait: '正在加载预报…'
 });
 const STATE_NAMES = { CO: 'Colorado', UT: 'Utah', CA: 'California', NV: 'Nevada', 'CA/NV': 'California Nevada', WA: 'Washington', OR: 'Oregon', AK: 'Alaska', WY: 'Wyoming', MT: 'Montana', ID: 'Idaho', NM: 'New Mexico', AB: 'Alberta', BC: 'British Columbia', QC: 'Quebec', ON: 'Ontario', VT: 'Vermont', ME: 'Maine', NH: 'New Hampshire', NY: 'New York' };
@@ -392,6 +415,7 @@ function renderShell() {
     el.innerHTML = `<div class="disc-hero"><div class="wrap">
         <h1 class="q" id="d-title"></h1><p class="dsub" id="d-sub"></p>
         <div class="dsearch"><span aria-hidden="true">🔎</span><input id="dq" type="search" autocomplete="off" enterkeyhint="search" aria-autocomplete="list" aria-controls="dq-ac"><button type="button" class="dqx" id="dq-x" hidden aria-label="Clear">✕</button><ul class="ac" id="dq-ac" role="listbox" hidden></ul></div>
+        <p class="dsec" id="d-sec"></p>
         <div class="dhero-a"><p class="dfrom" id="d-from"></p><a class="dplan" id="d-plan" href="?plan=1" data-plan></a></div>
         <div class="dtabs-row"><div class="dtabs" id="d-tabs" role="tablist"></div></div>
       </div></div>
@@ -404,6 +428,7 @@ function renderShell() {
         </div>
         <details class="dcredits" id="d-credits"></details>
       </div>
+      <div id="home-sections"></div>
       <div class="dtray" id="d-tray" hidden></div>
       <div class="dmodal" id="d-modal" hidden></div>`;
     el.dataset.ready = '1';
@@ -411,6 +436,7 @@ function renderShell() {
   }
   $('#d-title').textContent = tr('d_title');
   $('#d-sub').textContent = tr('d_sub');
+  $('#d-sec').textContent = tr('d_sec');
   $('#dq').placeholder = tr('d_search');
   if ($('#dq').value !== D.q) $('#dq').value = D.q;
   $('#dq-x').hidden = !D.q;
@@ -424,6 +450,60 @@ function renderShell() {
   $('#d-mapx').textContent = `☰ ${tr('d_list')}`;
   const ph = D.cat.resorts.filter(r => r.photo);
   $('#d-credits').innerHTML = `<summary>📷 ${X.state.lang === 'zh' ? '照片署名' : 'Photo credits'} (${ph.length})</summary><ul>${ph.map(r => `<li>${esc(r.name)}: ${esc(r.photo.credit)} · <a href="${esc(r.photo.page)}" target="_blank" rel="noopener">${esc(r.photo.license)}</a></li>`).join('')}</ul>`;
+}
+/** Homepage sections below the resort explorer: curated resorts (live data), What to Wear
+ *  intro, Learn intro, How It Works. Rebuilt on every renderDiscover so language changes apply. */
+const ls = k => (STR[X.state.lang] || STR.en)[k] ?? STR.en[k] ?? k;
+function homeCard(r) {
+  const c = cond(r), u = U(), snow = snow24(r), temp = c?.summit?.t, wind = c?.summit?.wind;
+  return `<article class="hcard">
+    <div class="rphoto${r.photo ? '' : ' ph0'}"${photoStyle(r)}><span class="rname">${esc(r.name)}</span></div>
+    <div class="hstats">
+      <span><b>${snow != null ? esc(fmt.snow(snow, u)) : '—'}</b><small>${esc(tr('d_new'))}</small></span>
+      <span><b>${temp != null ? esc(fmt.temp(temp, u)) : '—'}</b><small>${esc(tr('d_temp'))}</small></span>
+      <span><b>${wind != null ? esc(fmt.wind(wind, u)) : '—'}</b><small>${esc(tr('d_wind'))}</small></span>
+    </div>
+    <div class="dfoot">${statusHtml(r)}<span class="dseason">${esc(seasonTxt(r))}</span></div>
+    <div class="dact"><button type="button" class="dgo" data-open="${r.id}">${esc(tr('h_mtn_view'))} →</button></div>
+  </article>`;
+}
+function renderHome() {
+  const host = $('#home-sections'); if (!host || !D.cat) return;
+  const top = D.cond ? [...D.cat.resorts].map(r => [r, score(r)]).filter(x => x[1]).sort((a, b) => b[1].total - a[1].total).slice(0, 6) : null;
+  const catLink = n => (n === 1 || n === 4) ? '/what-to-wear/' : null; // 2 + 3 point at the explorer below (data-home-scroll)
+  host.innerHTML = `
+  <section class="home-sec" id="home-mtn">
+    <h2>${esc(tr('h_mtn_h'))}</h2><p class="home-sub">${esc(tr('h_mtn_sub'))}</p>
+    <div class="hcards">${top ? top.map(([r]) => homeCard(r)).join('') : `<p class="muted">${esc(tr('d_cond_na'))}</p>`}</div>
+    <p style="margin-top:16px"><button type="button" class="dgo" data-home-scroll>${esc(tr('h_mtn_all'))} →</button></p>
+  </section>
+  <section class="home-sec" id="home-wear">
+    <h2>${esc(tr('h_wear_h'))}</h2><p class="home-sub">${esc(tr('h_wear_sub'))}</p>
+    <div class="wear-demo">
+      <div class="wdemo l-base"><div class="wic">👕</div><h3>${esc(tr('h_wear_base'))}</h3><p>${esc(tr('h_wear_base_d'))}</p></div>
+      <div class="wdemo l-mid"><div class="wic">🧶</div><h3>${esc(tr('h_wear_mid'))}</h3><p>${esc(tr('h_wear_mid_d'))}</p></div>
+      <div class="wdemo l-outer"><div class="wic">🧥</div><h3>${esc(tr('h_wear_outer'))}</h3><p>${esc(tr('h_wear_outer_d'))}</p></div>
+      <div class="wdemo"><div class="wic">🧤🥽🧦</div><h3>${esc(tr('h_wear_acc'))}</h3><p>${esc(tr('h_wear_acc_d'))}</p></div>
+    </div>
+    <p style="margin-top:16px"><a class="dgo" href="/what-to-wear/" data-ev="homepage_what_to_wear_click">${esc(tr('h_wear_cta'))} →</a></p>
+  </section>
+  <section class="home-sec" id="home-learn">
+    <h2>${esc(ls('learn_h'))}</h2><p class="home-sub">${esc(ls('learn_sub'))}</p>
+    <div class="learn-cats">${[1, 2, 3, 4].map(n => `<article class="lcat"><h3>${esc(ls('learn_cat' + n + '_t'))}</h3>
+      <ul>${[1, 2, 3, 4].map(i => `<li>${esc(ls('learn_cat' + n + '_s' + i))}</li>`).join('')}</ul>
+      ${catLink(n) ? `<a class="dlink" href="${catLink(n)}" data-ev="homepage_what_to_wear_click">${esc(ls('learn_cat' + n + '_link'))} →</a>`
+        : `<button type="button" class="dlink" data-home-scroll>${esc(ls('learn_cat' + n + '_link'))} →</button>`}</article>`).join('')}
+    </div>
+    <p style="margin-top:16px"><a class="dgo" href="/learn/" data-ev="homepage_learn_click">${esc(tr('h_learn_cta'))} →</a></p>
+  </section>
+  <section class="home-sec" id="home-how">
+    <h2>${esc(tr('h_how_h'))}</h2>
+    <div class="how-steps">
+      <div class="how-step"><div class="n">01</div><h3>${esc(tr('h_how_1t'))}</h3><p>${esc(tr('h_how_1d'))}</p></div>
+      <div class="how-step"><div class="n">02</div><h3>${esc(tr('h_how_2t'))}</h3><p>${esc(tr('h_how_2d'))}</p></div>
+      <div class="how-step"><div class="n">03</div><h3>${esc(tr('h_how_3t'))}</h3><p>${esc(tr('h_how_3d'))}</p></div>
+    </div>
+  </section>`;
 }
 function renderRecent() {
   const r = recents();
@@ -621,7 +701,7 @@ function bindShell() {
   let tm;
   q.addEventListener('input', () => {
     D.q = q.value; D.acIdx = -1; $('#dq-x').hidden = !D.q;
-    if (D.q.trim() && !D.searched) { D.searched = true; X.track('disc_search', 'used'); }
+    if (D.q.trim() && !D.searched) { D.searched = true; X.track('disc_search', 'used'); X.track('homepage_resort_search'); }
     renderAC(); clearTimeout(tm); tm = setTimeout(() => { renderShell(); renderList(); }, 180);
   });
   q.addEventListener('keydown', e => {
@@ -642,7 +722,11 @@ function bindShell() {
   });
   el.addEventListener('click', e => {
     if (e.target.closest('input[data-cmp], label.dcmp, select, summary, .dhelp p, .dsx-p')) return;
-    if (e.target.closest('[data-plan]')) { e.preventDefault(); X.plan(); return; }
+    if (e.target.closest('[data-plan]')) { e.preventDefault(); X.track('homepage_plan_ski_day_click'); X.plan(); return; }
+    const ev = e.target.closest('[data-ev]');
+    if (ev) { X.track(ev.dataset.ev); /* plain link: navigation continues */ }
+    const hs = e.target.closest('[data-home-scroll]');
+    if (hs) { e.preventDefault(); X.track('homepage_explore_resorts_click'); document.getElementById('d-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     const fav = e.target.closest('[data-fav]');
     if (fav) { e.preventDefault(); e.stopPropagation(); toggleFav(fav.dataset.fav); renderShell(); renderList(); renderRecent(); if (D.map) D.map.closePopup(); return; }
     const tab = e.target.closest('[data-tab]');
@@ -659,7 +743,7 @@ function bindShell() {
     if (e.target.closest('[data-cmpclear]')) { D.cmp = []; renderList(); return; }
     if (e.target.closest('[data-cmpclose]') || e.target.id === 'd-modal') { $('#d-modal').hidden = true; return; }
     const op = e.target.closest('[data-open]');
-    if (op) { e.preventDefault(); $('#d-modal').hidden = true; document.body.classList.remove('dmap-full'); D.view = 'list'; X.open(op.dataset.open, op.closest('#dq-ac') ? 'search' : op.closest('#d-modal') ? 'compare' : op.closest('#d-map, .leaflet-container') ? 'map' : 'card'); }
+    if (op) { e.preventDefault(); $('#d-modal').hidden = true; document.body.classList.remove('dmap-full'); D.view = 'list'; if (op.closest('#dq-ac')) X.track('homepage_resort_selected', op.dataset.open); X.open(op.dataset.open, op.closest('#dq-ac') ? 'search' : op.closest('#d-modal') ? 'compare' : op.closest('#d-map, .leaflet-container') ? 'map' : 'card'); }
   });
   // Card <-> map: hovering or focusing a card highlights its pin (or the cluster holding it).
   const hov = e => { const c = e.target.closest('.dcard[data-id]'); hlPin(c && e.type !== 'mouseout' && e.type !== 'focusout' ? c.dataset.id : null); };
@@ -682,7 +766,7 @@ function locate() {
 export function initDiscover(ctx) { X = ctx; }
 export function renderDiscover() {
   if (!D.cat) return;
-  renderShell(); renderRecent(); renderList(); ensureMap();
+  renderShell(); renderRecent(); renderList(); ensureMap(); renderHome();
 }
 export function discoverState() { return D; }
 
@@ -814,7 +898,7 @@ export function renderBasic() {
     <section class="block card altsec" id="b-alts"></section>
   </main>`;
   if (stEl) { el.querySelector('#b-start-slot')?.replaceWith(stEl); try { X.state.startUI?.relabel(); X.state.startUI?.setMsg(''); } catch {} }
-  document.title = `SkiDay · ${T('q_dyn', r.name)}`;
+  document.title = `Follow the Powder · ${T('q_dyn', r.name)}`;
   drawBasicMap(r);
   renderAlts(r.id, document.getElementById('b-alts'));
 }
@@ -866,7 +950,7 @@ export async function showBasic(id) {
 
 
 /* ================= Alternatives: "Not looking great here? Compare nearby mountains." ================= */
-// Pure ranking over data SkiDay already has (catalog report + Open-Meteo summary + CDOT events). Rules:
+// Pure ranking over data Follow the Powder already has (catalog report + Open-Meteo summary + CDOT events). Rules:
 //  - never suggest a resort that reports itself closed, or one with no readable status (can't confirm it's open);
 //  - skip resorts with a full CDOT closure or passenger chain law within ~20 km (Colorado only), or summit gusts >= 80 km/h;
 //  - keep only options that are better (open vs closed, more terrain/lifts/new snow, or closer with similar conditions) or comparable
