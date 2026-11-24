@@ -1,9 +1,9 @@
 // Resort discovery (default home) + basic resort view for catalog resorts without a full dashboard.
 // Data: data/catalog.json (static, verified) + api/catalog-conditions.json (Open-Meteo model, refreshed hourly by
 // the ski-data Worker; resort-published base depth / terrain open / lifts / 24 h snow where Follow the Powder reads a public feed) + api/forecast.json?r=<id> (basic view).
-import { fmt, weatherEmoji, chainLevel, recommendFrom, visLevel } from './core.js?v=6fbac9d207';
-import { STR } from './i18n.js?v=6fbac9d207';
-import { getRoute, getTable } from './start.js?v=6fbac9d207';
+import { fmt, weatherEmoji, chainLevel, recommendFrom, visLevel } from './core.js?v=e54d1f13d1';
+import { STR } from './i18n.js?v=e54d1f13d1';
+import { getRoute, getTable } from './start.js?v=e54d1f13d1';
 
 const S = {
   en: {
@@ -296,7 +296,11 @@ function updTime(iso) {
   const today = new Date().toDateString() === d.toDateString();
   return new Intl.DateTimeFormat(loc, today ? { hour: 'numeric', minute: '2-digit' } : { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(d);
 }
-const passTxt = r => r.passes.length ? r.passes.map(p => p[0].toUpperCase() + p.slice(1)).join(' · ') : tr('d_other');
+/** Display names for multi-word passes: plain capitalisation would render
+ *  'mountain-collective' as 'Mountain-collective'. */
+const PASS_NAMES = { 'mountain-collective': 'Mountain Collective' };
+const passName = p => PASS_NAMES[p] || (p[0].toUpperCase() + p.slice(1));
+const passTxt = r => r.passes.length ? r.passes.map(passName).join(' · ') : tr('d_other');
 const stateTxt = r => X.state.lang === 'zh' ? (STATE_ZH[r.state] || r.state) : (STATE_NAMES[r.state] ? r.state : r.state);
 const regionName = id => { const g = D.cat.regions.find(x => x.id === id); return g ? (g[X.state.lang] || g.en) : id; };
 /** Operating status from the resort's own report (lift counts), kept apart from the season line below.
@@ -518,7 +522,7 @@ function renderBar(meta) {
   $('#d-bar').innerHTML = `
     <button type="button" class="dftog" data-ftog aria-expanded="${!!D.fopen}">⚙︎ ${esc(tr('d_filters'))}${nf ? ` <b>${nf}</b>` : ''}</button>
     <label class="ff"><span>${esc(tr('d_region'))}</span><select data-f="region">${opt('', tr('d_allr'), f.region)}${D.cat.regions.map(g => opt(g.id, `${g[X.state.lang] || g.en} (${D.cat.resorts.filter(r => r.region === g.id).length})`, f.region)).join('')}</select></label>
-    <label class="ff"><span>${esc(tr('d_pass'))}</span><select data-f="pass">${opt('', tr('d_allp'), f.pass)}${opt('ikon', 'Ikon', f.pass)}${opt('epic', 'Epic', f.pass)}${opt('indy', 'Indy', f.pass)}${opt('other', tr('d_other'), f.pass)}</select></label>
+    <label class="ff"><span>${esc(tr('d_pass'))}</span><select data-f="pass">${opt('', tr('d_allp'), f.pass)}${opt('ikon', 'Ikon', f.pass)}${opt('epic', 'Epic', f.pass)}${opt('indy', 'Indy', f.pass)}${opt('mountain-collective', 'Mountain Collective', f.pass)}${opt('other', tr('d_other'), f.pass)}</select></label>
     <label class="ff"><span>${esc(tr('d_status'))}</span><select data-f="status">${opt('', tr('d_any'), f.status)}${opt('open', tr('d_open_only'), f.status)}${opt('notclosed', tr('d_hide_closed'), f.status)}</select></label>
     <label class="ff"><span>${esc(tr('d_dist'))}</span><select data-f="dist">${opt('', tr('d_any'), f.dist)}${dists.map(([v, l]) => opt(v, tr('d_within', l), f.dist)).join('')}</select></label>
     ${meta.sortable ? `<label><span>${esc(tr('d_sort'))}</span><select id="d-sort">${['score', 'snow', 'fcst', 'base', 'terrain', 'open', 'close'].map(k => opt(k, tr('s_' + k), D.sort)).join('')}</select></label>` : ''}
@@ -968,7 +972,7 @@ function roadNear(r) {
 const minTxt = m => m < 60 ? (X.state.lang === 'zh' ? `${m} 分钟` : `${m} min`) : durTxt(m);
 const lineMin = km => Math.round(km * 1.3 / 80 * 60);     // straight line × 1.3 road factor at ~80 km/h average
 function passInfo(cur, r) {
-  const same = r.passes.filter(p => cur.passes.includes(p)).map(p => p[0].toUpperCase() + p.slice(1));
+  const same = r.passes.filter(p => cur.passes.includes(p)).map(passName);
   if (same.length) return { cls: 'go', txt: tr('a_pass_same', same.join(' · ')), same: true };
   if (!r.passes.length) return { cls: 'na', txt: tr('a_pass_ticket') };
   return { cls: 'caution', txt: tr('a_pass_diff', passTxt(r)) };

@@ -51,6 +51,10 @@
   {
    "id": "indy",
    "name": "Indy"
+  },
+  {
+   "id": "mountain-collective",
+   "name": "Mountain Collective"
   }
  ],
  "resorts": [
@@ -1368,7 +1372,8 @@
    "region": "rockies",
    "range": "Teton Range",
    "passes": [
-    "ikon"
+    "ikon",
+    "mountain-collective"
    ],
    "lat": 43.59,
    "lon": -110.89,
@@ -1401,10 +1406,11 @@
    "region": "rockies",
    "range": "Madison Range",
    "passes": [
-    "ikon"
+    "ikon",
+    "mountain-collective"
    ],
-   "lat": 45.275,
-   "lon": -111.4319,
+   "lat": 45.28822,
+   "lon": -111.39411,
    "baseElevM": 2073,
    "summitElevM": 3403,
    "tz": "America/Denver",
@@ -1438,8 +1444,8 @@
    "passes": [
     "ikon"
    ],
-   "lat": 43.655,
-   "lon": -114.40917,
+   "lat": 43.67072,
+   "lon": -114.36846,
    "baseElevM": 1753,
    "summitElevM": 2789,
    "tz": "America/Boise",
@@ -1479,7 +1485,13 @@
    "tz": "America/Los_Angeles",
    "url": "https://www.schweitzer.com/",
    "detail": "basic",
-   "src": "https://en.wikipedia.org/wiki/Schweitzer_Mountain"
+   "src": "https://en.wikipedia.org/wiki/Schweitzer_Mountain",
+   "report": {
+    "p": "mtnpowder",
+    "ids": [
+     168
+    ]
+   }
   },
   {
    "id": "taos",
@@ -1503,6 +1515,12 @@
    "url": "https://www.skitaos.com/",
    "detail": "basic",
    "src": "https://en.wikipedia.org/wiki/Taos_Ski_Valley,_New_Mexico",
+   "photo": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1b/Taos_Ski_Valley%2C_New_Mexico_%287334017088%29.jpg/960px-Taos_Ski_Valley%2C_New_Mexico_%287334017088%29.jpg",
+    "credit": "Fæ",
+    "license": "CC BY-SA 2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Taos_Ski_Valley,_New_Mexico_(7334017088).jpg"
+   },
    "report": {
     "p": "taos",
     "url": "https://www.skitaos.com/api/conditions"
@@ -1519,7 +1537,9 @@
    "country": "US",
    "region": "rockies",
    "range": "Teton Range",
-   "passes": [],
+   "passes": [
+    "mountain-collective"
+   ],
    "lat": 43.789,
    "lon": -110.957,
    "baseElevM": 2258,
@@ -1527,7 +1547,13 @@
    "tz": "America/Denver",
    "url": "https://www.grandtarghee.com/",
    "detail": "basic",
-   "src": "https://en.wikipedia.org/wiki/Grand_Targhee_Resort"
+   "src": "https://en.wikipedia.org/wiki/Grand_Targhee_Resort",
+   "photo": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b9/Grand_Targhee_Ski_Resort%2C_February_2021.jpg/960px-Grand_Targhee_Ski_Resort%2C_February_2021.jpg",
+    "credit": "Richardmouser",
+    "license": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Grand_Targhee_Ski_Resort,_February_2021.jpg"
+   }
   },
   {
    "id": "whitefish",
@@ -1541,8 +1567,8 @@
    "region": "rockies",
    "range": "Whitefish Range",
    "passes": [],
-   "lat": 48.5,
-   "lon": -114.34,
+   "lat": 48.48108,
+   "lon": -114.35785,
    "baseElevM": 1361,
    "summitElevM": 2078,
    "tz": "America/Denver",

@@ -162,7 +162,7 @@ async function aspen(c) {
 async function taos(c) {
   const d = await get(c.url);
   return finish({ lifts: pair(d.liftsOpen, d.liftsTotal), trails: pair(d.trailsOpen, d.trailsTotal), baseCm: inCm(d.snowData?.base), s24Cm: inCm(d.snowData?.last24Hours) },
-    'skitaos.com snow report', 'https://www.skitaos.com/snow-reports');
+    'skitaos.com snow report', 'https://www.skitaos.com/webcams');
 }
 
 /* ---- Sundance ---- */

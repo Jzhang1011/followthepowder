@@ -647,6 +647,640 @@ export function slimMaEvents(cfg, xml, nowMs = Date.now()) {
   return out;
 }
 
+/* ---------- Rockies roads — WyoRoad (WY), MDT 511 (MT), Idaho 511 (ID), NMRoads (NM) ---------- */
+// Four state feeds, no single source covers the Rockies. Every slim below returns {events} in the
+// same shape slimCaEvents/slimNeEvents return ({id, cls, segs, route, geo, title, tooltip, detail,
+// eventType, priority, icon, updated, start, src}), matched to segments by route name + bbox the
+// same way utahSegIds does it. A non-200/empty upstream response means "unknown", never "clear" —
+// the collectors throw in that case so mergeSource keeps the last good copy.
+// Chain levels exist as data only in Wyoming (CL1/CL2 in the WyoRoad feed, rendered in WYDOT's
+// words "Level 1/2"); MT/ID/NM have no live chain-level data, so no event from those states ever
+// carries cls 'chainLaws' — the chain display reads "Not reported" there.
+
+/** Google encoded polyline (precision 5) -> [[lon, lat], ...]; no geographic bounds check, so it
+ *  works for any state (unlike decodeUtahPolyline, which rejects points outside Utah). */
+function decodePolyline(str) {
+  try {
+    const out = [];
+    let i = 0, lat = 0, lon = 0;
+    while (i < str.length) {
+      for (const which of [0, 1]) {
+        let b, shift = 0, res = 0;
+        do { b = str.charCodeAt(i++) - 63; res += (b & 0x1f) * 2 ** shift; shift += 5; } while (b >= 0x20);
+        const d = (res % 2) ? -(Math.floor(res / 2)) - 1 : Math.floor(res / 2);
+        if (which === 0) lat += d; else lon += d;
+      }
+      out.push([+(lon / 1e5).toFixed(4), +(lat / 1e5).toFixed(4)]);
+    }
+    return out.length ? out : null;
+  } catch { return null; }
+}
+/** One or many encoded polylines (string, or the [string] arrays Idaho/Utah send) -> sampled geo. */
+function polylineGeo(polys) {
+  const list = Array.isArray(polys) ? polys : [polys];
+  const pts = [];
+  for (const p of list) { const d = typeof p === 'string' ? decodePolyline(p) : null; if (d) pts.push(...d); }
+  return sampleGeo(pts);
+}
+/** Web Mercator metres (wkid 102100, as NMRoads sends them) -> [lon, lat] degrees. Never store
+ *  the raw metre values as degrees — they land ~100x off in the wrong hemisphere. */
+function fromWebMercator(x, y) {
+  const R = 6378137;
+  const lon = x / R * 180 / Math.PI;
+  const lat = 180 / Math.PI * (2 * Math.atan(Math.exp(y / R)) - Math.PI / 2);
+  return [+lon.toFixed(4), +lat.toFixed(4)];
+}
+/** The segment route a token list actually matched (for the event's `route` label), else the first token. */
+function matchedRoute(cfg, tokens) {
+  for (const t of tokens) for (const s of Object.values(cfg.segments)) if (s.routes.some(r => sameRoad(r, t))) return t;
+  return tokens[0] || '';
+}
+
+/* ----- Wyoming — WyoRoad map PBF (primary) + classic text pages (fallback) ----- */
+// The map snapshot is XOR-obfuscated protobuf: every string field is base64, XORed with the key
+// below (the map bundle's own X() function), then UTF-8. Field numbers are the bundle's
+// ConditionsAttributes letters a..u = 1..21: 1 ROAD_CODE, 2 IMPACT_MAP, 3 CLOSURE_REASON,
+// 4 CUSTOM_CLOSURE_REASON, 5 OPEN_MSG, 6 LOCT, 7 NTT, 8 FR, 9 EIGHT_CODES, 10 NINE_CODES,
+// 11 WEIGHT, 12 WEIGHT_REASON, 13 WEIGHT_CUSTOM_REASON, 14 BI, 15 CL1, 16 CL2, 17 NLT, 18 NUT,
+// 19 EBOR, 20 HAIL, 21 LAST_MODIFIED (Unix seconds). Impact letters (bundle's
+// _processImpactConditions): L low, M medium, H high, P/D/I partial closure, C closed.
+// Surface codes (field 9): 81 Dry, 82 Wet, 83 Slick, 84 Slick in Spots, 85 Drifted Snow,
+// 810 Slush, anything else non-zero = multiple. Atmospheric codes (field 10): 91/0 none,
+// 92 Snowfall, 93 Rain, 94 Strong Winds, 95 Fog, 96 Blowing Snow, 97 Reduced Visibility.
+export const WYOROAD_XOR_KEY = 'EkhJp6wsgahsqkiw5nahFOSCwAND1zhZ';
+export const WYOROAD_PBF_FILE = 'Msg-IynkRefv.pbf'; // current conditions filename; rotates on redeploy
+export function wyoroadPbfUrl(filename = WYOROAD_PBF_FILE) {
+  return `https://map.wyoroad.info/wti511map-data/${filename}`;
+}
+/** The conditions PBF filename, extracted from the map JS bundle: the bundle assigns
+ *  `_conditionsURL=X(<VAR>)` and defines `<VAR>` as a backtick base64 string; XOR-decoding it
+ *  yields the full URL. Returns null when the bundle no longer has that shape (the collector
+ *  then keeps the last known filename and falls back to the text pages). */
+export function wyoroadPbfFilename(bundleJs) {
+  const s = String(bundleJs || '');
+  const anchor = s.match(/_conditionsURL\s*=\s*X\(\s*([A-Za-z_$][A-Za-z0-9_$]*)\s*\)/);
+  if (!anchor) return null;
+  const def = s.match(new RegExp(`(?<![A-Za-z0-9_$])${anchor[1]}\\s*=\\s*\`([A-Za-z0-9+/]+={0,2})\``));
+  if (!def) return null;
+  const url = wyoroadXorDecode(def[1]);
+  const m = url && url.match(/\/([^/]+\.pbf)$/);
+  return m ? m[1] : null;
+}
+/** The bundle's X(): base64 -> XOR with the key -> UTF-8. Null when the input is not base64. */
+export function wyoroadXorDecode(b64) {
+  try {
+    const raw = Uint8Array.from(atob(String(b64 || '')), c => c.charCodeAt(0));
+    const key = new TextEncoder().encode(WYOROAD_XOR_KEY);
+    const out = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) out[i] = raw[i] ^ key[i % key.length];
+    return new TextDecoder().decode(out);
+  } catch { return null; }
+}
+function pbfVarint(buf, i) {
+  let res = 0, shift = 0;
+  while (i < buf.length) {
+    const b = buf[i++];
+    res += (b & 0x7f) * 2 ** shift;
+    if (!(b & 0x80)) return [res, i];
+    shift += 7;
+    if (shift > 63) return [null, i];
+  }
+  return [null, i];
+}
+/** One protobuf message -> Map(field number -> varint value | length-delimited bytes). */
+function pbfFields(buf) {
+  const out = new Map();
+  let i = 0;
+  while (i < buf.length) {
+    const [tag, ni] = pbfVarint(buf, i); i = ni;
+    if (tag == null) break;
+    const fn = Math.floor(tag / 8), wt = tag % 8;
+    if (wt === 0) { const [v, nj] = pbfVarint(buf, i); i = nj; if (v == null) break; out.set(fn, v); }
+    else if (wt === 2) { const [len, nj] = pbfVarint(buf, i); i = nj; if (len == null || nj + len > buf.length) break; out.set(fn, buf.slice(nj, nj + len)); i = nj + len; }
+    else if (wt === 5) i += 4;
+    else if (wt === 1) i += 8;
+    else break;
+  }
+  return out;
+}
+/**
+ * XOR-decode + minimal protobuf-parse of the WyoRoad conditions PBF into section records
+ * ({code, impact, closureReason, customClosureReason, openMsg, loct, ntt, fr, eightCodes,
+ * nineCodes, weight, weightReason, weightCustomReason, bi, cl1, cl2, nlt, nut, ebor, hail,
+ * lastModified}). Dependency-free. Top level = repeated field-1 messages; a truncated tail is
+ * dropped, not fatal. Verified live 2026-11-24: 437 records, e.g. JACKW22B (WY-22, impact P,
+ * black ice + falling rock) and JACKW390B (WY-390, impact M, falling rock).
+ */
+export function decodeWyoPbf(buf) {
+  const bytes = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
+  const recs = [];
+  let i = 0;
+  while (i < bytes.length) {
+    const [tag, ni] = pbfVarint(bytes, i); i = ni;
+    if (tag == null) break;
+    if (Math.floor(tag / 8) !== 1 || tag % 8 !== 2) break;
+    const [len, nj] = pbfVarint(bytes, i); i = nj;
+    if (len == null || nj + len > bytes.length) break;
+    const f = pbfFields(bytes.slice(nj, nj + len));
+    i = nj + len;
+    const str = n => {
+      const raw = f.get(n);
+      if (raw == null) return '';
+      try { return wyoroadXorDecode(new TextDecoder().decode(raw)) ?? ''; } catch { return ''; }
+    };
+    const num = n => { const v = f.get(n); return typeof v === 'number' ? v : 0; };
+    const code = str(1);
+    if (!code) continue;
+    recs.push({ code, impact: str(2), closureReason: str(3), customClosureReason: str(4), openMsg: str(5),
+      loct: num(6), ntt: num(7), fr: num(8), eightCodes: num(9), nineCodes: num(10), weight: num(11),
+      weightReason: str(12), weightCustomReason: str(13), bi: num(14), cl1: num(15), cl2: num(16),
+      nlt: num(17), nut: num(18), ebor: num(19), hail: num(20), lastModified: num(21) });
+  }
+  return recs;
+}
+/** All ways to split a digit run into 2–3 digit route numbers ("26287" -> [26,287] and [262,87]). */
+function wyDigitSplits(digits) {
+  if (digits.length <= 3) return [[digits]];
+  const out = [];
+  const rec = (i, parts) => {
+    if (i === digits.length) { if (parts.length > 1) out.push(parts); return; }
+    for (const len of [2, 3]) if (i + len <= digits.length) rec(i + len, [...parts, digits.slice(i, i + len)]);
+  };
+  rec(0, []);
+  return out.length ? out : [[digits]];
+}
+/**
+ * Route tokens out of a WTI section code ("JACKW390B" -> ["WY-390"], "DUBUS26287WB" ->
+ * ["US-26","US-287","US-262","US-87"], "JACK189191B" -> ["US-189","US-191","WY-189","WY-191"]).
+ * The code is <town><route><direction/suffix>; prefixed runs (I/US/W/WYO + digits) keep their
+ * prefix, bare digit runs get both US- and WY- candidates — the segment match in slimWyEvents
+ * keeps only the tokens a corridor segment actually names, so the extra candidates are harmless.
+ * Named sections with no route number ("JACKSNAKEB", Snake River Canyon) yield no tokens and
+ * are dropped by the slim (no geometry to match by); the text fallback covers that stretch.
+ */
+export function wyRouteTokens(code) {
+  const s = String(code || '').toUpperCase();
+  const out = [];
+  const add = (prefix, num) => { const r = `${prefix}-${num}`; if (!out.includes(r)) out.push(r); };
+  const consumed = [];
+  const pre = /(I|US|WYO|W)(\d{2,8})/g;
+  let m;
+  while ((m = pre.exec(s))) {
+    const p = m[1] === 'W' || m[1] === 'WYO' ? 'WY' : m[1];
+    consumed.push([m.index, m.index + m[0].length]);
+    for (const parts of wyDigitSplits(m[2])) for (const n of parts) add(p, n);
+  }
+  const bare = /(\d{2,8})/g;
+  while ((m = bare.exec(s))) {
+    if (consumed.some(([a, b]) => m.index >= a && m.index < b)) continue;
+    for (const parts of wyDigitSplits(m[1])) for (const n of parts) { add('US', n); add('WY', n); }
+  }
+  return out;
+}
+const WY_SURFACE = { 81: 'Dry', 82: 'Wet', 83: 'Slick', 84: 'Slick in Spots', 85: 'Drifted Snow', 810: 'Slush' };
+const WY_ATMOS = { 92: 'Snowfall', 93: 'Rain', 94: 'Strong Winds', 95: 'Fog', 96: 'Blowing Snow', 97: 'Reduced Visibility' };
+/**
+ * Decoded WyoRoad conditions -> {events}. The PBF carries no geometry, so sections match by
+ * route name only (routeOnly): a condition anywhere on US-89 flags every US-89 corridor segment,
+ * the same granularity as the text fallback. Closures (impact C/D/I or a closure reason) are
+ * roadClosures; partial closures (P) are roadReports (a partial closure must not no-go a leg the
+ * way a full closure does); CL1/CL2 are chainLaws titled "Chain Law Level 1/2" in WYDOT's words;
+ * surface/atmospheric conditions are winterDriving with the feed's own labels. The seasonal
+ * "No Trailer Traffic" rule (Nov 15–Apr 1) rides in the detail text, never as a closure event.
+ * Dry + clear + no flags produces no event (like CA's dropped R-0).
+ */
+export function slimWyEvents(cfg, decoded) {
+  const out = [];
+  // Same road + same condition can come from two overlapping sections (e.g. JACKW22JWB with no
+  // flags and JACKW22B with black ice + falling rock + no-trailer-traffic): keep the richer one
+  // so advisory flags are not lost to whichever section the feed lists first.
+  const push = e => {
+    const k = `${e.cls}|${e.route}|${e.title}`;
+    const i = out.findIndex(x => `${x.cls}|${x.route}|${x.title}` === k);
+    if (i < 0) { out.push(e); return; }
+    const old = out[i];
+    if ((e.tooltip || '').length + (e.detail || '').length > (old.tooltip || '').length + (old.detail || '').length) out[i] = e;
+  };
+  for (const r of decoded || []) {
+    const tokens = wyRouteTokens(r.code);
+    if (!tokens.length) continue;
+    const segs = utahSegIds(cfg, tokens, null, null, null, { routeOnly: true });
+    if (!segs.length) continue;
+    const route = matchedRoute(cfg, tokens);
+    const updated = r.lastModified ? r.lastModified * 1000 : null;
+    const advisories = [];
+    if (r.bi) advisories.push('Black ice');
+    if (r.fr) advisories.push('Falling rock');
+    if (r.hail) advisories.push('Hail');
+    if (r.ebor) advisories.push('Blow-over risk');
+    if (r.ntt) advisories.push('No trailer traffic');
+    const adv = advisories.join(' · ');
+    const base = { segs, route, geo: [], updated, start: null, eventType: null, priority: null, icon: null, src: 'wy' };
+    const closed = ['C', 'D', 'I'].includes(r.impact) || r.closureReason || r.customClosureReason;
+    if (closed) {
+      const reason = r.closureReason || r.customClosureReason || '';
+      push({ ...base, id: `wy-${r.code}-closed`, cls: 'roadClosures',
+        title: `Road closed — ${route}${reason ? ` (${reason})` : ''}`, tooltip: '',
+        detail: [r.openMsg, reason, adv].filter(Boolean).join(' · ').slice(0, 600) });
+      continue;
+    }
+    if (r.impact === 'P') {
+      push({ ...base, id: `wy-${r.code}-partial`, cls: 'roadReports',
+        title: `Partial closure — ${route}`, tooltip: '',
+        detail: [r.closureReason || r.customClosureReason || '', r.openMsg, adv].filter(Boolean).join(' · ').slice(0, 600) });
+    }
+    if (r.cl2 || r.cl1) {
+      const lvl = r.cl2 ? 2 : 1;
+      push({ ...base, id: `wy-${r.code}-chain`, cls: 'chainLaws',
+        title: `Chain Law Level ${lvl} — ${route}`, tooltip: '',
+        detail: [adv, r.openMsg].filter(Boolean).join(' · ').slice(0, 600) });
+    }
+    const surf = WY_SURFACE[r.eightCodes];
+    const atmos = WY_ATMOS[r.nineCodes];
+    const label = (surf && r.eightCodes !== 81) ? surf : (!surf && r.eightCodes ? 'Multiple surface conditions' : (atmos || null));
+    if (label) {
+      push({ ...base, id: `wy-${r.code}-cond`, cls: 'winterDriving',
+        title: `${label} — ${route}`, tooltip: adv,
+        detail: [adv, r.openMsg].filter(Boolean).join(' · ').slice(0, 600) });
+    } else if (adv) {
+      push({ ...base, id: `wy-${r.code}-adv`, cls: 'winterDriving',
+        title: `${adv} — ${route}`, tooltip: '',
+        detail: [adv, r.openMsg].filter(Boolean).join(' · ').slice(0, 600) });
+    }
+    if (r.weight && r.weightReason) {
+      push({ ...base, id: `wy-${r.code}-weight`, cls: 'roadReports', eventType: 'routine',
+        title: `Weight restriction: ${r.weightReason} — ${route}`, tooltip: '',
+        detail: `Weight limit ${r.weight} lbs — ${r.weightReason}${r.weightCustomReason ? ` (${r.weightCustomReason})` : ''}`.slice(0, 600) });
+    }
+  }
+  return { events: out };
+}
+
+/** Classic WyoRoad text page for one town (same conditions as server-rendered HTML). */
+export function wyoroadTextUrl(town = 'Jackson') {
+  return `https://www.wyoroad.info/pls/Browse/WRR.TownResults?SelectedTown=${encodeURIComponent(town)}`;
+}
+function wyHtmlDecode(s) {
+  return String(s || '').replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_, d) => String.fromCharCode(+d))
+    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'");
+}
+/** "Nov 24, 2026, 12:53 PM" in America/Denver (the page carries no zone marker) -> epoch ms. */
+function wyReportEpoch(s) {
+  const m = String(s || '').match(/([A-Za-z]{3})\s+(\d{1,2}),\s*(\d{4}),\s*(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+  if (!m) return null;
+  const mo = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 }[m[1].toLowerCase()];
+  if (mo == null) return null;
+  let h = +m[4]; if (/pm/i.test(m[6]) && h < 12) h += 12; if (/am/i.test(m[6]) && h === 12) h = 0;
+  const guess = Date.UTC(+m[3], mo, +m[2], h, +m[5]);
+  const fmt = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Denver', hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+  const parts = Object.fromEntries(fmt.formatToParts(new Date(guess)).map(p => [p.type, p.value]));
+  const asUTC = Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute);
+  return guess - (asUTC - guess);
+}
+/** Route tokens out of a text-page route cell: "US 26/89" -> ["US-26","US-89"] (bare parts
+ *  inherit the first part's prefix); "WY 22" -> ["WY-22"]. */
+function wyTextRoutes(cell) {
+  const parts = String(cell || '').split('/').map(p => p.trim()).filter(Boolean);
+  if (!parts.length) return [];
+  const out = [];
+  let prefix = '';
+  for (const p of parts) {
+    const m = p.match(/^(I|US|SR|WY|WYO)\s+(\d+[A-Z]?)$/i) || p.match(/^(\d+[A-Z]?)$/);
+    if (!m) continue;
+    if (m[2]) { prefix = m[1].toUpperCase() === 'WYO' ? 'WY' : m[1].toUpperCase(); out.push(`${prefix}-${m[2].toUpperCase()}`); }
+    else if (prefix) out.push(`${prefix}-${m[1].toUpperCase()}`);
+  }
+  return out;
+}
+/**
+ * Parse the WRR.TownResults HTML table (Route | Location | Conditions | Advisories | Restrictions
+ * | Last Report Time) -> {events}. The route cell carries a rowspan over its rows, so the current
+ * route is tracked across rows; a closure row spans its condition cell over the advisory +
+ * restriction columns. "Dry"/"None" conditions produce no event; the standing seasonal
+ * "No Trailer Traffic" / Safe Pass text stays in the detail, never a closure. Verified against
+ * the live Jackson page 2026-11-24 (5 routes, 13 location rows).
+ */
+export function slimWyTextEvents(cfg, html) {
+  const out = []; const seen = new Set();
+  const push = e => { const k = `${e.cls}|${e.route}|${e.title}`; if (!seen.has(k)) { seen.add(k); out.push(e); } };
+  const rows = String(html || '').match(/<tr[\s\S]*?<\/tr>/gi) || [];
+  let route = '', tokens = [];
+  rows.forEach((row, ri) => {
+    const cells = [];
+    const re = /<td\s+class="([^"]*)"[^>]*>([\s\S]*?)<\/td>/gi;
+    let m;
+    while ((m = re.exec(row))) cells.push({ cls: m[1], text: wyHtmlDecode(stripHtml(m[2]).replace(/\s+/g, ' ').trim()) });
+    if (!cells.length) return;
+    const town = cells.find(c => c.cls === 'town');
+    if (town) { route = town.text; tokens = wyTextRoutes(route); }
+    const loc = cells.find(c => c.cls === 'closurelocation');
+    if (!loc || !tokens.length) return;
+    const cond = cells.find(c => /cond$/.test(c.cls));
+    const advCell = cells.find(c => c.cls === 'noimpact' || /^(low|mod|high)impact$/.test(c.cls));
+    const restrCell = cells.find(c => /restrict/.test(c.cls));
+    const timeCell = cells.find(c => c.cls === 'rpttime');
+    const condition = cond ? cond.text : '';
+    const advisories = advCell && advCell.text !== 'None' ? advCell.text : '';
+    const restrictions = restrCell && restrCell.text !== 'None' ? restrCell.text : '';
+    const updated = timeCell ? wyReportEpoch(timeCell.text) : null;
+    const segs = utahSegIds(cfg, tokens, null, null, null, { routeOnly: true });
+    if (!segs.length) return;
+    const r = matchedRoute(cfg, tokens);
+    const base = { segs, route: r, geo: [], updated, start: null, eventType: null, priority: null, icon: null, src: 'wy' };
+    const detail = [loc.text, advisories, restrictions].filter(Boolean).join(' · ').slice(0, 600);
+    if (/road closed/i.test(condition)) {
+      push({ ...base, id: `wy-text-${r.replace(/[^A-Za-z0-9]+/g, '-')}-${ri}`, cls: 'roadClosures',
+        title: `Road closed — ${r} (${loc.text})`, tooltip: '', detail });
+      return;
+    }
+    if (/chain law/i.test(`${advisories} ${restrictions}`)) {
+      const lvl = /level\s*2/i.test(`${advisories} ${restrictions}`) ? 2 : 1;
+      push({ ...base, id: `wy-text-${r.replace(/[^A-Za-z0-9]+/g, '-')}-${ri}-chain`, cls: 'chainLaws',
+        title: `Chain Law Level ${lvl} — ${r}`, tooltip: '', detail });
+    }
+    if (condition && !/^(none|dry)$/i.test(condition)) {
+      push({ ...base, id: `wy-text-${r.replace(/[^A-Za-z0-9]+/g, '-')}-${ri}`, cls: 'winterDriving',
+        title: `${condition} — ${r}`, tooltip: advisories, detail });
+    } else if (advisories && /falling rock|black ice/i.test(advisories)) {
+      push({ ...base, id: `wy-text-${r.replace(/[^A-Za-z0-9]+/g, '-')}-${ri}-adv`, cls: 'winterDriving',
+        title: `${advisories} — ${r}`, tooltip: '', detail });
+    }
+  });
+  return { events: out };
+}
+
+/* ----- Montana — MDT 511 Iteris CDN GeoJSON (keyless) ----- */
+/** Iteris ClearRoute CDN GeoJSON: kinds events/construction/restrictions (+cameras/rwis/dms). */
+export function mdtGeoUrl(kind) {
+  return `https://mt.cdn.iteris-atis.com/geojson/icons/metadata/icons.${kind}.geojson`;
+}
+/**
+ * MDT events + construction + restrictions -> {events}. Points only (no polylines), so segments
+ * match by route name + point-in-bbox, as with UDOT point events. Coordinates are strings in
+ * the feed and are coerced to numbers. Construction is roadReports with eventType 'routine'
+ * (long-running projects, same as Utah roadwork); restrictions (length/width limits) are
+ * roadReports; an events-file record whose headline/report says closed becomes roadClosures.
+ * No chain levels exist in this feed — no event ever carries cls 'chainLaws'.
+ */
+export function slimMtEvents(cfg, { events = {}, construction = {}, restrictions = {} } = {}) {
+  const out = [];
+  const walk = (file, kind) => {
+    for (const f of (file?.features || [])) {
+      const p = f.properties || {};
+      const g = f.geometry?.coordinates || [];
+      const lon = parseFloat(g[0]), lat = parseFloat(g[1]);
+      if (!Number.isFinite(lon) || !Number.isFinite(lat)) continue;
+      const route = normNeRoad(p.route || '');
+      const tokens = route ? [route] : [];
+      const segs = utahSegIds(cfg, tokens, lon, lat, null);
+      const geo = [[+lon.toFixed(4), +lat.toFixed(4)]];
+      if (!segs.length && !geo.length) continue;
+      const headline = String(p.headline || '');
+      const report = stripHtml(p.report || p.enhanced_report || '').slice(0, 600);
+      const loc = String(p.location_description || '');
+      const closed = kind === 'events' && /clos/i.test(`${headline} ${report}`);
+      const id = `mt-${kind === 'events' ? 'ev' : kind === 'construction' ? 'cn' : 'rs'}-${p.event_id || `${lon.toFixed(4)},${lat.toFixed(4)}`}`;
+      out.push({ id, cls: closed ? 'roadClosures' : 'roadReports', segs, route, geo,
+        title: closed ? `Road closed — ${route || loc}` : [headline, route].filter(Boolean).join(' — ') || `MDT event — ${route || loc}`,
+        tooltip: p.dir ? dirWord(p.dir) : '',
+        detail: [loc, report].filter(Boolean).join(' · ').slice(0, 600),
+        eventType: kind === 'construction' ? 'routine' : null, priority: null, icon: null,
+        updated: typeof p.last_update === 'number' ? p.last_update * 1000 : null, start: null, src: 'mt' });
+    }
+  };
+  walk(events, 'events'); walk(construction, 'construction'); walk(restrictions, 'restrictions');
+  return { events: out };
+}
+
+/* ----- Idaho — keyed Developer API (primary) + WZDx / mapIcons (keyless fallback) ----- */
+/** Idaho 511 Developer API (keyed; 10 calls / 60 s — the collector makes 2 per tick). */
+export function idahoWinterUrl(key) { return `https://511.idaho.gov/api/v3/get/winterroads?key=${encodeURIComponent(key)}`; }
+export function idahoEventUrl(key) { return `https://511.idaho.gov/api/v2/get/event?key=${encodeURIComponent(key)}`; }
+/** Idaho roadway spellings: "ID-44"/"SH-55" both appear, so each token carries its twin. */
+function idRoadTokens(name) {
+  const t = String(name || '').trim().replace(/\s+/g, ' ');
+  const m = t.match(/^(I|US|SR|ID|SH)[- ]?(\d+[A-Z]?)$/i);
+  if (!m) return t ? [t] : [];
+  const pre = m[1].toUpperCase(), num = m[2].toUpperCase();
+  if (pre === 'ID' || pre === 'SH') return [`ID-${num}`, `SH-${num}`];
+  if (pre === 'SR') return [`SR-${num}`];
+  return [`${pre}-${num}`];
+}
+const ID_WINTER_BAD = /(snow|ice|icy|slick|slush|drift|blowing|whiteout|poor visibility|wet)/i;
+/**
+ * Keyed winterroads (v3) + event (v2) -> {events}. Both endpoints return bare arrays (verified
+ * against the docs samples). "Overall Status" has no published vocabulary, so it is mapped
+ * defensively by keyword: a bad-weather word -> winterDriving, "Dry" (and nothing else) -> no
+ * event, an unknown value -> no event (unknown stays unknown, never clear). A status mentioning
+ * a closure -> roadClosures. Events: full closure -> roadClosures, roadwork -> roadReports with
+ * eventType 'routine', accidentsAndIncidents -> roadReports. A 400/401 from the API means the
+ * key is missing/invalid, not "no events" — the collector falls back to keyless on any failure.
+ */
+export function slimIdKeyed(cfg, winter, events) {
+  const out = [];
+  const toMs = v => (typeof v === 'number' && v > 0 ? (v < 1e12 ? v * 1000 : v) : null);
+  const winterRows = Array.isArray(winter) ? winter : (winter?.WinterRoads || winter?.data || winter?.results || []);
+  for (const s of winterRows) {
+    const tokens = idRoadTokens(s.RoadwayName);
+    if (!tokens.length) continue;
+    const geo = polylineGeo(s.EncodedPolyline);
+    const segs = utahSegIds(cfg, tokens, null, null, geo.length ? (() => { const xs = geo.map(p => p[0]), ys = geo.map(p => p[1]); return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]; })() : null, { routeOnly: !geo.length });
+    if (!segs.length && !geo.length) continue;
+    const route = matchedRoute(cfg, tokens);
+    const status = String(s['Overall Status'] || '');
+    const text = [status, s['Weather Conditions'], s['Special Conditions']].filter(Boolean).join(' · ');
+    const updated = toMs(s.LastUpdated);
+    if (/clos/i.test(text)) {
+      out.push({ id: `id-winter-${s.Id}-closed`, cls: 'roadClosures', segs, route, geo,
+        title: `Road closed — ${route}`, tooltip: '',
+        detail: [s.LocationDescription, text].filter(Boolean).join(' · ').slice(0, 600),
+        eventType: null, priority: null, icon: null, updated, start: null, src: 'id' });
+      continue;
+    }
+    if (!ID_WINTER_BAD.test(text)) continue; // Dry, or an unknown value: no event (unknown, not clear)
+    out.push({ id: `id-winter-${s.Id}`, cls: 'winterDriving', segs, route, geo,
+      title: `${status || 'Winter conditions'} — ${route}`, tooltip: [s['Weather Conditions'], s['Special Conditions']].filter(Boolean).join(' · '),
+      detail: [s.LocationDescription, text].filter(Boolean).join(' · ').slice(0, 600),
+      eventType: null, priority: null, icon: null, updated, start: null, src: 'id' });
+  }
+  const eventRows = Array.isArray(events) ? events : (events?.Events || events?.data || events?.results || []);
+  for (const a of eventRows) {
+    const tokens = idRoadTokens(a.RoadwayName);
+    const desc = String(a.Description || '');
+    for (const m of desc.matchAll(/\b(?:SH|ID|US|I)[- ]?\d+[A-Z]?\b/gi)) tokens.push(...idRoadTokens(m[0]));
+    const lon = +a.Longitude, lat = +a.Latitude;
+    let geo = polylineGeo(a.EncodedPolyline);
+    const hasPt = Number.isFinite(lon) && Number.isFinite(lat);
+    if (!geo.length && hasPt) geo = [[+lon.toFixed(4), +lat.toFixed(4)]];
+    if (!geo.length) continue;
+    const bbox = geo.length ? (() => { const xs = geo.map(p => p[0]), ys = geo.map(p => p[1]); return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]; })() : null;
+    const segs = utahSegIds(cfg, [...new Set(tokens)], hasPt ? lon : null, hasPt ? lat : null, bbox);
+    if (!segs.length && !geo.length) continue;
+    const route = matchedRoute(cfg, [...new Set(tokens)]);
+    const full = a.IsFullClosure === true || a.EventType === 'closures';
+    const cls = full ? 'roadClosures' : 'roadReports';
+    const title = (desc.split('\n')[0] || a.EventSubType || a.EventType || 'Idaho 511 event').trim();
+    out.push({ id: `id-event-${a.ID ?? a.Id ?? `${route}-${out.length}`}`, cls, segs, route, geo,
+      title, tooltip: dirWord(a.DirectionOfTravel),
+      detail: [desc, a.Comment && a.Comment !== desc ? a.Comment : '', a.LanesAffected || ''].filter(Boolean).join(' · ').slice(0, 600),
+      eventType: a.EventType === 'roadwork' ? 'routine' : null, priority: null, icon: null,
+      updated: toMs(a.LastUpdated), start: toMs(a.StartDate), src: 'id' });
+  }
+  return { events: out };
+}
+
+/** Idaho WZDx work zones (keyless GeoJSON, ~2.7 MB / 1,161 features — filtered before storage). */
+export function idahoWzdxUrl() { return 'https://511.idaho.gov/api/wzdx'; }
+/**
+ * WZDx -> {events}, filtered server-side to the corridor route set before returning (never the
+ * raw 2.7 MB). Work zones only — no closures, no conditions. A feature is kept when one of its
+ * road_names matches a corridor route (with ID/SH twins) or its geometry bbox overlaps a
+ * corridor segment bbox. Geometry may be Point/MultiPoint/LineString/MultiLineString.
+ */
+export function slimIdWzdx(cfg, geojson) {
+  const out = [];
+  const corridor = new Set(Object.values(cfg.segments).flatMap(s => s.routes.flatMap(idRoadTokens)));
+  const hitsCorridor = (names, bbox) => {
+    if (names.some(n => corridor.has(normNeRoad(n)) || idRoadTokens(n).some(t => corridor.has(t)))) return true;
+    if (!bbox) return false;
+    return Object.values(cfg.segments).some(s => bbox[0] <= s.bbox[2] && bbox[2] >= s.bbox[0] && bbox[1] <= s.bbox[3] && bbox[3] >= s.bbox[1]);
+  };
+  for (const f of (geojson?.features || [])) {
+    const p = f.properties || {}, cd = p.core_details || {};
+    const pts = [];
+    const walk = c => { if (typeof c[0] === 'number') pts.push([+c[0].toFixed(4), +c[1].toFixed(4)]); else c.forEach(walk); };
+    if (f.geometry?.coordinates) walk(f.geometry.coordinates);
+    const bbox = pts.length ? (() => { const xs = pts.map(q => q[0]), ys = pts.map(q => q[1]); return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]; })() : null;
+    const names = Array.isArray(cd.road_names) ? cd.road_names : [];
+    if (!hitsCorridor(names, bbox)) continue;
+    const tokens = [...new Set(names.flatMap(idRoadTokens))];
+    const segs = utahSegIds(cfg, tokens, null, null, bbox, { routeOnly: !bbox });
+    const desc = String(cd.description || '').trim();
+    const road = names[0] || '';
+    const route = matchedRoute(cfg, tokens) || road;
+    out.push({ id: `id-wzdx-${p.road_event_id || `${road}-${out.length}`}`, cls: 'roadReports', segs, route, geo: sampleGeo(pts),
+      title: desc ? (firstLine(desc) || `Work zone — ${road}`) : `Work zone — ${road || 'Idaho'}`,
+      tooltip: cd.direction || '',
+      detail: [desc, p.start_date ? `from ${p.start_date}` : '', p.end_date ? `to ${p.end_date}` : ''].filter(Boolean).join(' · ').slice(0, 600),
+      eventType: 'routine', priority: null, icon: null,
+      updated: parseIsoTs(cd.update_date), start: parseIsoTs(p.start_date), end: parseIsoTs(p.end_date), src: 'id' });
+  }
+  return { events: out };
+}
+
+/** Idaho 511 mapIcons points layer (keyless): ActiveClosures, Incidents, Construction, ... */
+export function idahoMapIconsUrl(layer) { return `https://511.idaho.gov/map/mapIcons/${layer}`; }
+/**
+ * mapIcons points -> {events}. Points only (no route/description/timestamp in the JSON — same
+ * shape as NE511); a point matches a segment only when it falls in exactly one segment bbox
+ * (utahSegIds' no-token rule). ActiveClosures are roadClosures, everything else roadReports.
+ * Detail lives in the HTML tooltips, which this collector does not fetch.
+ */
+export function slimIdMapIcons(cfg, json, layer = 'points') {
+  const out = [];
+  const items = Array.isArray(json?.item2) ? json.item2 : [];
+  const isClosure = /clos/i.test(layer);
+  for (const it of items) {
+    const loc = it.location || [];
+    const lat = parseFloat(loc[0]), lon = parseFloat(loc[1]); // mapIcons location is [lat, lon]
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+    const segs = utahSegIds(cfg, [], lon, lat, null);
+    const geo = [[+lon.toFixed(4), +lat.toFixed(4)]];
+    if (!segs.length && !geo.length) continue;
+    out.push({ id: `id-icons-${layer}-${it.itemId}`, cls: isClosure ? 'roadClosures' : 'roadReports', segs, route: '', geo,
+      title: isClosure ? 'Active closure (Idaho 511)' : `${layer} (Idaho 511)`,
+      tooltip: '', detail: '',
+      eventType: null, priority: null, icon: null, updated: null, start: null, src: 'id' });
+  }
+  return { events: out };
+}
+
+/* ----- New Mexico — NMRoads GetEventsJSON (keyless) ----- */
+/** NMRoads event types (from the site's JS): 5 closure, 6 crash, 7 alert, 8 laneClosure,
+ *  9 roadwork, 13 fairDrivingConditions, 14 weatherAdvisory, 16 difficultDrivingConditions,
+ *  17 severeDrivingConditions, 18 specialEvent, 19 construction, 20 seasonalClosure,
+ *  21 signalPowerOutage. One comma-list call covers them all (verified live 2026-11-24). */
+export const NM_EVENT_TYPES = [5, 6, 7, 8, 9, 13, 14, 16, 17, 18, 19, 20, 21];
+/** Canonical route number for Rockies feeds: normNeRoad's prefix list is NE-only, so 'NM 134'
+ *  / 'MT 64' / 'WY 22' come back unchanged — this one hyphenates the Rockies prefixes too. */
+const normRkRoad = s => {
+  const t = String(s || '').trim().replace(/\s+/g, ' ');
+  const m = t.match(/^(I|US|SR|ID|SH|NM|MT|WY)\s*-?\s*(\d+[A-Z]?)$/i);
+  return m ? `${m[1].toUpperCase()}-${m[2].toUpperCase()}` : normNeRoad(t);
+};
+export function nmEventsUrl(types = NM_EVENT_TYPES) {
+  const list = Array.isArray(types) ? types.join(',') : String(types);
+  return `https://servicev5.nmroads.com/RealMapWAR/GetEventsJSON?eventType=${list}&returnData=all`;
+}
+/**
+ * NMRoads events -> {events}. The response is a bare array (or {events: [...]}). Coordinates
+ * are Web Mercator metres in both `longitude`/`latitude` and `geometryAsJSON.paths` and are
+ * converted to degrees before any bbox math. Driving conditions: fair (13) is an explicit
+ * posting, difficult (16) is winterDriving (the description's "snow packed and icy" wording
+ * is kept in the tooltip so the verdict's winter-bad check sees it), severe (17) is a
+ * roadClosure so the leg's closure level applies — absence of any driving-conditions event is
+ * unknown, never clear. Lane closures are titled "Lane closed — ..." (CA style) so the verdict
+ * treats them as partial, not full closures.
+ */
+export function slimNmEvents(cfg, json) {
+  const rows = Array.isArray(json) ? json : (json?.events || []);
+  const out = [];
+  const toMs = v => (typeof v === 'number' && v > 0 ? (v < 1e12 ? v * 1000 : v) : null);
+  rows.forEach((e, i) => {
+    const type = e.eventType ?? e.incidentType;
+    const route = normRkRoad(`${e.routeName || ''} ${e.routeNumber || ''}`.trim());
+    const tokens = route ? [route] : [];
+    let geo = [];
+    try {
+      const gj = typeof e.geometryAsJSON === 'string' ? JSON.parse(e.geometryAsJSON) : e.geometryAsJSON;
+      const pts = [];
+      const walk = c => { if (typeof c[0] === 'number') pts.push(fromWebMercator(c[0], c[1])); else c.forEach(walk); };
+      if (gj?.paths) walk(gj.paths);
+      geo = sampleGeo(pts);
+    } catch { /* fall through to the point below */ }
+    const mx = +e.longitude, my = +e.latitude;
+    if (!geo.length && Number.isFinite(mx) && Number.isFinite(my)) geo = [fromWebMercator(mx, my)];
+    if (!geo.length) return;
+    const bbox = (() => { const xs = geo.map(p => p[0]), ys = geo.map(p => p[1]); return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]; })();
+    const segs = utahSegIds(cfg, tokens, null, null, bbox);
+    if (!segs.length && !geo.length) return;
+    const miles = (e.milemarkerfrom != null && e.milemarkerto != null) ? ` (mile ${e.milemarkerfrom}–${e.milemarkerto})` : '';
+    const desc = stripHtml(e.description || '').trim();
+    const updated = toMs(e.updatedateEpoc) ?? toMs(e.entereddateEpoc);
+    const start = toMs(e.entereddateEpoc);
+    const base = { segs, route, geo, updated, start, eventType: null, priority: null, icon: null, src: 'nm' };
+    const where = [e.atPointA, e.atPointB].filter(Boolean).join(' → ');
+    if (type === 5 || type === 20) {
+      out.push({ ...base, id: `nm-${type}-${i}`, cls: 'roadClosures',
+        title: `Road closed${type === 20 ? ' (seasonal)' : ''} — ${route}${miles}`,
+        tooltip: '', detail: [e.title || '', desc, where].filter(Boolean).join(' · ').slice(0, 600) });
+    } else if (type === 8) {
+      out.push({ ...base, id: `nm-${type}-${i}`, cls: 'roadClosures',
+        title: `Lane closed — ${route}${miles}`,
+        tooltip: '', detail: [e.title || '', desc, where].filter(Boolean).join(' · ').slice(0, 600) });
+    } else if (type === 13 || type === 16) {
+      const level = type === 13 ? 'Fair' : 'Difficult';
+      out.push({ ...base, id: `nm-${type}-${i}`, cls: 'winterDriving',
+        title: `${level} driving conditions — ${route}${miles}`,
+        tooltip: desc.slice(0, 200),
+        detail: [e.title || '', desc, where].filter(Boolean).join(' · ').slice(0, 600) });
+    } else if (type === 17) {
+      out.push({ ...base, id: `nm-${type}-${i}`, cls: 'roadClosures',
+        title: `Severe driving conditions — ${route}${miles}`,
+        tooltip: desc.slice(0, 200),
+        detail: [e.title || '', desc, where].filter(Boolean).join(' · ').slice(0, 600) });
+    } else {
+      const routine = type === 9 || type === 19;
+      out.push({ ...base, id: `nm-${type}-${i}`, cls: 'roadReports',
+        title: (e.title || e.incidentDesc || `NMRoads event — ${route}`).trim(),
+        tooltip: '', detail: [desc, where].filter(Boolean).join(' · ').slice(0, 600),
+        eventType: routine ? 'routine' : null });
+    }
+  });
+  return { events: out };
+}
 
 /** Road-condition segments that are icy / snow-covered, plus any non-'none' Restriction (traction/chain).
  *  Restriction values are unverified live (all 'none' at probe time) — the raw value goes into the title,
@@ -773,8 +1407,11 @@ export function verdictFor(cfg, resort, { roads, alerts, days, intel = null, now
       const cond = evs.filter(e => e.cls === 'winterDriving' && WINTER_BAD.test(`${e.title} ${e.tooltip}`));
       for (const e of closures) {
         const full = /closed|closure/i.test(e.title) && !/lane closed|lanes closed|shoulder|ramp/i.test(e.title);
-        const lvl = leg.alt || e.oppDir || future(e) ? 'info' : (full ? leg.closure : 'caution');
-        reasons.push({ level: lvl, kind: 'closure', seg: leg.seg, ev: e, key: future(e) ? 'r_scheduled' : (full ? 'r_closure' : 'r_partial_closure') });
+        // NMRoads "severe" driving conditions (type 17) mean the road is effectively impassable:
+        // no-go regardless of the leg's static closure level. Only NM emits this exact phrase.
+        const severe = /severe driving conditions/i.test(e.title);
+        const lvl = leg.alt || e.oppDir || future(e) ? 'info' : (severe ? 'nogo' : (full ? leg.closure : 'caution'));
+        reasons.push({ level: lvl, kind: 'closure', seg: leg.seg, ev: e, key: severe ? 'r_severe' : (future(e) ? 'r_scheduled' : (full ? 'r_closure' : 'r_partial_closure')) });
       }
       for (const e of chains) {
         const lvl = leg.alt || e.oppDir ? 'info' : chainLevel(e);

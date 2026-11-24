@@ -7,10 +7,14 @@ import { fetchAllIntel } from '../js/intel.js';
 import { openMeteoUrl, splitOpenMeteo, carsUrl, slimEvents, EVENT_CLASSES, nwsUrl, slimAlerts, wxGroupCfg,
   utahCarsUrl, utahKeyedUrl, slimUtahEvents, slimUtahRoadConditions, slimUtahCameras, slimUtahPasses,
   caRoadsUrl, CA_DISTRICTS, slimCaEvents,
-  c2cUrl, slimNeEvents, ny511Url, slimNyEvents, massdotUrl, slimMaEvents } from '../js/core.js';
+  c2cUrl, slimNeEvents, ny511Url, slimNyEvents, massdotUrl, slimMaEvents,
+  wyoroadPbfUrl, WYOROAD_PBF_FILE, wyoroadPbfFilename, decodeWyoPbf, slimWyEvents, wyoroadTextUrl, slimWyTextEvents,
+  mdtGeoUrl, slimMtEvents,
+  idahoWinterUrl, idahoEventUrl, slimIdKeyed, idahoWzdxUrl, slimIdWzdx, idahoMapIconsUrl, slimIdMapIcons,
+  nmEventsUrl, NM_EVENT_TYPES, slimNmEvents } from '../js/core.js';
 
 export const UA = 'SkiDay ski dashboard (https://followthepowder.com/)';
-export const SOURCES = ['weather', 'roads', 'alerts', 'cameras', 'intel', 'utah-roads', 'ca-roads', 'ne-roads', 'ny-roads', 'ma-roads'];
+export const SOURCES = ['weather', 'roads', 'alerts', 'cameras', 'intel', 'utah-roads', 'ca-roads', 'ne-roads', 'ny-roads', 'ma-roads', 'wy-roads', 'mt-roads', 'id-roads', 'nm-roads'];
 const now = () => new Date().toISOString();
 
 export function makeHttp({ tries = 3, timeoutMs = 25000 } = {}) {
@@ -29,7 +33,8 @@ export function makeHttp({ tries = 3, timeoutMs = 25000 } = {}) {
   }
   return {
     getJson: async (url, extra) => (await raw(url, extra)).json(),
-    getText: async (url, extra) => (await raw(url, extra, 'text/html')).text()
+    getText: async (url, extra) => (await raw(url, extra, 'text/html')).text(),
+    getBuffer: async (url, extra) => (await raw(url, extra, 'application/octet-stream')).arrayBuffer()
   };
 }
 
@@ -156,6 +161,105 @@ export const collectors = {
   async 'ma-roads'(cfg, http) {
     const xml = await http.getText(massdotUrl(), { Accept: 'application/xml, text/xml, */*' });
     return { events: slimMaEvents(cfg, xml) };
+  },
+  /**
+   * Re-extract the WyoRoad conditions PBF filename from the live map bundle (only when the known
+   * filename 404s — filenames are baked into the JS bundle and rotate on redeploy): map page ->
+   * app entry JS -> map node JS -> wyoroadPbfFilename(). 3 extra fetches, only on rotation.
+   */
+  async 'wy-roads'(cfg, http) {
+    let buf = null;
+    try { buf = await http.getBuffer(wyoroadPbfUrl()); }
+    catch (e) {
+      console.warn?.(`[ski] wy PBF ${WYOROAD_PBF_FILE} failed (${e.message || e}), discovering filename from bundle`);
+      const one = makeHttp({ tries: 1, timeoutMs: 20000 });
+      try {
+        const html = await one.getText('https://map.wyoroad.info/511-map/', { Accept: 'text/html' });
+        const app = html.match(/\/511-map\/_app\/immutable\/entry\/(app\.[A-Za-z0-9_-]+\.js)/)?.[1];
+        if (!app) throw new Error('map app entry not found');
+        const appJs = await one.getText(`https://map.wyoroad.info/511-map/_app/immutable/entry/${app}`);
+        const node = appJs.match(/nodes\/(2\.[A-Za-z0-9_-]+\.js)/)?.[1];
+        if (!node) throw new Error('map node 2 not found');
+        const bundle = await one.getText(`https://map.wyoroad.info/511-map/_app/immutable/nodes/${node}`);
+        const file = wyoroadPbfFilename(bundle);
+        if (!file) throw new Error('conditions PBF filename not in bundle');
+        buf = await one.getBuffer(wyoroadPbfUrl(file));
+        console.warn?.(`[ski] wy PBF filename rotated to ${file}`);
+      } catch (e2) { console.warn?.(`[ski] wy PBF discovery failed (${e2.message || e2}), using text fallback`); }
+    }
+    if (buf?.byteLength) {
+      try {
+        const recs = decodeWyoPbf(buf);
+        if (recs.length) return slimWyEvents(cfg, recs);
+        console.warn?.('[ski] wy PBF decoded 0 records, using text fallback');
+      } catch (e) { console.warn?.(`[ski] wy PBF decode failed (${e.message || e}), using text fallback`); }
+    }
+    // Text fallback: the Jackson town page covers both WY resorts' corridors. A PBF 404 is
+    // "unknown", never "clear" — if this fetch also fails, the throw keeps the last good copy.
+    const html = await http.getText(wyoroadTextUrl('Jackson'), { Accept: 'text/html' });
+    return slimWyTextEvents(cfg, html);
+  },
+  /**
+   * Montana roads: MDT 511 Iteris CDN GeoJSON (keyless): events + construction + restrictions
+   * (3 GETs, ~49 KB/tick). One file failing does not lose the others; all three failing throws.
+   */
+  async 'mt-roads'(cfg, http) {
+    const got = {}; const errs = [];
+    for (const kind of ['events', 'construction', 'restrictions']) {
+      try { got[kind] = await http.getJson(mdtGeoUrl(kind)); }
+      catch (e) { errs.push(`${kind}: ${e.message || e}`); }
+    }
+    if (!Object.keys(got).length) throw new Error(`mt-roads: ${errs.join('; ')}`);
+    if (errs.length) console.warn?.(`[ski] mt-roads partial: ${errs.join('; ')}`);
+    return slimMtEvents(cfg, got);
+  },
+  /**
+   * Idaho roads: keyed Developer API when a key is set (winterroads v3 + event v2, 2 calls/tick,
+   * under the 10 calls / 60 s throttle), keyless fallback (WZDx work zones, filtered server-side
+   * + mapIcons ActiveClosures/Construction points) otherwise. A 400/401 from the keyed API means
+   * "key missing", not "no events" — any keyed failure falls back to keyless, never to nothing.
+   * Without a key the source still works (thin keyless coverage), so the GitHub Action backup
+   * keeps working.
+   */
+  async 'id-roads'(cfg, http, keys = {}) {
+    const key = keys.idahoApiKey;
+    if (key) {
+      const keyHttp = makeHttp({ tries: 1, timeoutMs: 20000 });
+      let winter = null, evs = null; const kerrs = [];
+      try { winter = await keyHttp.getJson(idahoWinterUrl(key)); } catch (e) { kerrs.push(`winterroads: ${e.message || e}`); }
+      try { evs = await keyHttp.getJson(idahoEventUrl(key)); } catch (e) { kerrs.push(`event: ${e.message || e}`); }
+      if (winter != null || evs != null) {
+        if (kerrs.length) console.warn?.(`[ski] id keyed partial: ${kerrs.join('; ')}`);
+        return slimIdKeyed(cfg, winter ?? [], evs ?? []);
+      }
+      console.warn?.(`[ski] id keyed API failed (${kerrs.join('; ')}), falling back to keyless`);
+    }
+    const [wzdx, closures, construction] = await Promise.all([
+      http.getJson(idahoWzdxUrl()),
+      http.getJson(idahoMapIconsUrl('ActiveClosures')),
+      http.getJson(idahoMapIconsUrl('Construction'))
+    ]);
+    return { events: [...slimIdWzdx(cfg, wzdx).events, ...slimIdMapIcons(cfg, closures, 'ActiveClosures').events,
+      ...slimIdMapIcons(cfg, construction, 'Construction').events] };
+  },
+  /**
+   * New Mexico roads: NMRoads GetEventsJSON (keyless). One comma-list call for all 13 event types
+   * (verified live 2026-11-24: 95 events, 741 KB); if the comma list ever fails, one call per
+   * event type. At least one per-type call must succeed or the source throws (last good kept).
+   */
+  async 'nm-roads'(cfg, http) {
+    try {
+      return slimNmEvents(cfg, await http.getJson(nmEventsUrl()));
+    } catch (e) {
+      console.warn?.(`[ski] nm comma-list failed (${e.message || e}), falling back to per-type calls`);
+      const out = []; let ok = 0;
+      for (const t of NM_EVENT_TYPES) {
+        try { out.push(...slimNmEvents(cfg, await http.getJson(nmEventsUrl([t]))).events); ok++; }
+        catch (e2) { console.warn?.(`[ski] nm type ${t} failed: ${e2.message || e2}`); }
+      }
+      if (!ok) throw e;
+      return { events: out };
+    }
   }
 };
 
@@ -187,13 +291,15 @@ const meta = r => r ? { ok: !!r.ok, status: r.status, fetchedAt: r.fetchedAt, at
 
 /** Records -> the latest.json shape the page reads. */
 export function toLatest(rec, servedBy) {
-  const times = ['weather', 'roads', 'alerts', 'cameras', 'utah-roads', 'ca-roads', 'ne-roads', 'ny-roads', 'ma-roads'].map(k => rec[k]?.fetchedAt).filter(Boolean).sort();
+  const times = ['weather', 'roads', 'alerts', 'cameras', 'utah-roads', 'ca-roads', 'ne-roads', 'ny-roads', 'ma-roads', 'wy-roads', 'mt-roads', 'id-roads', 'nm-roads'].map(k => rec[k]?.fetchedAt).filter(Boolean).sort();
   return {
     generatedAt: times[times.length - 1] || null, servedBy,
-    sources: { weather: meta(rec.weather), roads: meta(rec.roads), alerts: meta(rec.alerts), cameras: meta(rec.cameras), 'utah-roads': meta(rec['utah-roads']), 'ca-roads': meta(rec['ca-roads']), 'ne-roads': meta(rec['ne-roads']), 'ny-roads': meta(rec['ny-roads']), 'ma-roads': meta(rec['ma-roads']) },
+    sources: { weather: meta(rec.weather), roads: meta(rec.roads), alerts: meta(rec.alerts), cameras: meta(rec.cameras), 'utah-roads': meta(rec['utah-roads']), 'ca-roads': meta(rec['ca-roads']), 'ne-roads': meta(rec['ne-roads']), 'ny-roads': meta(rec['ny-roads']), 'ma-roads': meta(rec['ma-roads']), 'wy-roads': meta(rec['wy-roads']), 'mt-roads': meta(rec['mt-roads']), 'id-roads': meta(rec['id-roads']), 'nm-roads': meta(rec['nm-roads']) },
     weather: rec.weather?.data || null, roads: rec.roads?.data || null, alerts: rec.alerts?.data || {}, cameras: rec.cameras?.data || null,
     'utah-roads': rec['utah-roads']?.data || null, 'ca-roads': rec['ca-roads']?.data || null,
-    'ne-roads': rec['ne-roads']?.data || null, 'ny-roads': rec['ny-roads']?.data || null, 'ma-roads': rec['ma-roads']?.data || null
+    'ne-roads': rec['ne-roads']?.data || null, 'ny-roads': rec['ny-roads']?.data || null, 'ma-roads': rec['ma-roads']?.data || null,
+    'wy-roads': rec['wy-roads']?.data || null, 'mt-roads': rec['mt-roads']?.data || null,
+    'id-roads': rec['id-roads']?.data || null, 'nm-roads': rec['nm-roads']?.data || null
   };
 }
 export const toIntel = (r, servedBy) => ({ generatedAt: r?.fetchedAt || null, attemptAt: r?.attemptAt || null, status: r?.status || 'failed', error: r?.error || null, servedBy, resorts: r?.data || {} });
@@ -202,7 +308,7 @@ export const toCameras = (r, cfg, servedBy) => ({ generatedAt: r?.fetchedAt || n
 /** latest.json (+ intel.json, cameras.json) on disk -> records, so the Node backup can merge too. */
 export function fromFiles(latest, intel, cams) {
   const rec = {};
-  for (const k of ['weather', 'roads', 'alerts', 'cameras', 'utah-roads', 'ca-roads', 'ne-roads', 'ny-roads', 'ma-roads']) {
+  for (const k of ['weather', 'roads', 'alerts', 'cameras', 'utah-roads', 'ca-roads', 'ne-roads', 'ny-roads', 'ma-roads', 'wy-roads', 'mt-roads', 'id-roads', 'nm-roads']) {
     const s = latest?.sources?.[k]; const d = latest?.[k];
     const has = d != null && s?.ok !== false && !(k === 'alerts' && !Object.values(d).some(v => v));
     rec[k] = has ? { status: s?.status || 'ok', ok: true, fetchedAt: s?.fetchedAt || latest.generatedAt, attemptAt: s?.attemptAt || null, error: s?.error || null, data: d } : null;

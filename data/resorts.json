@@ -129,6 +129,116 @@
     },
     "lat": 40.5853,
     "lon": -105.0844
+   },
+   {
+    "id": "JAC",
+    "airport": true,
+    "region": "RK",
+    "name": {
+     "en": "Jackson Hole Airport",
+     "zh": "Jackson Hole Airport"
+    },
+    "lat": 43.60722,
+    "lon": -110.73778
+   },
+   {
+    "id": "IDA",
+    "airport": true,
+    "region": "RK",
+    "name": {
+     "en": "Idaho Falls Regional Airport",
+     "zh": "Idaho Falls Regional Airport"
+    },
+    "lat": 43.51361,
+    "lon": -112.07083
+   },
+   {
+    "id": "BZN",
+    "airport": true,
+    "region": "RK",
+    "name": {
+     "en": "Bozeman Yellowstone Airport",
+     "zh": "Bozeman Yellowstone Airport"
+    },
+    "lat": 45.777,
+    "lon": -111.152
+   },
+   {
+    "id": "FCA",
+    "airport": true,
+    "region": "RK",
+    "name": {
+     "en": "Glacier Park International Airport",
+     "zh": "Glacier Park International Airport"
+    },
+    "lat": 48.31056,
+    "lon": -114.25611
+   },
+   {
+    "id": "SUN",
+    "airport": true,
+    "region": "RK",
+    "name": {
+     "en": "Friedman Memorial Airport",
+     "zh": "Friedman Memorial Airport"
+    },
+    "lat": 43.5066,
+    "lon": -114.30063
+   },
+   {
+    "id": "GEG",
+    "airport": true,
+    "region": "RK",
+    "name": {
+     "en": "Spokane International Airport",
+     "zh": "Spokane International Airport"
+    },
+    "lat": 47.62004,
+    "lon": -117.54237
+   },
+   {
+    "id": "SAF",
+    "airport": true,
+    "region": "RK",
+    "name": {
+     "en": "Santa Fe Municipal Airport",
+     "zh": "Santa Fe Municipal Airport"
+    },
+    "lat": 35.61777,
+    "lon": -106.08667
+   },
+   {
+    "id": "ABQ",
+    "airport": true,
+    "region": "RK",
+    "name": {
+     "en": "Albuquerque International Sunport",
+     "zh": "Albuquerque International Sunport"
+    },
+    "lat": 35.03767,
+    "lon": -106.61097
+   },
+   {
+    "id": "BOI",
+    "airport": true,
+    "region": "RK",
+    "name": {
+     "en": "Boise Airport",
+     "zh": "Boise Airport"
+    },
+    "lat": 43.56923,
+    "lon": -116.22185
+   },
+   {
+    "id": "MSO",
+    "airport": true,
+    "region": "RK",
+    "name": {
+     "en": "Missoula International Airport",
+     "zh": "Missoula International Airport"
+    },
+    "lat": 46.91639,
+    "lon": -114.09056
    }
   ]
  },
@@ -2048,6 +2158,724 @@
     44.3572,
     -73.7177,
     44.4125
+   ]
+  },
+  "jac-airport-us26": {
+   "name": {
+    "en": "JAC Airport → US-26/89 (East Airport Road)",
+    "zh": "JAC Airport → US-26/89 (East Airport Road)"
+   },
+   "routes": [
+    "US-26",
+    "US-89",
+    "US-191"
+   ],
+   "bbox": [
+    -110.7985,
+    43.46351,
+    -110.71421,
+    43.61695
+   ]
+  },
+  "us26-jackson": {
+   "name": {
+    "en": "US-26/89/191 Jackson → WY-22 junction",
+    "zh": "US-26/89/191 Jackson → WY-22 junction"
+   },
+   "routes": [
+    "US-26",
+    "US-89",
+    "US-191",
+    "US-189"
+   ],
+   "bbox": [
+    -110.7985,
+    43.46351,
+    -110.71421,
+    43.61695
+   ]
+  },
+  "wy22-jackson-wilson": {
+   "name": {
+    "en": "WY-22 Jackson → Wilson",
+    "zh": "WY-22 Jackson → Wilson"
+   },
+   "routes": [
+    "WY-22"
+   ],
+   "bbox": [
+    -110.88182,
+    43.46351,
+    -110.7785,
+    43.51002
+   ]
+  },
+  "wy22-teton-pass": {
+   "name": {
+    "en": "WY-22 Teton Pass, Wilson → Victor (ID line)",
+    "zh": "WY-22 Teton Pass, Wilson → Victor (ID line)"
+   },
+   "routes": [
+    "WY-22"
+   ],
+   "bbox": [
+    -111.0555,
+    43.49,
+    -110.88182,
+    43.55344
+   ]
+  },
+  "wy390-teton-village": {
+   "name": {
+    "en": "WY-390 (Moose-Wilson Road) → Teton Village",
+    "zh": "WY-390 (Moose-Wilson Road) → Teton Village"
+   },
+   "routes": [
+    "WY-390",
+    "Moose-Wilson Road",
+    "Teton Village Road",
+    "North Fish Creek Road"
+   ],
+   "bbox": [
+    -110.88182,
+    43.49003,
+    -110.84108,
+    43.58104
+   ]
+  },
+  "id33-victor-driggs": {
+   "name": {
+    "en": "ID-33 Victor → Driggs",
+    "zh": "ID-33 Victor → Driggs"
+   },
+   "routes": [
+    "ID-33",
+    "SH-33",
+    "SH 33"
+   ],
+   "bbox": [
+    -111.12136,
+    43.53344,
+    -111.0355,
+    43.73309
+   ]
+  },
+  "id33-rexburg-driggs": {
+   "name": {
+    "en": "ID-33 Rexburg → Driggs",
+    "zh": "ID-33 Rexburg → Driggs"
+   },
+   "routes": [
+    "ID-33",
+    "SH-33",
+    "SH 33"
+   ],
+   "bbox": [
+    -111.76364,
+    43.74933,
+    -111.11,
+    43.89659
+   ]
+  },
+  "us20-idaho-falls": {
+   "name": {
+    "en": "US-20 Idaho Falls → Rexburg",
+    "zh": "US-20 Idaho Falls → Rexburg"
+   },
+   "routes": [
+    "US-20"
+   ],
+   "bbox": [
+    -112.07973,
+    43.494,
+    -111.74364,
+    43.88888
+   ]
+  },
+  "ski-hill-rd": {
+   "name": {
+    "en": "Ski Hill Road, Driggs → Alta",
+    "zh": "Ski Hill Road, Driggs → Alta"
+   },
+   "routes": [
+    "Ski Hill Road"
+   ],
+   "bbox": [
+    -111.11118,
+    43.71289,
+    -111.03658,
+    43.76076
+   ]
+  },
+  "alta-ski-hill-rd": {
+   "name": {
+    "en": "West Alta Ski Hill Road → Grand Targhee",
+    "zh": "West Alta Ski Hill Road → Grand Targhee"
+   },
+   "routes": [
+    "West Alta Ski Hill Road",
+    "Alta Ski Hill Road"
+   ],
+   "bbox": [
+    -111.05659,
+    43.74076,
+    -110.94725,
+    43.79935
+   ]
+  },
+  "w2500n-driggs": {
+   "name": {
+    "en": "West 2500 North + N Stateline Road (Driggs shortcut)",
+    "zh": "West 2500 North + N Stateline Road (Driggs shortcut)"
+   },
+   "routes": [
+    "West 2500 North",
+    "North Stateline Road"
+   ],
+   "bbox": [
+    -111.12083,
+    43.74928,
+    -111.03659,
+    43.76933
+   ]
+  },
+  "bzn-airport-us191": {
+   "name": {
+    "en": "BZN Airport → US-191 (East Cameron Bridge Rd / MT-85)",
+    "zh": "BZN Airport → US-191 (East Cameron Bridge Rd / MT-85)"
+   },
+   "routes": [
+    "MT-85",
+    "East Cameron Bridge Road"
+   ],
+   "bbox": [
+    -111.19583,
+    45.66112,
+    -111.14494,
+    45.78549
+   ]
+  },
+  "us191-four-corners-bigsky": {
+   "name": {
+    "en": "US-191 Four Corners → MT-64 (Gallatin Canyon)",
+    "zh": "US-191 Four Corners → MT-64 (Gallatin Canyon)"
+   },
+   "routes": [
+    "US-191"
+   ],
+   "bbox": [
+    -111.28244,
+    45.27463,
+    -111.16055,
+    45.68021
+   ]
+  },
+  "us191-west-yellowstone-bigsky": {
+   "name": {
+    "en": "US-191 West Yellowstone → MT-64",
+    "zh": "US-191 West Yellowstone → MT-64"
+   },
+   "routes": [
+    "US-191",
+    "US-287"
+   ],
+   "bbox": [
+    -111.26447,
+    44.65379,
+    -111.03396,
+    45.27463
+   ]
+  },
+  "mt64-bigsky": {
+   "name": {
+    "en": "MT-64 US-191 → Big Sky Mountain Village",
+    "zh": "MT-64 US-191 → Big Sky Mountain Village"
+   },
+   "routes": [
+    "MT-64"
+   ],
+   "bbox": [
+    -111.40398,
+    45.25089,
+    -111.24454,
+    45.29986
+   ]
+  },
+  "id33-tetonia": {
+   "name": {
+    "en": "ID-33 / SH-33 Victor → Tetonia",
+    "zh": "ID-33 / SH-33 Victor → Tetonia"
+   },
+   "routes": [
+    "ID-33",
+    "SH-33"
+   ],
+   "bbox": [
+    -111.19058,
+    43.53454,
+    -111.03749,
+    43.94881
+   ]
+  },
+  "id32-ashton": {
+   "name": {
+    "en": "SH-32 / ID-32 Tetonia → Ashton",
+    "zh": "SH-32 / ID-32 Tetonia → Ashton"
+   },
+   "routes": [
+    "SH-32",
+    "ID-32"
+   ],
+   "bbox": [
+    -111.46458,
+    43.93013,
+    -111.16919,
+    44.08138
+   ]
+  },
+  "us20-ashton-west-yellowstone": {
+   "name": {
+    "en": "US-20 Ashton → West Yellowstone",
+    "zh": "US-20 Ashton → West Yellowstone"
+   },
+   "routes": [
+    "US-20"
+   ],
+   "bbox": [
+    -111.47975,
+    44.06163,
+    -111.08968,
+    44.69768
+   ]
+  },
+  "i90-bzn-bozeman": {
+   "name": {
+    "en": "I-90 BZN → Bozeman (MT-86 exit)",
+    "zh": "I-90 BZN → Bozeman (MT-86 exit)"
+   },
+   "routes": [
+    "I-90"
+   ],
+   "bbox": [
+    -111.17323,
+    45.6861,
+    -111.0361,
+    45.78549
+   ]
+  },
+  "mt86-bozeman-bridger": {
+   "name": {
+    "en": "MT-86 Bozeman → Bridger Bowl (Bridger Canyon)",
+    "zh": "MT-86 Bozeman → Bridger Bowl (Bridger Canyon)"
+   },
+   "routes": [
+    "MT-86"
+   ],
+   "bbox": [
+    -111.05561,
+    45.68999,
+    -110.866,
+    45.82905
+   ]
+  },
+  "us2-fca-mt40": {
+   "name": {
+    "en": "US-2 FCA → MT-40",
+    "zh": "US-2 FCA → MT-40"
+   },
+   "routes": [
+    "US-2"
+   ],
+   "bbox": [
+    -114.26235,
+    48.29599,
+    -114.23086,
+    48.38017
+   ]
+  },
+  "mt40-columbia-falls": {
+   "name": {
+    "en": "MT-40 US-2 → US-93",
+    "zh": "MT-40 US-2 → US-93"
+   },
+   "routes": [
+    "MT-40"
+   ],
+   "bbox": [
+    -114.3453,
+    48.3604,
+    -114.23336,
+    48.38831
+   ]
+  },
+  "mt487-whitefish": {
+   "name": {
+    "en": "MT-487 US-93 → Whitefish Mountain Resort (Wisconsin Ave / Big Mountain Rd)",
+    "zh": "MT-487 US-93 → Whitefish Mountain Resort (Wisconsin Ave / Big Mountain Rd)"
+   },
+   "routes": [
+    "MT-487",
+    "Big Mountain Road",
+    "Wisconsin Avenue",
+    "Baker Avenue"
+   ],
+   "bbox": [
+    -114.3748,
+    48.36912,
+    -114.32525,
+    48.4911
+   ]
+  },
+  "mso-airport-us93": {
+   "name": {
+    "en": "MSO Airport → US-93 (West Broadway St)",
+    "zh": "MSO Airport → US-93 (West Broadway St)"
+   },
+   "routes": [
+    "West Broadway Street"
+   ],
+   "bbox": [
+    -114.14127,
+    46.90658,
+    -114.07011,
+    46.96307
+   ]
+  },
+  "us93-mso-kalispell": {
+   "name": {
+    "en": "US-93 Missoula → Kalispell",
+    "zh": "US-93 Missoula → Kalispell"
+   },
+   "routes": [
+    "US-93",
+    "MT-200"
+   ],
+   "bbox": [
+    -114.35988,
+    46.94498,
+    -114.03053,
+    48.16465
+   ]
+  },
+  "us93alt-kalispell": {
+   "name": {
+    "en": "US 93 ALT Kalispell bypass",
+    "zh": "US 93 ALT Kalispell bypass"
+   },
+   "routes": [
+    "US 93 ALT",
+    "US-93 ALT"
+   ],
+   "bbox": [
+    -114.35884,
+    48.14519,
+    -114.28058,
+    48.25034
+   ]
+  },
+  "us93-kalispell-whitefish": {
+   "name": {
+    "en": "US-93 Kalispell → Whitefish",
+    "zh": "US-93 Kalispell → Whitefish"
+   },
+   "routes": [
+    "US-93"
+   ],
+   "bbox": [
+    -114.34823,
+    48.23185,
+    -114.32024,
+    48.42063
+   ]
+  },
+  "sun-airport": {
+   "name": {
+    "en": "SUN Airport → ID-75 (Airport Way)",
+    "zh": "SUN Airport → ID-75 (Airport Way)"
+   },
+   "routes": [
+    "Airport Way"
+   ],
+   "bbox": [
+    -114.31063,
+    43.4966,
+    -114.29063,
+    43.5166
+   ]
+  },
+  "id75-sun-valley": {
+   "name": {
+    "en": "ID-75 US-20 junction → River Run (Sun Valley)",
+    "zh": "ID-75 US-20 junction → River Run (Sun Valley)"
+   },
+   "routes": [
+    "ID-75",
+    "SH-75"
+   ],
+   "bbox": [
+    -114.37854,
+    43.32256,
+    -114.2422,
+    43.6825
+   ]
+  },
+  "boi-airport": {
+   "name": {
+    "en": "BOI Airport → I-84 (Airport Way)",
+    "zh": "BOI Airport → I-84 (Airport Way)"
+   },
+   "routes": [
+    "Airport Way"
+   ],
+   "bbox": [
+    -116.23185,
+    43.55923,
+    -116.21185,
+    43.57923
+   ]
+  },
+  "i84-boise": {
+   "name": {
+    "en": "I-84 Boise → Mountain Home",
+    "zh": "I-84 Boise → Mountain Home"
+   },
+   "routes": [
+    "I-84",
+    "US-30"
+   ],
+   "bbox": [
+    -116.2318,
+    43.12868,
+    -115.65484,
+    43.58037
+   ]
+  },
+  "us20-mtn-home": {
+   "name": {
+    "en": "US-20 Mountain Home → ID-75 junction (OSRM labels it \"I 84 Business\")",
+    "zh": "US-20 Mountain Home → ID-75 junction (OSRM labels it \"I 84 Business\")"
+   },
+   "routes": [
+    "US-20",
+    "I 84 Business",
+    "I-84 Business"
+   ],
+   "bbox": [
+    -115.67402,
+    43.12886,
+    -115.07672,
+    43.33202
+   ]
+  },
+  "us20-sun-valley": {
+   "name": {
+    "en": "US-20 → ID-75 (Sun Valley)",
+    "zh": "US-20 → ID-75 (Sun Valley)"
+   },
+   "routes": [
+    "US-20"
+   ],
+   "bbox": [
+    -115.09466,
+    43.28815,
+    -114.26976,
+    43.35268
+   ]
+  },
+  "geg-airport": {
+   "name": {
+    "en": "GEG Airport → US-2 (West Airport Drive)",
+    "zh": "GEG Airport → US-2 (West Airport Drive)"
+   },
+   "routes": [
+    "West Airport Drive"
+   ],
+   "bbox": [
+    -117.55395,
+    47.61401,
+    -117.49259,
+    47.65124
+   ]
+  },
+  "us2-spokane": {
+   "name": {
+    "en": "US-2 Spokane → I-90",
+    "zh": "US-2 Spokane → I-90"
+   },
+   "routes": [
+    "US-2"
+   ],
+   "bbox": [
+    -117.51117,
+    47.62284,
+    -116.90155,
+    47.72399
+   ]
+  },
+  "i90-coeur-dalene": {
+   "name": {
+    "en": "I-90 US-2 → US-95 (Coeur d'Alene)",
+    "zh": "I-90 US-2 → US-95 (Coeur d'Alene)"
+   },
+   "routes": [
+    "I-90"
+   ],
+   "bbox": [
+    -116.91803,
+    47.68899,
+    -116.78802,
+    47.72247
+   ]
+  },
+  "us95-sandpoint": {
+   "name": {
+    "en": "US-95 Coeur d'Alene → Schweitzer turnoff",
+    "zh": "US-95 Coeur d'Alene → Schweitzer turnoff"
+   },
+   "routes": [
+    "US-95"
+   ],
+   "bbox": [
+    -116.80669,
+    47.68806,
+    -116.52843,
+    48.33017
+   ]
+  },
+  "schweitzer-mtn-rd": {
+   "name": {
+    "en": "Schweitzer Mountain Road → Schweitzer",
+    "zh": "Schweitzer Mountain Road → Schweitzer"
+   },
+   "routes": [
+    "Schweitzer Mountain Road"
+   ],
+   "bbox": [
+    -116.63378,
+    48.30806,
+    -116.55126,
+    48.37672
+   ]
+  },
+  "saf-airport": {
+   "name": {
+    "en": "SAF Airport → NM-599",
+    "zh": "SAF Airport → NM-599"
+   },
+   "routes": [
+    "NM-599"
+   ],
+   "bbox": [
+    -106.09465,
+    35.60776,
+    -105.93217,
+    35.72728
+   ]
+  },
+  "i25-santa-fe": {
+   "name": {
+    "en": "I-25 ABQ → US-84 (Santa Fe)",
+    "zh": "I-25 ABQ → US-84 (Santa Fe)"
+   },
+   "routes": [
+    "I-25"
+   ],
+   "bbox": [
+    -106.64993,
+    35.02674,
+    -105.94344,
+    35.69832
+   ]
+  },
+  "us84-santa-fe": {
+   "name": {
+    "en": "US-84/US-285 → NM-68 (Santa Fe)",
+    "zh": "US-84/US-285 → NM-68 (Santa Fe)"
+   },
+   "routes": [
+    "US-84",
+    "US-285"
+   ],
+   "bbox": [
+    -106.07509,
+    35.67935,
+    -105.92156,
+    35.99857
+   ]
+  },
+  "nm68-taos": {
+   "name": {
+    "en": "NM-68 Española → Taos",
+    "zh": "NM-68 Española → Taos"
+   },
+   "routes": [
+    "NM-68"
+   ],
+   "bbox": [
+    -106.07808,
+    35.97935,
+    -105.59856,
+    36.36959
+   ]
+  },
+  "nm240-taos": {
+   "name": {
+    "en": "NM-240 → CR BA-007 (Taos)",
+    "zh": "NM-240 → CR BA-007 (Taos)"
+   },
+   "routes": [
+    "NM-240"
+   ],
+   "bbox": [
+    -105.64089,
+    36.35037,
+    -105.59832,
+    36.40218
+   ]
+  },
+  "cr-ba007-taos": {
+   "name": {
+    "en": "CR BA-007 → NM-230 (Taos)",
+    "zh": "CR BA-007 → NM-230 (Taos)"
+   },
+   "routes": [
+    "CR BA-007"
+   ],
+   "bbox": [
+    -105.63894,
+    36.38325,
+    -105.58527,
+    36.50748
+   ]
+  },
+  "nm230-taos": {
+   "name": {
+    "en": "NM-230 → NM-150 (Taos)",
+    "zh": "NM-230 → NM-150 (Taos)"
+   },
+   "routes": [
+    "NM-230"
+   ],
+   "bbox": [
+    -105.60622,
+    36.48817,
+    -105.54984,
+    36.54981
+   ]
+  },
+  "nm150-taos": {
+   "name": {
+    "en": "NM-150 → Taos Ski Valley",
+    "zh": "NM-150 → Taos Ski Valley"
+   },
+   "routes": [
+    "NM-150"
+   ],
+   "bbox": [
+    -105.569,
+    36.53047,
+    -105.42487,
+    36.61504
    ]
   }
  },
@@ -6206,6 +7034,643 @@
    "summitSource": "Summit 4,386 ft / 1,337 m (Whiteface Mountain Ski Area, lift-served)",
    "baseSource": "Base 1,220 ft / 372 m (Whiteface Mountain Ski Area)",
    "wxGroup": 14
+  },
+  {
+   "id": "jackson-hole",
+   "name": {
+    "en": "Jackson Hole",
+    "zh": "Jackson Hole"
+   },
+   "short": "Jackson Hole",
+   "passes": [
+    "ikon",
+    "mountain-collective"
+   ],
+   "region": "RK",
+   "tz": "America/Denver",
+   "lat": 43.59,
+   "lon": -110.89,
+   "baseElevM": 1924,
+   "summitElevM": 3185,
+   "driveMin": 49,
+   "driveSource": "OSRM route from JAC airport, no traffic (computed 2026-11-24)",
+   "gateway": "JAC",
+   "routeNote": {
+    "en": "JAC → US-26 S → WY-22 W → North Fish Creek Road N to Jackson Hole.",
+    "zh": "JAC → US-26 S → WY-22 W → North Fish Creek Road N to Jackson Hole."
+   },
+   "route": [
+    {
+     "seg": "jac-airport-us26",
+     "closure": "caution"
+    },
+    {
+     "seg": "wy22-jackson-wilson",
+     "closure": "caution"
+    },
+    {
+     "seg": "wy390-teton-village",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.jacksonhole.com/",
+    "webcams": "https://cams.jacksonhole.com/",
+    "report": "https://www.jacksonhole.com/mountain-report"
+   },
+   "webcams": [
+    {
+     "name": {
+      "en": "Cody Bowl",
+      "zh": "Cody Bowl"
+     },
+     "image": "https://cams.jacksonhole.com/webcam/codybowl.jpg"
+    },
+    {
+     "name": {
+      "en": "Sublette Base",
+      "zh": "Sublette Base"
+     },
+     "image": "https://cams.jacksonhole.com/webcam/guncam.jpg"
+    },
+    {
+     "name": {
+      "en": "Summit of the Teton Lift",
+      "zh": "Summit of the Teton Lift"
+     },
+     "image": "https://cams.jacksonhole.com/webcam/teton_lift_summit.jpg"
+    },
+    {
+     "name": {
+      "en": "Casper Chair",
+      "zh": "Casper Chair"
+     },
+     "image": "https://cams.jacksonhole.com/webcam/casperchair.jpg"
+    },
+    {
+     "name": {
+      "en": "Base of the Teton Lift",
+      "zh": "Base of the Teton Lift"
+     },
+     "image": "https://cams.jacksonhole.com/webcam/teton_lift_base.jpg"
+    },
+    {
+     "name": {
+      "en": "Solitude Station",
+      "zh": "Solitude Station"
+     },
+     "image": "https://cams.jacksonhole.com/webcam/solitudestation.jpg"
+    },
+    {
+     "name": {
+      "en": "Teewinot/Sweetwater",
+      "zh": "Teewinot/Sweetwater"
+     },
+     "image": "https://cams.jacksonhole.com/webcam/teewinot.jpg"
+    },
+    {
+     "name": {
+      "en": "Snow Stake",
+      "zh": "Snow Stake"
+     },
+     "image": "https://cams.jacksonhole.com/webcam/raymersnowstake.jpg"
+    },
+    {
+     "name": {
+      "en": "Tram Station Cam",
+      "zh": "Tram Station Cam"
+     },
+     "image": "https://cams.jacksonhole.com/webcam/trambase.jpg"
+    },
+    {
+     "name": {
+      "en": "Mountain View",
+      "zh": "Mountain View"
+     },
+     "image": "https://cams.jacksonhole.com/webcam/SouthHoback.jpg"
+    },
+    {
+     "name": {
+      "en": "Stilson",
+      "zh": "Stilson"
+     },
+     "image": "https://cams.jacksonhole.com/webcam/stilson.jpg"
+    }
+   ],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "img/cat/jackson-hole.jpg",
+    "credit": "Enricokamasa",
+    "license": "Public domain",
+    "licenseUrl": "https://en.wikipedia.org/wiki/Public_domain",
+    "page": "https://commons.wikimedia.org/wiki/File:Jackson_hole_new_tram.jpg"
+   },
+   "parking": {
+    "lat": 43.59,
+    "lon": -110.89
+   },
+   "summitLat": 43.59714,
+   "summitLon": -110.87113,
+   "summitSource": "Summit 10,450 ft / 3,185 m (Jackson Hole Mountain Resort); weather point = Rendezvous Mountain (Nominatim peak)",
+   "baseSource": "Base 6,311 ft / 1,924 m (Jackson Hole Mountain Resort)",
+   "wxGroup": 15
+  },
+  {
+   "id": "grand-targhee",
+   "name": {
+    "en": "Grand Targhee",
+    "zh": "Grand Targhee"
+   },
+   "short": "Grand Targhee",
+   "passes": [
+    "mountain-collective"
+   ],
+   "region": "RK",
+   "tz": "America/Denver",
+   "lat": 43.789,
+   "lon": -110.957,
+   "baseElevM": 2258,
+   "summitElevM": 3006,
+   "driveMin": 122,
+   "driveSource": "OSRM route from IDA airport, no traffic (computed 2026-11-24)",
+   "gateway": "IDA",
+   "routeNote": {
+    "en": "IDA → US-20 N → ID-33 E → West 2500 North E → West Alta Ski Hill Road E to Grand Targhee.",
+    "zh": "IDA → US-20 N → ID-33 E → West 2500 North E → West Alta Ski Hill Road E to Grand Targhee."
+   },
+   "route": [
+    {
+     "seg": "us20-idaho-falls",
+     "closure": "caution"
+    },
+    {
+     "seg": "id33-rexburg-driggs",
+     "closure": "caution"
+    },
+    {
+     "seg": "w2500n-driggs",
+     "closure": "caution"
+    },
+    {
+     "seg": "alta-ski-hill-rd",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.grandtarghee.com/",
+    "webcams": "https://www.grandtarghee.com/the-mountain/cams-conditions/webcams",
+    "report": "https://www.grandtarghee.com/the-mountain/cams-conditions/mountain-report"
+   },
+   "webcams": [
+    {
+     "name": {
+      "en": "Summit",
+      "zh": "Summit"
+     },
+     "image": "https://copyrighted.seejh.com/gtrsummit/gtrsummit.jpg"
+    },
+    {
+     "name": {
+      "en": "Snow Stick",
+      "zh": "Snow Stick"
+     },
+     "image": "https://copyrighted.seejh.com/gtrsnowstick/gtrsnowstick.jpg"
+    },
+    {
+     "name": {
+      "en": "Colter",
+      "zh": "Colter"
+     },
+     "image": "https://copyrighted.seejh.com/gtrcolter/gtrcolter.jpg"
+    },
+    {
+     "name": {
+      "en": "Plaza",
+      "zh": "Plaza"
+     },
+     "image": "https://copyrighted.seejh.com/gtrplaza/gtrplaza.jpg"
+    },
+    {
+     "name": {
+      "en": "Teton Valley",
+      "zh": "Teton Valley"
+     },
+     "image": "https://copyrighted.seejh.com/tetonvalley/tetonvalley.jpg"
+    }
+   ],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b9/Grand_Targhee_Ski_Resort%2C_February_2021.jpg/960px-Grand_Targhee_Ski_Resort%2C_February_2021.jpg",
+    "credit": "Richardmouser",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Grand_Targhee_Ski_Resort,_February_2021.jpg"
+   },
+   "parking": {
+    "lat": 43.789,
+    "lon": -110.957
+   },
+   "summitLat": 43.79104,
+   "summitLon": -110.93577,
+   "summitSource": "Summit 9,862 ft / 3,006 m (Grand Targhee Resort); weather point = Freds Mountain (Nominatim peak)",
+   "baseSource": "Base 7,408 ft / 2,258 m (Grand Targhee Resort)",
+   "wxGroup": 15
+  },
+  {
+   "id": "big-sky",
+   "name": {
+    "en": "Big Sky",
+    "zh": "Big Sky"
+   },
+   "short": "Big Sky",
+   "passes": [
+    "ikon",
+    "mountain-collective"
+   ],
+   "region": "RK",
+   "tz": "America/Denver",
+   "lat": 45.28822,
+   "lon": -111.39411,
+   "baseElevM": 2073,
+   "summitElevM": 3403,
+   "driveMin": 69,
+   "driveSource": "OSRM route from BZN airport, no traffic (computed 2026-11-24)",
+   "gateway": "BZN",
+   "routeNote": {
+    "en": "BZN → East Cameron Bridge Road SW → MT-85 S → US-191 S → MT-64 W to Big Sky.",
+    "zh": "BZN → East Cameron Bridge Road SW → MT-85 S → US-191 S → MT-64 W to Big Sky."
+   },
+   "route": [
+    {
+     "seg": "bzn-airport-us191",
+     "closure": "caution"
+    },
+    {
+     "seg": "us191-four-corners-bigsky",
+     "closure": "caution"
+    },
+    {
+     "seg": "mt64-bigsky",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.bigskyresort.com/",
+    "webcams": "https://www.bigskyresort.com/current-conditions/webcams",
+    "report": "https://www.bigskyresort.com/current-conditions"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "img/cat/big-sky.jpg",
+    "credit": "Jim from Lexington, KY, USA",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Big_Sky_resort.jpg"
+   },
+   "parking": {
+    "lat": 45.28822,
+    "lon": -111.39411
+   },
+   "summitLat": 45.27806,
+   "summitLon": -111.45028,
+   "summitSource": "Summit 11,166 ft / 3,403 m, Lone Peak — lift-served by the Lone Peak Tram (Big Sky Resort)",
+   "baseSource": "Base 6,800 ft / 2,073 m at Lone Moose (lowest lift); main base Mountain Village 7,500 ft (Wikipedia / Big Sky Resort)",
+   "wxGroup": 16
+  },
+  {
+   "id": "whitefish",
+   "name": {
+    "en": "Whitefish",
+    "zh": "Whitefish"
+   },
+   "short": "Whitefish",
+   "passes": [],
+   "region": "RK",
+   "tz": "America/Denver",
+   "lat": 48.48108,
+   "lon": -114.35785,
+   "baseElevM": 1361,
+   "summitElevM": 2078,
+   "driveMin": 35,
+   "driveSource": "OSRM route from FCA airport, no traffic (computed 2026-11-24)",
+   "gateway": "FCA",
+   "routeNote": {
+    "en": "FCA → US-2 N → MT-40 W → MT-487 N to Whitefish Mountain Resort.",
+    "zh": "FCA → US-2 N → MT-40 W → MT-487 N to Whitefish Mountain Resort."
+   },
+   "route": [
+    {
+     "seg": "us2-fca-mt40",
+     "closure": "caution"
+    },
+    {
+     "seg": "mt40-columbia-falls",
+     "closure": "caution"
+    },
+    {
+     "seg": "mt487-whitefish",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://skiwhitefish.com/",
+    "webcams": "https://skiwhitefish.com/webcams/",
+    "report": "https://skiwhitefish.com/snowreport/"
+   },
+   "webcams": [
+    {
+     "name": {
+      "en": "Stumpy Cam",
+      "zh": "Stumpy Cam"
+     },
+     "image": "https://skiwhitefish.com/inbound/cams/2425_StumpyCam.jpg"
+    },
+    {
+     "name": {
+      "en": "Hellroaring",
+      "zh": "Hellroaring"
+     },
+     "image": "https://skiwhitefish.com/inbound/cams/hellroaring_chalet.jpg"
+    },
+    {
+     "name": {
+      "en": "Base Lodge",
+      "zh": "Base Lodge"
+     },
+     "image": "https://skiwhitefish.com/inbound/cams/newbaselodge.jpg"
+    }
+   ],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "img/cat/whitefish.jpg",
+    "credit": "Donnie Clapp for Whitefish Mountain Resort",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:WhitefishMountainResortAerialView.jpg"
+   },
+   "parking": {
+    "lat": 48.48108,
+    "lon": -114.35785
+   },
+   "summitLat": 48.50278,
+   "summitLon": -114.34028,
+   "summitSource": "Summit 6,817 ft / 2,078 m (Whitefish Mountain Resort, Mountain Stats)",
+   "baseSource": "Base 4,464 ft / 1,361 m (Whitefish Mountain Resort, Mountain Stats)",
+   "wxGroup": 16
+  },
+  {
+   "id": "bridger-bowl",
+   "name": {
+    "en": "Bridger Bowl",
+    "zh": "Bridger Bowl"
+   },
+   "short": "Bridger Bowl",
+   "passes": [],
+   "region": "RK",
+   "tz": "America/Denver",
+   "lat": 45.818,
+   "lon": -110.897,
+   "baseElevM": 1859,
+   "summitElevM": 2652,
+   "driveMin": 53,
+   "driveSource": "OSRM route from BZN airport, no traffic (computed 2026-11-24)",
+   "gateway": "BZN",
+   "routeNote": {
+    "en": "BZN → I-90 SE → MT-86 NE to Bridger Bowl.",
+    "zh": "BZN → I-90 SE → MT-86 NE to Bridger Bowl."
+   },
+   "route": [
+    {
+     "seg": "i90-bzn-bozeman",
+     "closure": "caution"
+    },
+    {
+     "seg": "mt86-bozeman-bridger",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.bridgerbowl.com/",
+    "webcams": "https://bridgerbowl.com/weather/webcams",
+    "report": "https://bridgerbowl.com/weather"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "img/cat/bridger-bowl.jpg",
+    "credit": "Richard Barley",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Bridger_Bowl.jpg"
+   },
+   "parking": {
+    "lat": 45.818,
+    "lon": -110.897
+   },
+   "summitSource": "Highest lift-served elevation 8,700 ft / 2,652 m, top of Schlasman's lift; true top 8,800 ft is hike-to Ridge (Bridger Bowl, Stats)",
+   "baseSource": "Base 6,100 ft / 1,859 m (Bridger Bowl, Stats)",
+   "wxGroup": 16
+  },
+  {
+   "id": "sun-valley",
+   "name": {
+    "en": "Sun Valley",
+    "zh": "Sun Valley"
+   },
+   "short": "Sun Valley",
+   "passes": [
+    "ikon"
+   ],
+   "region": "RK",
+   "tz": "America/Boise",
+   "lat": 43.67072,
+   "lon": -114.36846,
+   "baseElevM": 1753,
+   "summitElevM": 2789,
+   "driveMin": 22,
+   "driveSource": "OSRM route from SUN airport, no traffic (computed 2026-11-24)",
+   "gateway": "SUN",
+   "routeNote": {
+    "en": "SUN → ID-75 N to Sun Valley.",
+    "zh": "SUN → ID-75 N to Sun Valley."
+   },
+   "route": [
+    {
+     "seg": "id75-sun-valley",
+     "closure": "caution"
+    }
+   ],
+   "links": {
+    "site": "https://www.sunvalley.com/",
+    "webcams": "https://www.sunvalley.com/mountain/webcams",
+    "report": "https://www.sunvalley.com/mountain-report"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "img/cat/sun-valley.jpg",
+    "credit": "Greg L. Wright - SnapJag",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Baldmountainid.jpg"
+   },
+   "parking": {
+    "lat": 43.67072,
+    "lon": -114.36846
+   },
+   "summitLat": 43.65491,
+   "summitLon": -114.40922,
+   "summitSource": "Summit 9,150 ft / 2,789 m (Bald Mountain)",
+   "baseSource": "Base 5,750 ft / 1,753 m (Bald Mountain, River Run)",
+   "wxGroup": 17
+  },
+  {
+   "id": "schweitzer",
+   "name": {
+    "en": "Schweitzer",
+    "zh": "Schweitzer"
+   },
+   "short": "Schweitzer",
+   "passes": [
+    "ikon"
+   ],
+   "region": "RK",
+   "tz": "America/Los_Angeles",
+   "lat": 48.367,
+   "lon": -116.623,
+   "baseElevM": 1207,
+   "summitElevM": 1951,
+   "driveMin": 128,
+   "driveSource": "OSRM route from GEG airport, no traffic (computed 2026-11-24)",
+   "gateway": "GEG",
+   "routeNote": {
+    "en": "GEG → West Airport Drive NE → US-2 E → I-90 E → US-95 N → Schweitzer Mountain Road NW to Schweitzer.",
+    "zh": "GEG → West Airport Drive NE → US-2 E → I-90 E → US-95 N → Schweitzer Mountain Road NW to Schweitzer."
+   },
+   "route": [
+    {
+     "seg": "geg-airport",
+     "closure": "caution"
+    },
+    {
+     "seg": "us2-spokane",
+     "closure": "caution"
+    },
+    {
+     "seg": "i90-coeur-dalene",
+     "closure": "caution"
+    },
+    {
+     "seg": "us95-sandpoint",
+     "closure": "caution"
+    },
+    {
+     "seg": "schweitzer-mtn-rd",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.schweitzer.com/",
+    "webcams": "https://www.schweitzer.com/mountain-info/webcam",
+    "report": "https://www.schweitzer.com/mountain-info/mountain-report"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "parking": {
+    "lat": 48.367,
+    "lon": -116.623
+   },
+   "summitLat": 48.37972,
+   "summitLon": -116.63395,
+   "summitSource": "Summit 6,400 ft / 1,951 m (Schweitzer Mountain, top of Great Escape Quad)",
+   "baseSource": "Base 3,960 ft / 1,207 m (Schweitzer Mountain, lowest chair Stella)",
+   "wxGroup": 17
+  },
+  {
+   "id": "taos",
+   "name": {
+    "en": "Taos Ski Valley",
+    "zh": "Taos Ski Valley"
+   },
+   "short": "Taos",
+   "passes": [
+    "ikon"
+   ],
+   "region": "RK",
+   "tz": "America/Denver",
+   "lat": 36.59,
+   "lon": -105.43694,
+   "baseElevM": 2804,
+   "summitElevM": 3804,
+   "driveMin": 183,
+   "driveSource": "OSRM route from SAF airport, no traffic (computed 2026-11-24)",
+   "gateway": "SAF",
+   "routeNote": {
+    "en": "SAF → NM-599 NE → US-84 N → NM-68 NE → NM-240 NW → CR BA-007 N → NM-230 NE → NM-150 NE to Taos Ski Valley.",
+    "zh": "SAF → NM-599 NE → US-84 N → NM-68 NE → NM-240 NW → CR BA-007 N → NM-230 NE → NM-150 NE to Taos Ski Valley."
+   },
+   "route": [
+    {
+     "seg": "saf-airport",
+     "closure": "caution"
+    },
+    {
+     "seg": "us84-santa-fe",
+     "closure": "caution"
+    },
+    {
+     "seg": "nm68-taos",
+     "closure": "caution"
+    },
+    {
+     "seg": "nm240-taos",
+     "closure": "caution"
+    },
+    {
+     "seg": "cr-ba007-taos",
+     "closure": "caution"
+    },
+    {
+     "seg": "nm230-taos",
+     "closure": "caution"
+    },
+    {
+     "seg": "nm150-taos",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.skitaos.com/",
+    "webcams": "https://www.skitaos.com/webcams",
+    "report": "https://www.skitaos.com/webcams"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1b/Taos_Ski_Valley%2C_New_Mexico_%287334017088%29.jpg/960px-Taos_Ski_Valley%2C_New_Mexico_%287334017088%29.jpg",
+    "credit": "Fæ",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Taos_Ski_Valley,_New_Mexico_(7334017088).jpg"
+   },
+   "parking": {
+    "lat": 36.59,
+    "lon": -105.43694
+   },
+   "summitLat": 36.56145,
+   "summitLon": -105.44614,
+   "summitSource": "Summit 12,481 ft / 3,804 m (Taos Ski Valley, Kachina Peak)",
+   "baseSource": "Base 9,200 ft / 2,804 m (Taos Ski Valley)",
+   "wxGroup": 18
   }
  ],
  "cameras": [
