@@ -440,8 +440,6 @@ section{scroll-margin-top:70px}
 .dplan:hover{background:rgba(255,255,255,.1);border-color:#fff}
 .dtabs-row{display:flex;align-items:flex-end;gap:10px}
 .dtabs-row .dtabs{flex:1;min-width:0}
-.dplan-nav{flex:none;color:#c5d3e2;text-decoration:none;font-size:13.5px;font-weight:650;padding:10px 4px 13px;border-left:1px solid rgba(255,255,255,.2);padding-left:14px}
-.dplan-nav:hover{color:#fff}
 
 /* resort cards: score prominent, status chip + season line, five stats */
 .dhead{align-items:flex-start;gap:10px}
@@ -518,7 +516,6 @@ section{scroll-margin-top:70px}
 .tiles.t6 .tile{min-width:0} .tiles.t6 .tile>span:not(.ti){overflow-wrap:anywhere}
 @media (max-width:560px){
   .dhero-a{margin:8px 0 12px} .dplan{width:100%;justify-content:center}
-  .dplan-nav{display:none}
   .dstats{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:6px}
   .dscore{min-width:50px} .dscore>b{font-size:19px}
   .rec-main b{font-size:20px}
@@ -571,7 +568,7 @@ h2{font-size:22px} .dlist-h h2{font-size:22px} .dhead h3{font-size:17.5px;color:
 /* night heroes */
 .disc-hero{background:radial-gradient(1200px 420px at 75% -10%,rgba(157,188,245,.18),transparent 60%),linear-gradient(180deg,#0C1520 0%,#13233A 100%);padding-top:34px}
 @media (min-width:861px){.disc-hero .q{font-size:44px;max-width:760px}}
-.dsub,.dfrom,.dplan-nav,.dtabs button{color:var(--on-night-mut)} .dfrom .dlink{color:var(--accent-night)}
+.dsub,.dfrom,.dtabs button{color:var(--on-night-mut)} .dfrom .dlink{color:var(--accent-night)}
 .hero-wrap::before{background:linear-gradient(180deg,rgba(12,21,32,.55) 0%,rgba(12,21,32,.35) 35%,rgba(12,21,32,.88) 72%,var(--navy) 100%)}
 .vpanel{background:var(--glass);border-color:var(--glass-line);border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
 .dsearch,.start-box{border-radius:999px;padding-left:18px;box-shadow:0 10px 40px rgba(0,0,0,.28)}
@@ -586,7 +583,6 @@ h2{font-size:22px} .dlist-h h2{font-size:22px} .dhead h3{font-size:17.5px;color:
 .dtabs button{border-radius:999px;padding:9px 16px;min-height:42px}
 .dtabs button.on{background:var(--on-night);color:var(--ink)}
 .dtabs button.on small{background:rgba(17,27,38,.1)}
-.dplan-nav{border-left:0;padding:10px 8px}
 /* paper body, white cards with warm hairlines */
 .card,.rcard,.dcard,.why,.alt,.rvchip,.dempty,.dhelp[open]{border-color:var(--line)}
 .card,.rcard{border-radius:18px}
