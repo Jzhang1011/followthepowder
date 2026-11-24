@@ -1,8 +1,8 @@
 // Resort discovery (default home) + basic resort view for catalog resorts without a full dashboard.
 // Data: data/catalog.json (static, verified) + api/catalog-conditions.json (Open-Meteo model, refreshed hourly by
 // the ski-data Worker; resort-published base depth / terrain open / lifts / 24 h snow where SkiDay reads a public feed) + api/forecast.json?r=<id> (basic view).
-import { fmt, weatherEmoji, chainLevel, recommendFrom, visLevel } from './core.js?v=58e23c4e81';
-import { getRoute, getTable } from './start.js?v=58e23c4e81';
+import { fmt, weatherEmoji, chainLevel, recommendFrom, visLevel } from './core.js?v=b6cae93a9a';
+import { getRoute, getTable } from './start.js?v=b6cae93a9a';
 
 const S = {
   en: {
@@ -789,7 +789,7 @@ export function renderBasic() {
     <div id="b-verdict">${UI.rec(rec, why, basis)}</div>
     <div class="hgrid">
       <div class="vpanel hp" id="b-mtn"><h2 class="hp-h">🏔️ ${esc(T('mtn_h'))}</h2>${tiles}<p class="hp-src">${esc(msrc)}${p?.source?.url ? ` <a href="${esc(p.source.url)}" target="_blank" rel="noopener">${esc(tr('d_rep_src', new URL(p.source.url).host.replace(/^www\./, '')))} ↗</a>` : ''}</p></div>
-      <details class="vpanel hp getthere" id="b-get" open><summary><h2 class="hp-h">🚗 ${esc(T('get_h'))}</h2></summary><div id="b-start-slot"></div>${glist}</details>
+      <details class="vpanel hp getthere" id="b-get"><summary><h2 class="hp-h">🚗 ${esc(T('get_h'))}</h2></summary><div id="b-start-slot"></div>${glist}</details>
     </div>
     <div class="why" id="b-why">${UI.know([
       { g: 'mountain', items: mtn, empty: tr('b_norep') },
