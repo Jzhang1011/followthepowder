@@ -631,7 +631,7 @@ button.ln span{display:inline-block;transition:transform .15s} button.ln[aria-ex
 .top #nav{max-width:1120px;margin:0 auto;padding:2px 18px 10px;flex:none}
 .mnav{display:none}
 /* discovery hero: mountain photo under the navy gradient (photo is a layer; gradients still paint if it fails) */
-.disc-hero{background:linear-gradient(180deg,rgba(12,21,32,.66) 0%,rgba(12,21,32,.45) 45%,rgba(12,21,32,.94) 100%),url('../img/cat/jackson-hole.jpg') center 35%/cover no-repeat,linear-gradient(180deg,#0C1520 0%,#13233A 100%)}
+.disc-hero{background:linear-gradient(180deg,rgba(12,21,32,.66) 0%,rgba(12,21,32,.45) 45%,rgba(12,21,32,.94) 100%),url('../img/Unknown.jpg') center 35%/cover no-repeat,linear-gradient(180deg,#0C1520 0%,#13233A 100%)}
 .dsec{margin:4px 0 0;color:#dbe6f0;font-size:13.5px;letter-spacing:.02em}
 .dplan{background:var(--on-night);color:var(--ink);border-color:transparent}
 .dplan:hover{background:#fff;border-color:#fff}

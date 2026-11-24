@@ -2,7 +2,7 @@
 // (js/app.js renderWear) and the standalone page (js/wear-page.js). The recommendation
 // rules themselves live in core.js outfitFor; this module only renders them, so both
 // surfaces always show the same outfits from the same data.
-import { outfitFor } from './core.js?v=cefb4f9a79';
+import { outfitFor } from './core.js?v=6fbac9d207';
 
 export const WICON = { w_base_light: '👕', w_base_mid: '👕', w_base_heavy: '👕', w_mid_fleece_opt: '🧶', w_mid_fleece: '🧶', w_mid_puffy: '🧥', w_shell: '🧥', w_jacket_insulated: '🧥',
   w_gaiter: '🧣', w_balaclava: '🥷', w_facemask: '😷', w_gloves: '🧤', w_gloves_warm: '🧤', w_mittens: '🧤', w_handwarmers: '🔥', w_toewarmers: '🔥', w_socks: '🧦', w_helmet_goggles: '🥽', w_spare_gloves: '🎒' };

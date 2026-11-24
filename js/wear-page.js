@@ -3,9 +3,9 @@
 // splitOpenMeteo / dailyRows), the recommendation rules in core.js outfitFor, and the
 // shared card renderer in js/wear.js. No duplicated weather or recommendation code.
 import './site.js';
-import { lang, units, t } from './site.js?v=cefb4f9a79';
-import { openMeteoUrl, splitOpenMeteo, dailyRows, fmt } from './core.js?v=cefb4f9a79';
-import { wearCard, bindWearExpand } from './wear.js?v=cefb4f9a79';
+import { lang, units, t } from './site.js?v=6fbac9d207';
+import { openMeteoUrl, splitOpenMeteo, dailyRows, fmt } from './core.js?v=6fbac9d207';
+import { wearCard, bindWearExpand } from './wear.js?v=6fbac9d207';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

@@ -1,13 +1,13 @@
 import { openMeteoUrl, splitOpenMeteo, dailyRows, hourlyRows, weatherEmoji, carsUrl, slimEvents, EVENT_CLASSES,
   nwsUrl, slimAlerts, verdictFor, recommendFrom, fmt, wxGroupOf, wxGroupCfg, wxGroupCount,
   utahCarsUrl, slimUtahEvents, caRoadsUrl, CA_DISTRICTS, slimCaEvents,
-  c2cUrl, slimNeEvents, ny511Url, slimNyEvents, massdotUrl, slimMaEvents } from './core.js?v=cefb4f9a79';
-import { STR, PACK_DEFAULT } from './i18n.js?v=cefb4f9a79';
-import { selectCameras, routeSegments, inCO, inUT } from './route.js?v=cefb4f9a79';
-import { dl, initAnalytics, selectResort, resortCompare, forecast, gear, startSet, pageView } from './analytics.js?v=cefb4f9a79';
-import { loadStart, saveStart, closestAirport, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=cefb4f9a79';
-import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=cefb4f9a79';
-import { wearCard } from './wear.js?v=cefb4f9a79';
+  c2cUrl, slimNeEvents, ny511Url, slimNyEvents, massdotUrl, slimMaEvents } from './core.js?v=6fbac9d207';
+import { STR, PACK_DEFAULT } from './i18n.js?v=6fbac9d207';
+import { selectCameras, routeSegments, inCO, inUT } from './route.js?v=6fbac9d207';
+import { dl, initAnalytics, selectResort, resortCompare, forecast, gear, startSet, pageView } from './analytics.js?v=6fbac9d207';
+import { loadStart, saveStart, closestAirport, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=6fbac9d207';
+import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=6fbac9d207';
+import { wearCard } from './wear.js?v=6fbac9d207';
 
 const LS = {
   get: (k, d) => { try { const v = localStorage.getItem('ski.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
