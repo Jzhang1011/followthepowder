@@ -3,13 +3,13 @@ import { openMeteoUrl, splitOpenMeteo, dailyRows, hourlyRows, weatherEmoji, cars
   utahCarsUrl, slimUtahEvents, caRoadsUrl, CA_DISTRICTS, slimCaEvents,
   c2cUrl, slimNeEvents, ny511Url, slimNyEvents, massdotUrl, slimMaEvents,
   slimWyTextEvents, wyoroadTextUrl, mdtGeoUrl, slimMtEvents, nmEventsUrl, slimNmEvents,
-  idahoWzdxUrl, slimIdWzdx, idahoMapIconsUrl, slimIdMapIcons } from './core.js?v=e54d1f13d1';
-import { STR, PACK_DEFAULT } from './i18n.js?v=e54d1f13d1';
-import { selectCameras, routeSegments, inCO, inUT, inRK } from './route.js?v=e54d1f13d1';
-import { dl, initAnalytics, selectResort, resortCompare, forecast, gear, startSet, pageView } from './analytics.js?v=e54d1f13d1';
-import { loadStart, saveStart, closestAirport, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=e54d1f13d1';
-import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=e54d1f13d1';
-import { wearCard } from './wear.js?v=e54d1f13d1';
+  idahoWzdxUrl, slimIdWzdx, idahoMapIconsUrl, slimIdMapIcons } from './core.js?v=f07107d506';
+import { STR, PACK_DEFAULT } from './i18n.js?v=f07107d506';
+import { selectCameras, routeSegments, inCO, inUT, inRK } from './route.js?v=f07107d506';
+import { dl, initAnalytics, selectResort, resortCompare, forecast, gear, startSet, pageView } from './analytics.js?v=f07107d506';
+import { loadStart, saveStart, closestAirport, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=f07107d506';
+import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=f07107d506';
+import { wearCard } from './wear.js?v=f07107d506';
 
 const LS = {
   get: (k, d) => { try { const v = localStorage.getItem('ski.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -1185,7 +1185,8 @@ function goHome() {
   try { state.start = loadStart(state.cfg, resort()); } catch { state.start = { ...state.cfg.trip.origin, kind: 'preset' }; }
   state.manualStart = hasManualStart();
   if (!state.manualStart) autoLocate({ api: API, onUpdate: setStart, shouldStop: () => state.manualStart }).catch(() => {});
-  try { if ($('#start')) state.startUI = mountStartUI($('#start'), { cfg: state.cfg, t, L, getStart: () => state.start, getRegion: () => resort().region, getGateway: () => resort().gateway, onChange: setStart }); }
+  // Alternate gateways (Nov 2026): resort().altGateway offers a second airport where the catalog sets one (Targhee→JAC, Taos→ABQ).
+  try { if ($('#start')) state.startUI = mountStartUI($('#start'), { cfg: state.cfg, t, L, getStart: () => state.start, getRegion: () => resort().region, getGateway: () => resort().gateway, getAltGateway: () => resort().altGateway, onChange: setStart }); }
   catch (e) { console.warn('[ski] start UI failed:', e); }
   initDiscover({ compare: resortCompare, forecast, state, L, t, ui: UI, roadCheck, roadCount, reasonText, getJson, track, loadLeaflet, getStart: () => state.start, setStart, open: openResort, loadRoads: async () => { if (!state.roads.data) { try { await loadServer(); } catch {} } return state.roads; }, home: goHome, plan: openPlan, view: () => state.view });
   try { bind(); } catch (e) { console.warn('[ski] bind failed:', e); }

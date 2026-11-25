@@ -1,5 +1,5 @@
 // Starting location: input with Photon autocomplete, presets, browser geolocation; OSRM routing with cache + throttle.
-import { buildRoute, osrmRouteUrl, osrmTableUrl } from './route.js?v=6fbac9d207';
+import { buildRoute, osrmRouteUrl, osrmTableUrl } from './route.js?v=f07107d506';
 
 const LSK = 'ski.start', RCK = 'ski.routes';
 const round = (v, n = 3) => +(+v).toFixed(n); // ~100 m: enough for routing, kinder to privacy
@@ -10,7 +10,9 @@ export function loadStart(cfg, resort) {
   try { const s = JSON.parse(localStorage.getItem(LSK)); if (s && isFinite(s.lat) && isFinite(s.lon)) {
     // A saved airport preset does not carry across resorts: the start follows
     // the resort. Saved personal locations (search, "Use my location", auto-locate) persist.
-    if (s.kind === 'preset' && s.id !== dflt.id) return asPreset(dflt);
+    // A saved preset that is this resort's gateway or its alternate stays;
+    // a preset saved for another resort resets to this resort's default.
+    if (s.kind === 'preset' && s.id !== dflt.id && s.id !== resort?.altGateway) return asPreset(dflt);
     return s; } } catch {}
   return asPreset(dflt);
 }
@@ -152,7 +154,7 @@ function photonLabel(f) {
   return { main, sub: where.filter(w => w !== main).join(', ') };
 }
 
-export function mountStartUI(root, { cfg, t, L, getStart, getRegion, getGateway, onChange }) {
+export function mountStartUI(root, { cfg, t, L, getStart, getRegion, getGateway, getAltGateway, onChange }) {
   const presets = cfg.trip.presets || [];
   root.innerHTML = `
     <div class="start-row">
@@ -179,12 +181,15 @@ export function mountStartUI(root, { cfg, t, L, getStart, getRegion, getGateway,
     const cur = getStart();
     // Quick picks show only the nearby airport for the resort's region (DEN for
     // Colorado, SLC for Utah). A resort with a gateway (California has two airports)
-    // shows only its own — RNO for the Tahoe/Mammoth resorts, ONT for the Big Bear pair.
+    // shows only its own — RNO for the Tahoe/Mammoth resorts, ONT for the Big Bear pair —
+    // plus its alternate gateway when one is set (JAC for Grand Targhee, ABQ for Taos).
     // Other starts stay available via search / "Use my location".
     const region = getRegion?.();
     const gw = getGateway?.();
+    const alt = getAltGateway?.();
     const airports = presets.filter(p => p.airport);
-    const shown = presets.filter(p => p.airport && (gw ? p.id === gw : (!region || p.region === region)));
+    const shown = presets.filter(p => p.airport && (gw ? (p.id === gw || p.id === alt) : (!region || p.region === region)));
+    if (gw) shown.sort((a, b) => (a.id === gw ? 0 : 1) - (b.id === gw ? 0 : 1)); // gateway first, alternate second
     const picks = shown.length ? shown : (airports.length ? airports : presets);
     root.querySelector('#start-presets').innerHTML = picks.map(p => `<button type="button" data-p="${p.id}" class="${cur.id === p.id ? 'on' : ''}">${L(p.name)}</button>`).join('');
   }

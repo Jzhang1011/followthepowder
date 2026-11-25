@@ -7195,6 +7195,7 @@
    "driveMin": 122,
    "driveSource": "OSRM route from IDA airport, no traffic (computed 2026-11-24)",
    "gateway": "IDA",
+   "altGateway": "JAC",
    "routeNote": {
     "en": "IDA → US-20 N → ID-33 E → West 2500 North E → West Alta Ski Hill Road E to Grand Targhee.",
     "zh": "IDA → US-20 N → ID-33 E → West 2500 North E → West Alta Ski Hill Road E to Grand Targhee."
@@ -7613,6 +7614,7 @@
    "driveMin": 183,
    "driveSource": "OSRM route from SAF airport, no traffic (computed 2026-11-24)",
    "gateway": "SAF",
+   "altGateway": "ABQ",
    "routeNote": {
     "en": "SAF → NM-599 NE → US-84 N → NM-68 NE → NM-240 NW → CR BA-007 N → NM-230 NE → NM-150 NE to Taos Ski Valley.",
     "zh": "SAF → NM-599 NE → US-84 N → NM-68 NE → NM-240 NW → CR BA-007 N → NM-230 NE → NM-150 NE to Taos Ski Valley."
