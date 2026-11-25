@@ -1,9 +1,9 @@
 // Resort discovery (default home) + basic resort view for catalog resorts without a full dashboard.
 // Data: data/catalog.json (static, verified) + api/catalog-conditions.json (Open-Meteo model, refreshed hourly by
 // the ski-data Worker; resort-published base depth / terrain open / lifts / 24 h snow where Follow the Powder reads a public feed) + api/forecast.json?r=<id> (basic view).
-import { fmt, weatherEmoji, chainLevel, recommendFrom, visLevel } from './core.js?v=e54d1f13d1';
-import { STR } from './i18n.js?v=e54d1f13d1';
-import { getRoute, getTable } from './start.js?v=e54d1f13d1';
+import { fmt, weatherEmoji, chainLevel, recommendFrom, visLevel } from './core.js?v=490f8b8de0';
+import { STR } from './i18n.js?v=490f8b8de0';
+import { getRoute, getTable } from './start.js?v=490f8b8de0';
 
 const S = {
   en: {
@@ -455,59 +455,10 @@ function renderShell() {
   const ph = D.cat.resorts.filter(r => r.photo);
   $('#d-credits').innerHTML = `<summary>📷 ${X.state.lang === 'zh' ? '照片署名' : 'Photo credits'} (${ph.length})</summary><ul>${ph.map(r => `<li>${esc(r.name)}: ${esc(r.photo.credit)} · <a href="${esc(r.photo.page)}" target="_blank" rel="noopener">${esc(r.photo.license)}</a></li>`).join('')}</ul>`;
 }
-/** Homepage sections below the resort explorer: curated resorts (live data), What to Wear
- *  intro, Learn intro, How It Works. Rebuilt on every renderDiscover so language changes apply. */
-const ls = k => (STR[X.state.lang] || STR.en)[k] ?? STR.en[k] ?? k;
-function homeCard(r) {
-  const c = cond(r), u = U(), snow = snow24(r), temp = c?.summit?.t, wind = c?.summit?.wind;
-  return `<article class="hcard">
-    <div class="rphoto${r.photo ? '' : ' ph0'}"${photoStyle(r)}><span class="rname">${esc(r.name)}</span></div>
-    <div class="hstats">
-      <span><b>${snow != null ? esc(fmt.snow(snow, u)) : '—'}</b><small>${esc(tr('d_new'))}</small></span>
-      <span><b>${temp != null ? esc(fmt.temp(temp, u)) : '—'}</b><small>${esc(tr('d_temp'))}</small></span>
-      <span><b>${wind != null ? esc(fmt.wind(wind, u)) : '—'}</b><small>${esc(tr('d_wind'))}</small></span>
-    </div>
-    <div class="dfoot">${statusHtml(r)}<span class="dseason">${esc(seasonTxt(r))}</span></div>
-    <div class="dact"><button type="button" class="dgo" data-open="${r.id}">${esc(tr('h_mtn_view'))} →</button></div>
-  </article>`;
-}
+/** Homepage promo sections removed Nov 2026 (Jie): the resort explorer above already covers
+ *  mountain selection, and What to Wear / Learn / Plan have their own nav destinations. */
 function renderHome() {
-  const host = $('#home-sections'); if (!host || !D.cat) return;
-  const top = D.cond ? [...D.cat.resorts].map(r => [r, score(r)]).filter(x => x[1]).sort((a, b) => b[1].total - a[1].total).slice(0, 6) : null;
-  const catLink = n => (n === 1 || n === 4) ? '/what-to-wear/' : null; // 2 + 3 point at the explorer below (data-home-scroll)
-  host.innerHTML = `
-  <section class="home-sec" id="home-mtn">
-    <h2>${esc(tr('h_mtn_h'))}</h2><p class="home-sub">${esc(tr('h_mtn_sub'))}</p>
-    <div class="hcards">${top ? top.map(([r]) => homeCard(r)).join('') : `<p class="muted">${esc(tr('d_cond_na'))}</p>`}</div>
-    <p style="margin-top:16px"><button type="button" class="dgo" data-home-scroll>${esc(tr('h_mtn_all'))} →</button></p>
-  </section>
-  <section class="home-sec" id="home-wear">
-    <h2>${esc(tr('h_wear_h'))}</h2><p class="home-sub">${esc(tr('h_wear_sub'))}</p>
-    <div class="wear-demo">
-      <div class="wdemo l-base"><div class="wic">👕</div><h3>${esc(tr('h_wear_base'))}</h3><p>${esc(tr('h_wear_base_d'))}</p></div>
-      <div class="wdemo l-mid"><div class="wic">🧶</div><h3>${esc(tr('h_wear_mid'))}</h3><p>${esc(tr('h_wear_mid_d'))}</p></div>
-      <div class="wdemo l-outer"><div class="wic">🧥</div><h3>${esc(tr('h_wear_outer'))}</h3><p>${esc(tr('h_wear_outer_d'))}</p></div>
-      <div class="wdemo"><div class="wic">🧤🥽🧦</div><h3>${esc(tr('h_wear_acc'))}</h3><p>${esc(tr('h_wear_acc_d'))}</p></div>
-    </div>
-    <p style="margin-top:16px"><a class="dgo" href="/what-to-wear/" data-ev="homepage_what_to_wear_click">${esc(tr('h_wear_cta'))} →</a></p>
-  </section>
-  <section class="home-sec" id="home-learn">
-    <h2>${esc(ls('learn_h'))}</h2><p class="home-sub">${esc(ls('learn_sub'))}</p>
-    <div class="learn-cats">${[1, 2, 3, 4].map(n => `<article class="lcat"><h3>${esc(ls('learn_cat' + n + '_t'))}</h3>
-      <ul>${[1, 2, 3, 4].map(i => `<li>${esc(ls('learn_cat' + n + '_s' + i))}</li>`).join('')}</ul>
-      ${catLink(n) ? `<a class="dlink" href="${catLink(n)}" data-ev="homepage_what_to_wear_click">${esc(ls('learn_cat' + n + '_link'))} →</a>`
-        : `<button type="button" class="dlink" data-home-scroll>${esc(ls('learn_cat' + n + '_link'))} →</button>`}</article>`).join('')}
-    </div>
-    <p style="margin-top:16px"><a class="dgo" href="/learn/" data-ev="homepage_learn_click">${esc(tr('h_learn_cta'))} →</a></p>
-  </section>
-  <section class="home-sec" id="home-how">
-    <h2>${esc(tr('h_how_h'))}</h2>
-    <div class="how-steps">
-      <div class="how-step"><div class="n">01</div><h3>${esc(tr('h_how_1t'))}</h3><p>${esc(tr('h_how_1d'))}</p></div>
-      <div class="how-step"><div class="n">02</div><h3>${esc(tr('h_how_2t'))}</h3><p>${esc(tr('h_how_2d'))}</p></div>
-      <div class="how-step"><div class="n">03</div><h3>${esc(tr('h_how_3t'))}</h3><p>${esc(tr('h_how_3d'))}</p></div>
-    </div>
-  </section>`;
+  const host = $('#home-sections'); if (host) host.innerHTML = '';
 }
 function renderRecent() {
   const r = recents();
