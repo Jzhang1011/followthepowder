@@ -199,7 +199,7 @@ export function chainLevel(ev) {
   const s = `${ev.title} ${ev.tooltip} ${ev.detail}`.toLowerCase();
   if (/\br-3\b/.test(s)) return 'nogo'; // Caltrans R-3: chains on every vehicle, no exceptions
   if (/\br-[12]\b/.test(s)) return 'caution'; // Caltrans R-1 / R-2 chain controls
-  if (/code\s*16|passenger vehicle chain law|chain law for all/.test(s)) return 'nogo';
+  if (/code\s*16|passenger vehicle chain law|chain law for all|chains required on all vehicles/.test(s)) return 'nogo'; // WSDOT "Chains Required on All Vehicles" (WA) joins the nogo set
   if (/code\s*15|traction law/.test(s)) return 'caution';
   if (/commercial|code\s*1[89]/.test(s)) return 'info';
   return 'caution';
@@ -1358,7 +1358,277 @@ export function slimUtahPasses(cfg, json) {
   return out;
 }
 
+/* ---------- Pacific Northwest roads — WSDOT (WA), ODOT TripCheck (OR), Alaska 511 (AK) ---------- */
+
+/** WSDOT Mountain Pass Conditions RSS (keyless, 16 passes). */
+export function wsdotPassUrl() { return 'https://wsdot.wa.gov/traffic/api/MountainPassConditions/rss.aspx'; }
+/** WSDOT Highway Alerts KML (keyless, ~88 placemarks with point coordinates). The RSS twin
+ *  carries no coordinates, so the KML is the alert source — a Spokane I-90 alert must not flag
+ *  the Snoqualmie segment. */
+export function wsdotAlertsUrl() { return 'https://wsdot.wa.gov/traffic/api/HighwayAlerts/kml.aspx'; }
+/** ODOT TripCheck map data file (keyless EsriJSON, Web Mercator wkid 3857). */
+export function tripcheckUrl(file) { return `https://tripcheck.com/Scripts/map/data/${file}.js`; }
+/** Alaska 511 Developer API (keyed; 10 calls / 60 s). Payload shapes are UNVERIFIED — no key
+ *  exists yet — and are parsed defensively from the identical Idaho 511 docs; verify against
+ *  the first keyed response before trusting the parser. A 400/401 means the key is missing,
+ *  not "no events". */
+export function alaskaWinterUrl(key) { return `https://511.alaska.gov/api/v3/get/winterroads?key=${encodeURIComponent(key)}`; }
+export function alaskaEventUrl(key) { return `https://511.alaska.gov/api/v2/get/event?key=${encodeURIComponent(key)}`; }
+/** Alaska 511 mapIcons points layer (keyless) — same shape as Idaho's mapIcons. */
+export function alaskaMapIconsUrl(layer) { return `https://511.alaska.gov/map/mapIcons/${layer}`; }
+
+/** Corridor mountain passes from the WSDOT pass RSS, by exact <title>. The pass point is the
+ *  KML coordinate for that pass (verified live 2026-11-26). Chinook Pass SR 410 is deliberately
+ *  absent: its closure point (MP 57, Crystal Mountain Blvd) is EAST of the Crystal drive — a
+ *  Chinook closure closes the through-route to Yakima, not the resort drive. */
+const WA_PASS_SEGS = {
+  'Snoqualmie Pass I-90': { route: 'I-90', segs: ['i90-sea-snoqualmie'], geo: [[-121.4058, 47.41]] },
+  'Stevens Pass US 2': { route: 'US-2', segs: ['us2-monroe-stevens'], geo: [[-121.0933, 47.745]] },
+  'Crystal to Greenwater SR 410': { route: 'SR-410', segs: ['sr410-enumclaw-crystal'], geo: [[-121.5779, 47.073]] },
+  'Mt. Baker Hwy SR 542': { route: 'SR-542', segs: ['sr542-bellingham-deming', 'sr9-sr542-concurrency', 'sr542-deming-glacier', 'sr542-glacier-baker'], geo: [[-121.6685, 48.8646]] },
+};
+/** WSDOT restriction wording -> strictness rank (higher = stricter). "Closed" is a road closure,
+ *  everything else a chain/traction law; an unknown wording emits no chain event (unknown,
+ *  never clear). */
+const WA_RESTRICTION_RANK = [
+  [/closed/i, 5, 'closed'],
+  [/chains required on all vehicles/i, 4, 'chains-all'],
+  [/chains required|tire chains required/i, 3, 'chains'],
+  [/traction tires required/i, 2, 'traction-required'],
+  [/traction tires advised/i, 1, 'traction-advised'],
+];
+/**
+ * WSDOT Mountain Pass Conditions RSS -> {events}. One event per corridor pass, carrying the
+ * stricter of the two directions' restrictions (they are usually identical). The restriction
+ * text is kept verbatim in the title so chainLevel() classifies it; conditions/weather are
+ * kept in the detail. A pass with no restrictions and no winter-bad conditions emits nothing.
+ */
+export function slimWaPasses(cfg, xml) {
+  const out = [];
+  const text = String(xml || '');
+  for (const m of text.matchAll(/<item>([\s\S]*?)<\/item>/g)) {
+    const item = m[1];
+    const title = (item.match(/<title>([\s\S]*?)<\/title>/) || [])[1];
+    const pass = WA_PASS_SEGS[String(title || '').trim()];
+    if (!pass) continue; // only corridor passes; Blewett/Cayuse/etc. touch no PNW segment
+    const descRaw = (item.match(/<description>([\s\S]*?)<\/description>/) || [])[1] || '';
+    const lines = wyHtmlDecode(descRaw).replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '')
+      .split('\n').map(s => s.trim()).filter(Boolean);
+    const at = label => { const i = lines.findIndex(l => l.toLowerCase() === label.toLowerCase()); return i >= 0 ? lines[i + 1] || '' : ''; };
+    const temp = (lines.find(l => /^temperature:/i.test(l)) || '').replace(/^temperature:\s*/i, '');
+    const cond = at('Conditions:');
+    const weather = at('Weather:');
+    const updated = Date.parse((item.match(/<a10:updated>([\s\S]*?)<\/a10:updated>/) || [])[1] || '') || null;
+    const guid = (item.match(/<guid[^>]*>([\s\S]*?)<\/guid>/) || [])[1] || pass.route;
+    const restrictions = [at('Eastbound'), at('Westbound'), at('Northbound'), at('Southbound')].filter(Boolean);
+    let best = null;
+    for (const r of restrictions) {
+      const t = r.replace(/,\s*oversize vehicles prohibited\.?/i, '').trim();
+      for (const [re, rank, kind] of WA_RESTRICTION_RANK) {
+        if (re.test(t) && (!best || rank > best.rank)) best = { rank, kind, text: t };
+      }
+    }
+    const detail = [temp ? `Temperature: ${temp}` : '', restrictions.length ? `Restrictions: ${restrictions.join(' / ')}` : '',
+      cond ? `Conditions: ${cond}` : '', weather ? `Weather: ${weather}` : ''].filter(Boolean).join(' · ').slice(0, 600);
+    const base = { segs: pass.segs, route: pass.route, geo: pass.geo, updated, start: null,
+      eventType: null, priority: null, icon: null, src: 'wa' };
+    if (best?.kind === 'closed') {
+      out.push({ ...base, id: `wa-pass-${guid}-closed`, cls: 'roadClosures',
+        title: `Road closed — ${pass.route} (${title})`, tooltip: '', detail });
+      continue;
+    }
+    if (best) {
+      out.push({ ...base, id: `wa-pass-${guid}`, cls: 'chainLaws',
+        title: `${best.text} — ${pass.route}`, tooltip: '', detail });
+      continue;
+    }
+    if (WINTER_BAD.test(`${cond} ${weather}`)) {
+      out.push({ ...base, id: `wa-pass-${guid}-cond`, cls: 'winterDriving',
+        title: `${cond || weather} — ${pass.route}`, tooltip: weather || '', detail });
+    }
+  }
+  return { events: out };
+}
+/** Normalise a WA alert route token: "US 2" / "US-2" -> "US-2", "SR 410" -> "SR-410". */
+const normWaRoad = s => {
+  const t = String(s || '').trim().replace(/\s+/g, ' ');
+  const m = t.match(/^(I|US|SR)\s*-?\s*(\d+[A-Z]?)$/i);
+  return m ? `${m[1].toUpperCase()}-${m[2].toUpperCase()}` : t;
+};
+/**
+ * WSDOT Highway Alerts KML -> {events}. Point geometry makes matching precise (route + point
+ * in utahSegIds), so a Spokane I-90 alert does not flag the Snoqualmie segment. Lane closures
+ * are titled "Lane closed — ..." (CA style) so the verdict treats them as partial.
+ */
+export function slimWaAlerts(cfg, kml) {
+  const out = [];
+  const text = String(kml || '');
+  for (const m of text.matchAll(/<Placemark[^>]*id="ID (\d+)"[^>]*>([\s\S]*?)<\/Placemark>/g)) {
+    const id = m[1], body = m[2];
+    const nameRaw = (body.match(/<name>([\s\S]*?)<\/name>/) || [])[1] || '';
+    const name = stripHtml(wyHtmlDecode(nameRaw.replace(/<!\[CDATA\[|\]\]>/g, ''))).trim();
+    if (!name) continue;
+    const descRaw = (body.match(/<description>([\s\S]*?)<\/description>/) || [])[1] || '';
+    const desc = wyHtmlDecode(descRaw.replace(/<!\[CDATA\[|\]\]>/g, ''));
+    const impact = (desc.match(/>(High|Medium|Low) Impact</i) || [])[1] || '';
+    const detailText = stripHtml(desc).replace(/^(High|Medium|Low) Impact\s*/i, '').trim();
+    const co = body.match(/<coordinates>\s*(-?[\d.]+),(-?[\d.]+)/);
+    const lon = co ? +co[1] : NaN, lat = co ? +co[2] : NaN;
+    const geo = (Number.isFinite(lon) && Number.isFinite(lat)) ? [[+lon.toFixed(4), +lat.toFixed(4)]] : [];
+    const tokens = [...new Set([
+      ...[...name.matchAll(/\b(I|US|SR)[ -]?(\d+[A-Z]?)\b/gi)].map(x => normWaRoad(`${x[1]}-${x[2]}`)),
+      ...[...name.matchAll(/\bState Route\s*(\d+[A-Z]?)\b/gi)].map(x => `SR-${x[1]}`), // "State Route 542"
+      ...[...name.matchAll(/\bInterstate\s*(\d+[A-Z]?)\b/gi)].map(x => `I-${x[1]}`), // "Interstate 5"
+    ])];
+    const segs = geo.length ? utahSegIds(cfg, tokens, lon, lat) : utahSegIds(cfg, tokens, null, null, null, { routeOnly: true });
+    if (!segs.length && !geo.length) continue;
+    const low = name.toLowerCase();
+    const isLane = /lane (closed|closure|reduction)|lanes closed/i.test(low);
+    const isClosed = !isLane && /closed for the season|road closed|highway closed|pass closed|avalanche/i.test(low);
+    const route = matchedRoute(cfg, tokens) || tokens[0] || (segs.length ? (cfg.segments[segs[0]]?.routes?.[0] || '') : ''); // no-token point match: fall back to the segment's own route
+    const impactText = impact ? `${impact} Impact` : '';
+    const base = { segs, route, geo, updated: null, start: null,
+      eventType: /construction|road work|maintenance|paving|rest area/i.test(low) ? 'routine' : null,
+      priority: null, icon: null, src: 'wa' };
+    if (isClosed) {
+      out.push({ ...base, id: `wa-alert-${id}-closed`, cls: 'roadClosures',
+        title: `Road closed — ${route || 'WA'}`, tooltip: '',
+        detail: [impactText, name].filter(Boolean).join(' · ').slice(0, 600) });
+    } else if (isLane) {
+      out.push({ ...base, id: `wa-alert-${id}-lane`, cls: 'roadClosures',
+        title: `Lane closed — ${route || 'WA'}`, tooltip: '',
+        detail: [impactText, name].filter(Boolean).join(' · ').slice(0, 600) });
+    } else {
+      out.push({ ...base, id: `wa-alert-${id}`, cls: 'roadReports',
+        title: name.slice(0, 200), tooltip: impactText,
+        detail: detailText.slice(0, 600) });
+    }
+  }
+  return { events: out };
+}
+/** Normalise an ODOT TripCheck road name: "US26" -> "US-26", "ORE35" -> "OR-35",
+ *  "HWY372" -> "OR-372"; already-hyphenated names ("US-26", "OR-35") pass through. */
+const normOrRoad = s => {
+  const t = String(s || '').trim().replace(/\s+/g, ' ').toUpperCase();
+  const ore = t.match(/^ORE(\d+[A-Z]?)$/);
+  if (ore) return `OR-${ore[1]}`;
+  const hwy = t.match(/^HWY(\d+[A-Z]?)$/);
+  if (hwy) return `OR-${hwy[1]}`;
+  const m = t.match(/^([A-Z]+)-?(\d+[A-Z]?)$/);
+  return m ? `${m[1]}-${m[2]}` : t;
+};
+/** ODOT pavement/weather wording bad enough for a winterDriving event. "Wet Pavement" alone is
+ *  excluded (the verdict's WINTER_BAD would drop it anyway); "Packed Snow" / "Slush" are kept
+ *  here and dropped by the verdict only when no chain event covers the leg — all ODOT snow-zone
+ *  stations carry chain code 1, so the leg still shows caution. */
+const OR_BAD = /(ice|icy|snow|slush|blowing|whiteout|fog|drift)/i;
+/**
+ * ODOT TripCheck map files -> {events}. rw.js road-weather stations: only active reports whose
+ * expirationTime is in the future (inactive records go back to 2019). Chain codes: 1 "Carry
+ * Chains or Traction Tires" and 2 "Chains Required on vehicles towing or over 10,000 GVW" are
+ * chainLaws with ODOT's description verbatim (code 1 is the standing minimum on all snow
+ * zones); code 0 is no chain event. INCD.js / EVENT.js: deduplicated by incidentId (each
+ * incident appears twice, start/end points); latitude/longitude are decimal degrees.
+ */
+export function slimOrRoads(cfg, { rw, incd, event } = {}) {
+  const out = [];
+  const now = Date.now();
+  const rwRows = Array.isArray(rw?.features) ? rw.features : [];
+  for (const f of rwRows) {
+    const a = f.attributes || {};
+    if (String(a.activeReport).toLowerCase() !== 'true') continue;
+    const exp = Date.parse(a.expirationTime || '');
+    if (Number.isFinite(exp) && exp <= now) continue; // stale record: never treat as current
+    const g = f.geometry || {};
+    const [lon, lat] = fromWebMercator(+g.x, +g.y);
+    if (!Number.isFinite(lon) || !Number.isFinite(lat)) continue;
+    const route = normOrRoad(a.linkName || '');
+    const segs = route ? utahSegIds(cfg, [route], lon, lat) : [];
+    const geo = [[+lon.toFixed(4), +lat.toFixed(4)]];
+    if (!segs.length && !geo.length) continue;
+    const loc = a.locationName || '';
+    const condText = [a.pavementConditionDesc, a.weatherConditionDesc].filter(Boolean).join(' · ');
+    const chainDesc = a.chainRestrictionDesc || '';
+    const updated = Date.parse(a.entryTime || '') || null;
+    const base = { segs, route, geo, updated, start: null, eventType: null, priority: null, icon: null, src: 'or' };
+    const code = +a.chainRestrictionCode;
+    if (code === 1 || code === 2) {
+      out.push({ ...base, id: `or-rw-${a.id}-chain`, cls: 'chainLaws',
+        title: `${chainDesc || 'Chain restriction'} — ${route}`,
+        tooltip: loc,
+        detail: [loc, a.linkName ? `${a.linkName} MP ${a.linkStartMP}–${a.linkEndMP}` : '', condText, a.tempCurr != null ? `${a.tempCurr}°F` : ''].filter(Boolean).join(' · ').slice(0, 600) });
+    }
+    if (OR_BAD.test(condText)) {
+      out.push({ ...base, id: `or-rw-${a.id}-cond`, cls: 'winterDriving',
+        title: `${condText} — ${route}`, tooltip: loc,
+        detail: [loc, a.linkName ? `${a.linkName} MP ${a.linkStartMP}–${a.linkEndMP}` : '', chainDesc, a.snowDepth != null ? `Snow depth ${a.snowDepth}"` : '', a.tempCurr != null ? `${a.tempCurr}°F` : ''].filter(Boolean).join(' · ').slice(0, 600) });
+    }
+  }
+  const seen = new Set();
+  for (const [file, rows] of [['incd', incd], ['event', event]]) {
+    for (const f of (Array.isArray(rows?.features) ? rows.features : [])) {
+      const a = f.attributes || {};
+      if (a.incidentId != null) {
+        if (seen.has(a.incidentId)) continue;
+        seen.add(a.incidentId);
+      }
+      const route = normOrRoad(a.route || '');
+      const g = f.geometry || {};
+      let lon = +a.startLongitude, lat = +a.startLatitude;
+      if (!Number.isFinite(lon) || !Number.isFinite(lat)) {
+        if (Number.isFinite(+g.x) && Number.isFinite(+g.y)) [lon, lat] = fromWebMercator(+g.x, +g.y);
+      }
+      if (!Number.isFinite(lon) || !Number.isFinite(lat)) continue;
+      const geo = [[+lon.toFixed(4), +lat.toFixed(4)]];
+      const segs = route ? utahSegIds(cfg, [route], lon, lat) : [];
+      if (!segs.length && !geo.length) continue;
+      const comments = stripHtml(a.comments || '').trim();
+      const text = `${comments} ${a.eventTypeName || ''} ${a.eventSubTypeName || ''}`;
+      const low = text.toLowerCase();
+      const isClosed = /clos/i.test(text);
+      const isRoutine = /road ?work|construction|maintenance|paving/i.test(low);
+      const title = comments ? comments.split('\n')[0].slice(0, 200) : `${a.eventTypeName || 'Incident'} — ${a.locationName || route}`;
+      const detail = [a.locationName, a.beginMarker, comments, a.eventSubTypeName].filter(Boolean).join(' · ').slice(0, 600);
+      const base = { segs, route, geo, updated: Date.parse(a.lastUpdated || '') || null,
+        start: Date.parse(a.startTime || '') || null, priority: null, icon: null, src: 'or' };
+      if (isClosed) {
+        out.push({ ...base, id: `or-${file}-${a.incidentId || out.length}-closed`, cls: 'roadClosures',
+          title: `Road closed — ${route}`, tooltip: '', detail, eventType: null });
+      } else {
+        out.push({ ...base, id: `or-${file}-${a.incidentId || out.length}`, cls: 'roadReports',
+          title, tooltip: a.eventSubTypeName || '', detail,
+          eventType: isRoutine ? 'routine' : null });
+      }
+    }
+  }
+  return { events: out };
+}
+/**
+ * Alaska 511 keyed Developer API -> {events}. The Alaska payload shapes are UNVERIFIED (no key
+ * yet), so this is a thin wrapper over the Idaho parser — same Iteris platform, same field
+ * names in the docs — with the source, ids and titles rewritten to Alaska. Verify against the
+ * first keyed response before trusting the parser.
+ */
+export function slimAkKeyed(cfg, winter, events) {
+  const r = slimIdKeyed(cfg, winter, events);
+  return { events: r.events.map(e => ({ ...e, src: 'ak', id: e.id.replace(/^id-/, 'ak-'),
+    title: e.title.replace(/Idaho 511/g, 'Alaska 511') })) };
+}
+/**
+ * Alaska 511 mapIcons points -> {events}. Same shape as Idaho's mapIcons (item2 points with
+ * [lat, lon] locations, no route/description/timestamp in the JSON) — wrapper over the Idaho
+ * parser with the source, ids and titles rewritten to Alaska. The no-token exactly-one-bbox
+ * rule matters here: the Closures layer is mostly British Columbia, so a point matches only
+ * when it falls in exactly one PNW segment bbox.
+ */
+export function slimAkMapIcons(cfg, json, layer = 'points') {
+  const r = slimIdMapIcons(cfg, json, layer);
+  return { events: r.events.map(e => ({ ...e, src: 'ak', id: e.id.replace(/^id-icons-/, 'ak-icons-'),
+    title: e.title.replace(/Idaho 511/g, 'Alaska 511') })) };
+}
+
 /* ---------------- NWS alerts ---------------- */
+
 
 export function nwsUrl(cfg, r) { return `${cfg.sources.nws}?point=${r.lat.toFixed(4)},${r.lon.toFixed(4)}`; }
 

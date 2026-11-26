@@ -201,7 +201,21 @@ async function mtnlive(c) {
   return finish({ lifts: sumPairs(per.map(p => p.lifts)), trails: sumPairs(per.map(p => p.trails)) }, 'sunvalley.com interactive mountain map', 'https://www.sunvalley.com/mountain-report');
 }
 
-const PROVIDERS = { mtnpowder, vail, powdr, reportpal, zaneray, aspen, taos, sundance, red, mtnlive };
+/* ---- Mt. Hood Meadows (skihood.com) ---- */
+/** Depths only — the feed carries no lifts/trails and no open/closed flag, so status stays null
+ *  ("no report" banner until a lift/status source exists). Depths arrive in CENTIMETER already.
+ *  finish() nulls the stale pre-season numbers by age (lastModified 2026-05-05 at wire-up). */
+async function skihood(c) {
+  const d = await get(c.api);
+  const s = Array.isArray(d.snow) && d.snow[0];
+  if (!s) throw new Error('skihood: empty feed');
+  const v = x => (x && typeof x === 'object' ? num(x.value) : num(x));
+  return finish({ snowAt: iso(s.lastModified), baseCm: v(s.snowTotalDepth), s24Cm: v(s.freshSnowFallDepth24H),
+    s48Cm: v(s.freshSnowFallDepth48H), s7dCm: v(s.freshSnowFallDepth7D), seasonCm: v(s.snowFallDepthCompleteSeason) },
+    'Mt. Hood Meadows snow report', c.api);
+}
+
+const PROVIDERS = { mtnpowder, vail, powdr, reportpal, zaneray, aspen, taos, sundance, red, mtnlive, skihood };
 
 /** Fetch one resort's report; on failure keep the previous good one, marked stale. */
 export async function fetchReport(r, prev) {

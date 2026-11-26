@@ -11,10 +11,13 @@ import { openMeteoUrl, splitOpenMeteo, carsUrl, slimEvents, EVENT_CLASSES, nwsUr
   wyoroadPbfUrl, WYOROAD_PBF_FILE, wyoroadPbfFilename, decodeWyoPbf, slimWyEvents, wyoroadTextUrl, slimWyTextEvents,
   mdtGeoUrl, slimMtEvents,
   idahoWinterUrl, idahoEventUrl, slimIdKeyed, idahoWzdxUrl, slimIdWzdx, idahoMapIconsUrl, slimIdMapIcons,
-  nmEventsUrl, NM_EVENT_TYPES, slimNmEvents } from '../js/core.js';
+  nmEventsUrl, NM_EVENT_TYPES, slimNmEvents,
+  wsdotPassUrl, wsdotAlertsUrl, slimWaPasses, slimWaAlerts,
+  tripcheckUrl, slimOrRoads,
+  alaskaWinterUrl, alaskaEventUrl, slimAkKeyed, alaskaMapIconsUrl, slimAkMapIcons } from '../js/core.js';
 
 export const UA = 'SkiDay ski dashboard (https://followthepowder.com/)';
-export const SOURCES = ['weather', 'roads', 'alerts', 'cameras', 'intel', 'utah-roads', 'ca-roads', 'ne-roads', 'ny-roads', 'ma-roads', 'wy-roads', 'mt-roads', 'id-roads', 'nm-roads'];
+export const SOURCES = ['weather', 'roads', 'alerts', 'cameras', 'intel', 'utah-roads', 'ca-roads', 'ne-roads', 'ny-roads', 'ma-roads', 'wy-roads', 'mt-roads', 'id-roads', 'nm-roads', 'wa-roads', 'or-roads', 'ak-roads'];
 const now = () => new Date().toISOString();
 
 export function makeHttp({ tries = 3, timeoutMs = 25000 } = {}) {
@@ -260,6 +263,64 @@ export const collectors = {
       if (!ok) throw e;
       return { events: out };
     }
+  },
+  /**
+   * Washington roads: WSDOT Mountain Pass Conditions RSS (keyless, 16 passes, chain/traction
+   * restrictions verbatim) + Highway Alerts KML (keyless, ~88 placemarks with point coordinates).
+   * Both fetches must succeed — either failing throws so the last good copy is kept (a partial
+   * tick would silently drop the other feed's events).
+   */
+  async 'wa-roads'(cfg, http) {
+    const [passes, alerts] = await Promise.all([
+      http.getText(wsdotPassUrl(), { Accept: 'application/rss+xml, application/xml, text/xml, */*' }),
+      http.getText(wsdotAlertsUrl(), { Accept: 'application/vnd.google-earth.kml+xml, application/xml, text/xml, */*' })
+    ]);
+    return { events: [...slimWaPasses(cfg, passes).events, ...slimWaAlerts(cfg, alerts).events] };
+  },
+  /**
+   * Oregon roads: ODOT TripCheck map files (keyless EsriJSON, Web Mercator): rw.js road-weather
+   * stations (chain codes + conditions) + INCD.js incidents + EVENT.js events. All three must
+   * succeed or the source throws (last good kept). The INCDLine/EVENTLine twins are not fetched —
+   * the point incidents already carry the location; the lines duplicate them.
+   */
+  async 'or-roads'(cfg, http) {
+    const any = { Accept: '*/*' }; // TripCheck 406s on application/json — it serves plain JS
+    const [rw, incd, event] = await Promise.all([
+      http.getJson(tripcheckUrl('rw'), any),
+      http.getJson(tripcheckUrl('INCD'), any),
+      http.getJson(tripcheckUrl('EVENT'), any)
+    ]);
+    return slimOrRoads(cfg, { rw, incd, event });
+  },
+  /**
+   * Alaska roads: keyed Developer API when a key is set (winterroads v3 + event v2, 2 calls/tick,
+   * under the 10 calls / 60 s throttle), keyless fallback (mapIcons Closures/Incidents/
+   * Construction points) otherwise. Any keyed failure falls back to keyless, never to nothing.
+   * No key exists yet — Jie must obtain one (free registration at 511.alaska.gov/my511/register)
+   * and set it as the ALASKA_511_API_KEY Worker secret. WZDx is not fetched (0 features at
+   * check; work zones arrive via the Construction layer).
+   */
+  async 'ak-roads'(cfg, http, keys = {}) {
+    const key = keys.alaskaApiKey;
+    if (key) {
+      const keyHttp = makeHttp({ tries: 1, timeoutMs: 20000 });
+      let winter = null, evs = null; const kerrs = [];
+      try { winter = await keyHttp.getJson(alaskaWinterUrl(key)); } catch (e) { kerrs.push(`winterroads: ${e.message || e}`); }
+      try { evs = await keyHttp.getJson(alaskaEventUrl(key)); } catch (e) { kerrs.push(`event: ${e.message || e}`); }
+      if (winter != null || evs != null) {
+        if (kerrs.length) console.warn?.(`[ski] ak keyed partial: ${kerrs.join('; ')}`);
+        return slimAkKeyed(cfg, winter ?? [], evs ?? []);
+      }
+      console.warn?.(`[ski] ak keyed API failed (${kerrs.join('; ')}), falling back to keyless`);
+    }
+    const [closures, incidents, construction] = await Promise.all([
+      http.getJson(alaskaMapIconsUrl('Closures')),
+      http.getJson(alaskaMapIconsUrl('Incidents')),
+      http.getJson(alaskaMapIconsUrl('Construction'))
+    ]);
+    return { events: [...slimAkMapIcons(cfg, closures, 'Closures').events,
+      ...slimAkMapIcons(cfg, incidents, 'Incidents').events,
+      ...slimAkMapIcons(cfg, construction, 'Construction').events] };
   }
 };
 
@@ -291,15 +352,16 @@ const meta = r => r ? { ok: !!r.ok, status: r.status, fetchedAt: r.fetchedAt, at
 
 /** Records -> the latest.json shape the page reads. */
 export function toLatest(rec, servedBy) {
-  const times = ['weather', 'roads', 'alerts', 'cameras', 'utah-roads', 'ca-roads', 'ne-roads', 'ny-roads', 'ma-roads', 'wy-roads', 'mt-roads', 'id-roads', 'nm-roads'].map(k => rec[k]?.fetchedAt).filter(Boolean).sort();
+  const times = ['weather', 'roads', 'alerts', 'cameras', 'utah-roads', 'ca-roads', 'ne-roads', 'ny-roads', 'ma-roads', 'wy-roads', 'mt-roads', 'id-roads', 'nm-roads', 'wa-roads', 'or-roads', 'ak-roads'].map(k => rec[k]?.fetchedAt).filter(Boolean).sort();
   return {
     generatedAt: times[times.length - 1] || null, servedBy,
-    sources: { weather: meta(rec.weather), roads: meta(rec.roads), alerts: meta(rec.alerts), cameras: meta(rec.cameras), 'utah-roads': meta(rec['utah-roads']), 'ca-roads': meta(rec['ca-roads']), 'ne-roads': meta(rec['ne-roads']), 'ny-roads': meta(rec['ny-roads']), 'ma-roads': meta(rec['ma-roads']), 'wy-roads': meta(rec['wy-roads']), 'mt-roads': meta(rec['mt-roads']), 'id-roads': meta(rec['id-roads']), 'nm-roads': meta(rec['nm-roads']) },
+    sources: { weather: meta(rec.weather), roads: meta(rec.roads), alerts: meta(rec.alerts), cameras: meta(rec.cameras), 'utah-roads': meta(rec['utah-roads']), 'ca-roads': meta(rec['ca-roads']), 'ne-roads': meta(rec['ne-roads']), 'ny-roads': meta(rec['ny-roads']), 'ma-roads': meta(rec['ma-roads']), 'wy-roads': meta(rec['wy-roads']), 'mt-roads': meta(rec['mt-roads']), 'id-roads': meta(rec['id-roads']), 'nm-roads': meta(rec['nm-roads']), 'wa-roads': meta(rec['wa-roads']), 'or-roads': meta(rec['or-roads']), 'ak-roads': meta(rec['ak-roads']) },
     weather: rec.weather?.data || null, roads: rec.roads?.data || null, alerts: rec.alerts?.data || {}, cameras: rec.cameras?.data || null,
     'utah-roads': rec['utah-roads']?.data || null, 'ca-roads': rec['ca-roads']?.data || null,
     'ne-roads': rec['ne-roads']?.data || null, 'ny-roads': rec['ny-roads']?.data || null, 'ma-roads': rec['ma-roads']?.data || null,
     'wy-roads': rec['wy-roads']?.data || null, 'mt-roads': rec['mt-roads']?.data || null,
-    'id-roads': rec['id-roads']?.data || null, 'nm-roads': rec['nm-roads']?.data || null
+    'id-roads': rec['id-roads']?.data || null, 'nm-roads': rec['nm-roads']?.data || null,
+    'wa-roads': rec['wa-roads']?.data || null, 'or-roads': rec['or-roads']?.data || null, 'ak-roads': rec['ak-roads']?.data || null
   };
 }
 export const toIntel = (r, servedBy) => ({ generatedAt: r?.fetchedAt || null, attemptAt: r?.attemptAt || null, status: r?.status || 'failed', error: r?.error || null, servedBy, resorts: r?.data || {} });
@@ -308,7 +370,7 @@ export const toCameras = (r, cfg, servedBy) => ({ generatedAt: r?.fetchedAt || n
 /** latest.json (+ intel.json, cameras.json) on disk -> records, so the Node backup can merge too. */
 export function fromFiles(latest, intel, cams) {
   const rec = {};
-  for (const k of ['weather', 'roads', 'alerts', 'cameras', 'utah-roads', 'ca-roads', 'ne-roads', 'ny-roads', 'ma-roads', 'wy-roads', 'mt-roads', 'id-roads', 'nm-roads']) {
+  for (const k of ['weather', 'roads', 'alerts', 'cameras', 'utah-roads', 'ca-roads', 'ne-roads', 'ny-roads', 'ma-roads', 'wy-roads', 'mt-roads', 'id-roads', 'nm-roads', 'wa-roads', 'or-roads', 'ak-roads']) {
     const s = latest?.sources?.[k]; const d = latest?.[k];
     const has = d != null && s?.ok !== false && !(k === 'alerts' && !Object.values(d).some(v => v));
     rec[k] = has ? { status: s?.status || 'ok', ok: true, fetchedAt: s?.fetchedAt || latest.generatedAt, attemptAt: s?.attemptAt || null, error: s?.error || null, data: d } : null;

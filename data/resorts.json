@@ -239,6 +239,61 @@
     },
     "lat": 46.91639,
     "lon": -114.09056
+   },
+   {
+    "id": "SEA",
+    "airport": true,
+    "region": "PNW",
+    "name": {
+     "en": "Seattle-Tacoma International Airport",
+     "zh": "Seattle-Tacoma International Airport"
+    },
+    "lat": 47.44889,
+    "lon": -122.30944
+   },
+   {
+    "id": "BLI",
+    "airport": true,
+    "region": "PNW",
+    "name": {
+     "en": "Bellingham International Airport",
+     "zh": "Bellingham International Airport"
+    },
+    "lat": 48.7925,
+    "lon": -122.5375
+   },
+   {
+    "id": "PDX",
+    "airport": true,
+    "region": "PNW",
+    "name": {
+     "en": "Portland International Airport",
+     "zh": "Portland International Airport"
+    },
+    "lat": 45.5871326,
+    "lon": -122.5927798
+   },
+   {
+    "id": "RDM",
+    "airport": true,
+    "region": "PNW",
+    "name": {
+     "en": "Redmond Municipal Airport",
+     "zh": "Redmond Municipal Airport"
+    },
+    "lat": 44.254082,
+    "lon": -121.1490687
+   },
+   {
+    "id": "ANC",
+    "airport": true,
+    "region": "PNW",
+    "name": {
+     "en": "Ted Stevens Anchorage International Airport",
+     "zh": "Ted Stevens Anchorage International Airport"
+    },
+    "lat": 61.17417,
+    "lon": -149.99833
    }
   ]
  },
@@ -2876,6 +2931,573 @@
     36.53047,
     -105.42487,
     36.61504
+   ]
+  },
+  "sr518-sea-airport": {
+   "name": {
+    "en": "SR-518 SEA Airport → I-405 / I-5",
+    "zh": "SR-518 SEA Airport → I-405 / I-5"
+   },
+   "routes": [
+    "SR-518"
+   ],
+   "bbox": [
+    -122.31503,
+    47.43639,
+    -122.25182,
+    47.47571
+   ]
+  },
+  "sr99-sea-airport": {
+   "name": {
+    "en": "SR-99 SEA Airport → SR-516",
+    "zh": "SR-99 SEA Airport → SR-516"
+   },
+   "routes": [
+    "SR-99"
+   ],
+   "bbox": [
+    -122.31503,
+    47.38381,
+    -122.2849,
+    47.46067
+   ]
+  },
+  "sr516-kent": {
+   "name": {
+    "en": "SR-516 Des Moines → Kent",
+    "zh": "SR-516 Des Moines → Kent"
+   },
+   "routes": [
+    "SR-516"
+   ],
+   "bbox": [
+    -122.3042,
+    47.36537,
+    -122.23752,
+    47.40301
+   ]
+  },
+  "sr167-kent-auburn": {
+   "name": {
+    "en": "SR-167 Kent → Auburn",
+    "zh": "SR-167 Kent → Auburn"
+   },
+   "routes": [
+    "SR-167"
+   ],
+   "bbox": [
+    -122.266,
+    47.29114,
+    -122.21739,
+    47.38791
+   ]
+  },
+  "sr164-auburn-enumclaw": {
+   "name": {
+    "en": "SR-164 Auburn → Enumclaw",
+    "zh": "SR-164 Auburn → Enumclaw"
+   },
+   "routes": [
+    "SR-164"
+   ],
+   "bbox": [
+    -122.23592,
+    47.1893,
+    -121.99947,
+    47.31289
+   ]
+  },
+  "roosevelt-enumclaw": {
+   "name": {
+    "en": "Roosevelt Avenue, Enumclaw",
+    "zh": "Roosevelt Avenue, Enumclaw"
+   },
+   "routes": [
+    "Roosevelt Avenue"
+   ],
+   "bbox": [
+    -122.01779,
+    47.18855,
+    -121.94166,
+    47.20944
+   ]
+  },
+  "sr410-enumclaw-crystal": {
+   "name": {
+    "en": "SR-410 Enumclaw → Crystal Mountain Blvd",
+    "zh": "SR-410 Enumclaw → Crystal Mountain Blvd"
+   },
+   "routes": [
+    "SR-410"
+   ],
+   "bbox": [
+    -121.96007,
+    46.96986,
+    -121.51662,
+    47.20783
+   ]
+  },
+  "crystal-mtn-blvd": {
+   "name": {
+    "en": "Crystal Mountain Blvd (NF-7190) → Crystal Mountain",
+    "zh": "Crystal Mountain Blvd (NF-7190) → Crystal Mountain"
+   },
+   "routes": [
+    "NF-7190",
+    "NF 7190",
+    "Crystal Mountain Boulevard"
+   ],
+   "bbox": [
+    -121.54453,
+    46.91916,
+    -121.46284,
+    47.00481
+   ]
+  },
+  "i405-sea-i90": {
+   "name": {
+    "en": "I-405 SEA → I-90",
+    "zh": "I-405 SEA → I-90"
+   },
+   "routes": [
+    "I-405"
+   ],
+   "bbox": [
+    -122.27055,
+    47.45175,
+    -122.16578,
+    47.58416
+   ]
+  },
+  "i405-i90-sr522": {
+   "name": {
+    "en": "I-405 I-90 → SR-522",
+    "zh": "I-405 I-90 → SR-522"
+   },
+   "routes": [
+    "I-405"
+   ],
+   "bbox": [
+    -122.27055,
+    47.58,
+    -122.16413,
+    47.7684
+   ]
+  },
+  "i90-sea-snoqualmie": {
+   "name": {
+    "en": "I-90 SEA → Snoqualmie Pass (Summit West)",
+    "zh": "I-90 SEA → Snoqualmie Pass (Summit West)"
+   },
+   "routes": [
+    "I-90"
+   ],
+   "bbox": [
+    -122.18506,
+    47.38279,
+    -121.40483,
+    47.59002
+   ]
+  },
+  "sr522-bothell-monroe": {
+   "name": {
+    "en": "SR-522 I-405 → Monroe",
+    "zh": "SR-522 I-405 → Monroe"
+   },
+   "routes": [
+    "SR-522"
+   ],
+   "bbox": [
+    -122.18632,
+    47.74738,
+    -121.97739,
+    47.86991
+   ]
+  },
+  "us2-monroe-stevens": {
+   "name": {
+    "en": "US-2 Monroe → Stevens Pass",
+    "zh": "US-2 Monroe → Stevens Pass"
+   },
+   "routes": [
+    "US-2"
+   ],
+   "bbox": [
+    -121.99587,
+    47.70024,
+    -121.07797,
+    47.87968
+   ]
+  },
+  "i5-sea-burlington": {
+   "name": {
+    "en": "I-5 SEA → Burlington (SR-20)",
+    "zh": "I-5 SEA → Burlington (SR-20)"
+   },
+   "routes": [
+    "I-5"
+   ],
+   "bbox": [
+    -122.35156,
+    47.45206,
+    -122.16384,
+    48.49058
+   ]
+  },
+  "sr20-burlington-sedro": {
+   "name": {
+    "en": "SR-20 Burlington → Sedro-Woolley (SR-9)",
+    "zh": "SR-20 Burlington → Sedro-Woolley (SR-9)"
+   },
+   "routes": [
+    "SR-20"
+   ],
+   "bbox": [
+    -122.32204,
+    48.47118,
+    -122.21559,
+    48.52333
+   ]
+  },
+  "sr9-sedro-deming": {
+   "name": {
+    "en": "SR-9 Sedro-Woolley → Deming (SR-542)",
+    "zh": "SR-9 Sedro-Woolley → Deming (SR-542)"
+   },
+   "routes": [
+    "SR-9"
+   ],
+   "bbox": [
+    -122.24287,
+    48.5042,
+    -122.1804,
+    48.82535
+   ]
+  },
+  "i5-bli-sr542": {
+   "name": {
+    "en": "I-5 BLI → SR-542 (Sunset Dr)",
+    "zh": "I-5 BLI → SR-542 (Sunset Dr)"
+   },
+   "routes": [
+    "I-5"
+   ],
+   "bbox": [
+    -122.544,
+    48.76106,
+    -122.4548,
+    48.80112
+   ]
+  },
+  "sr542-bellingham-deming": {
+   "name": {
+    "en": "SR-542 Bellingham → Deming (SR-9)",
+    "zh": "SR-542 Bellingham → Deming (SR-9)"
+   },
+   "routes": [
+    "SR-542",
+    "Mount Baker Highway"
+   ],
+   "bbox": [
+    -122.47397,
+    48.76084,
+    -122.2802,
+    48.85313
+   ]
+  },
+  "sr9-sr542-concurrency": {
+   "name": {
+    "en": "SR-9 / SR-542 concurrency, Deming",
+    "zh": "SR-9 / SR-542 concurrency, Deming"
+   },
+   "routes": [
+    "SR-9",
+    "SR-542",
+    "Mount Baker Highway"
+   ],
+   "bbox": [
+    -122.29885,
+    48.80621,
+    -122.19412,
+    48.85359
+   ]
+  },
+  "sr542-deming-glacier": {
+   "name": {
+    "en": "SR-542 Deming → Glacier",
+    "zh": "SR-542 Deming → Glacier"
+   },
+   "routes": [
+    "SR-542",
+    "Mount Baker Highway"
+   ],
+   "bbox": [
+    -122.21282,
+    48.80594,
+    -122.12772,
+    48.92683
+   ]
+  },
+  "sr542-glacier-baker": {
+   "name": {
+    "en": "SR-542 / Mount Baker Highway, Glacier → Heather Meadows",
+    "zh": "SR-542 / Mount Baker Highway, Glacier → Heather Meadows"
+   },
+   "routes": [
+    "SR-542",
+    "Mount Baker Highway"
+   ],
+   "bbox": [
+    -122.14663,
+    48.84906,
+    -121.64491,
+    48.93806
+   ]
+  },
+  "i84-pdx-fairview": {
+   "name": {
+    "en": "I-84 PDX → Fairview (Airport Way / I-84)",
+    "zh": "I-84 PDX → Fairview (Airport Way / I-84)"
+   },
+   "routes": [
+    "I-84",
+    "US-30",
+    "Airport Way"
+   ],
+   "bbox": [
+    -122.60257,
+    45.49886,
+    -122.42118,
+    45.59723
+   ]
+  },
+  "mt-hood-hwy-gresham": {
+   "name": {
+    "en": "Mount Hood Highway, Fairview → US-26 (Gresham)",
+    "zh": "Mount Hood Highway, Fairview → US-26 (Gresham)"
+   },
+   "routes": [
+    "US-26",
+    "Mount Hood Highway",
+    "Southeast Mount Hood Highway"
+   ],
+   "bbox": [
+    -122.44118,
+    45.39608,
+    -122.28515,
+    45.51886
+   ]
+  },
+  "us26-gresham-govcamp": {
+   "name": {
+    "en": "US-26 Gresham → Government Camp",
+    "zh": "US-26 Gresham → Government Camp"
+   },
+   "routes": [
+    "US-26"
+   ],
+   "bbox": [
+    -122.30515,
+    45.29146,
+    -121.73113,
+    45.41608
+   ]
+  },
+  "us26-govcamp-or35": {
+   "name": {
+    "en": "US-26 Government Camp → OR-35 junction",
+    "zh": "US-26 Government Camp → OR-35 junction"
+   },
+   "routes": [
+    "US-26"
+   ],
+   "bbox": [
+    -121.74113,
+    45.28392,
+    -121.71184,
+    45.30154
+   ]
+  },
+  "or35-govcamp-meadows": {
+   "name": {
+    "en": "OR-35 Government Camp → Mt. Hood Meadows (Meadows Dr)",
+    "zh": "OR-35 Government Camp → Mt. Hood Meadows (Meadows Dr)"
+   },
+   "routes": [
+    "OR-35",
+    "ORE35",
+    "OR35",
+    "Mount Hood Meadows Road"
+   ],
+   "bbox": [
+    -121.73184,
+    45.27294,
+    -121.63292,
+    45.33892
+   ]
+  },
+  "or173-timberline": {
+   "name": {
+    "en": "OR-173 (Timberline Highway) → Timberline Lodge",
+    "zh": "OR-173 (Timberline Highway) → Timberline Lodge"
+   },
+   "routes": [
+    "OR-173",
+    "Timberline Highway"
+   ],
+   "bbox": [
+    -121.75113,
+    45.29146,
+    -121.6916,
+    45.34066
+   ]
+  },
+  "us97-rdm-bend": {
+   "name": {
+    "en": "US-97 RDM → Bend (Airport Way / Colorado Ave)",
+    "zh": "US-97 RDM → Bend (Airport Way / Colorado Ave)"
+   },
+   "routes": [
+    "US-97",
+    "Airport Way",
+    "Colorado Avenue"
+   ],
+   "bbox": [
+    -121.34186,
+    44.03179,
+    -121.14728,
+    44.26516
+   ]
+  },
+  "century-dr-bend": {
+   "name": {
+    "en": "Century Drive, Bend → Cascade Lakes Hwy",
+    "zh": "Century Drive, Bend → Cascade Lakes Hwy"
+   },
+   "routes": [
+    "Century Drive",
+    "OR-372",
+    "HWY372"
+   ],
+   "bbox": [
+    -121.40073,
+    43.98981,
+    -121.32186,
+    44.05179
+   ]
+  },
+  "cascade-lakes-hwy": {
+   "name": {
+    "en": "Cascade Lakes Highway (OR-372) → Mt. Bachelor",
+    "zh": "Cascade Lakes Highway (OR-372) → Mt. Bachelor"
+   },
+   "routes": [
+    "OR-372",
+    "HWY372",
+    "Century Drive",
+    "Cascade Lakes Highway"
+   ],
+   "bbox": [
+    -121.68753,
+    43.96982,
+    -121.38073,
+    44.01594
+   ]
+  },
+  "us26-pdx-bend": {
+   "name": {
+    "en": "US-26 PDX → Bend (via Government Camp / Madras)",
+    "zh": "US-26 PDX → Bend (via Government Camp / Madras)"
+   },
+   "routes": [
+    "US-26"
+   ],
+   "bbox": [
+    -122.30515,
+    44.1038,
+    -121.11856,
+    45.41608
+   ]
+  },
+  "us97-bend-south": {
+   "name": {
+    "en": "US-97 Bend south → Century Drive",
+    "zh": "US-97 Bend south → Century Drive"
+   },
+   "routes": [
+    "US-97"
+   ],
+   "bbox": [
+    -121.34186,
+    44.03179,
+    -121.28235,
+    44.1238
+   ]
+  },
+  "anc-airport-pt-woronzof": {
+   "name": {
+    "en": "ANC Airport → Minnesota Drive (Point Woronzof Dr)",
+    "zh": "ANC Airport → Minnesota Drive (Point Woronzof Dr)"
+   },
+   "routes": [
+    "Point Woronzof Drive",
+    "Postmark Drive",
+    "West International Airport Road"
+   ],
+   "bbox": [
+    -150.02958,
+    61.1578,
+    -149.90609,
+    61.21313
+   ]
+  },
+  "minnesota-dr-anc": {
+   "name": {
+    "en": "Minnesota Drive, ANC → AK-1",
+    "zh": "Minnesota Drive, ANC → AK-1"
+   },
+   "routes": [
+    "Minnesota Drive"
+   ],
+   "bbox": [
+    -149.92609,
+    61.11297,
+    -149.84804,
+    61.17779
+   ]
+  },
+  "ak1-anchorage-girdwood": {
+   "name": {
+    "en": "AK-1 (Seward Highway), Anchorage → Girdwood",
+    "zh": "AK-1 (Seward Highway), Anchorage → Girdwood"
+   },
+   "routes": [
+    "AK-1",
+    "AK 1",
+    "Seward Highway"
+   ],
+   "bbox": [
+    -149.86804,
+    60.91977,
+    -149.16329,
+    61.13299
+   ]
+  },
+  "alyeska-hwy-girdwood": {
+   "name": {
+    "en": "Alyeska Highway → Alyeska (Arlberg Ave)",
+    "zh": "Alyeska Highway → Alyeska (Arlberg Ave)"
+   },
+   "routes": [
+    "Alyeska Highway",
+    "Arlberg Avenue"
+   ],
+   "bbox": [
+    -149.18329,
+    60.93028,
+    -149.08914,
+    60.9806
    ]
   }
  },
@@ -7673,6 +8295,715 @@
    "summitSource": "Summit 12,481 ft / 3,804 m (Taos Ski Valley, Kachina Peak)",
    "baseSource": "Base 9,200 ft / 2,804 m (Taos Ski Valley)",
    "wxGroup": 18
+  },
+  {
+   "id": "crystal",
+   "name": {
+    "en": "Crystal Mountain",
+    "zh": "Crystal Mountain"
+   },
+   "short": "Crystal",
+   "passes": [
+    "ikon"
+   ],
+   "region": "PNW",
+   "tz": "America/Los_Angeles",
+   "lat": 46.93,
+   "lon": -121.48,
+   "baseElevM": 1192,
+   "summitElevM": 2137,
+   "driveMin": 119,
+   "driveSource": "OSRM route from SEA airport, no traffic (computed 2026-11-26)",
+   "gateway": "SEA",
+   "routeNote": {
+    "en": "SEA → SR-99 S → SR-516 SE → SR-167 S → SR-164 SE → Roosevelt Avenue E → SR-410 SE → Crystal Mountain Blvd (NF-7190) SE to Crystal Mountain.",
+    "zh": "SEA → SR-99 S → SR-516 SE → SR-167 S → SR-164 SE → Roosevelt Avenue E → SR-410 SE → Crystal Mountain Blvd (NF-7190) SE to Crystal Mountain."
+   },
+   "route": [
+    {
+     "seg": "sr99-sea-airport",
+     "closure": "caution"
+    },
+    {
+     "seg": "sr516-kent",
+     "closure": "caution"
+    },
+    {
+     "seg": "sr167-kent-auburn",
+     "closure": "caution"
+    },
+    {
+     "seg": "sr164-auburn-enumclaw",
+     "closure": "caution"
+    },
+    {
+     "seg": "roosevelt-enumclaw",
+     "closure": "caution"
+    },
+    {
+     "seg": "sr410-enumclaw-crystal",
+     "closure": "caution"
+    },
+    {
+     "seg": "crystal-mtn-blvd",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.crystalmountainresort.com/",
+    "webcams": "https://crystalmountainresort.roundshot.com/summit/",
+    "report": "https://www.crystalmountainresort.com/"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/63/Campbell_Basin_ski_run_at_Crystal_Mountain_%287_March_2025%29.jpg/960px-Campbell_Basin_ski_run_at_Crystal_Mountain_%287_March_2025%29.jpg",
+    "credit": "Buidhe",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Campbell_Basin_ski_run_at_Crystal_Mountain_(7_March_2025).jpg"
+   },
+   "parking": {
+    "lat": 46.93,
+    "lon": -121.48
+   },
+   "summitSource": "Summit 7,012 ft / 2,137 m (Crystal Mountain)",
+   "baseSource": "Base 3,912 ft / 1,192 m (Crystal Mountain)",
+   "wxGroup": 19
+  },
+  {
+   "id": "snoqualmie",
+   "name": {
+    "en": "The Summit at Snoqualmie",
+    "zh": "The Summit at Snoqualmie"
+   },
+   "short": "Snoqualmie",
+   "passes": [
+    "ikon"
+   ],
+   "region": "PNW",
+   "tz": "America/Los_Angeles",
+   "lat": 47.424,
+   "lon": -121.416,
+   "baseElevM": 796,
+   "summitElevM": 1652,
+   "driveMin": 82,
+   "driveSource": "OSRM route from SEA airport, no traffic (computed 2026-11-26)",
+   "gateway": "SEA",
+   "routeNote": {
+    "en": "SEA → SR-518 NE → I-405 NE → I-90 E to The Summit at Snoqualmie (Summit West).",
+    "zh": "SEA → SR-518 NE → I-405 NE → I-90 E to The Summit at Snoqualmie (Summit West)."
+   },
+   "route": [
+    {
+     "seg": "sr518-sea-airport",
+     "closure": "caution"
+    },
+    {
+     "seg": "i405-sea-i90",
+     "closure": "caution"
+    },
+    {
+     "seg": "i90-sea-snoqualmie",
+     "closure": "caution"
+    }
+   ],
+   "links": {
+    "site": "https://www.summitatsnoqualmie.com/",
+    "webcams": "https://www.summitatsnoqualmie.com/webcams",
+    "report": "https://www.summitatsnoqualmie.com/"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "img/cat/snoqualmie.jpg",
+    "credit": "DarkRavag3r",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Snoqualmie_summit_lodge.jpg"
+   },
+   "parking": {
+    "lat": 47.424,
+    "lon": -121.416
+   },
+   "summitLat": 47.4408708,
+   "summitLon": -121.4328381,
+   "summitSource": "Summit 5,420 ft / 1,652 m (The Summit at Snoqualmie, Alpental)",
+   "baseSource": "Base 2,610 ft / 796 m (The Summit at Snoqualmie, Summit East)",
+   "wxGroup": 19
+  },
+  {
+   "id": "stevens-pass",
+   "name": {
+    "en": "Stevens Pass",
+    "zh": "Stevens Pass"
+   },
+   "short": "Stevens Pass",
+   "passes": [
+    "epic"
+   ],
+   "region": "PNW",
+   "tz": "America/Los_Angeles",
+   "lat": 47.74472,
+   "lon": -121.08889,
+   "baseElevM": 1238,
+   "summitElevM": 1782,
+   "driveMin": 127,
+   "driveSource": "OSRM route from SEA airport, no traffic (computed 2026-11-26)",
+   "gateway": "SEA",
+   "routeNote": {
+    "en": "SEA → SR-518 NE → I-405 N → SR-522 NE → US-2 E to Stevens Pass.",
+    "zh": "SEA → SR-518 NE → I-405 N → SR-522 NE → US-2 E to Stevens Pass."
+   },
+   "route": [
+    {
+     "seg": "sr518-sea-airport",
+     "closure": "caution"
+    },
+    {
+     "seg": "i405-i90-sr522",
+     "closure": "caution"
+    },
+    {
+     "seg": "sr522-bothell-monroe",
+     "closure": "caution"
+    },
+    {
+     "seg": "us2-monroe-stevens",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.stevenspass.com/",
+    "webcams": "https://www.stevenspass.com/the-mountain/mountain-conditions/mountain-cams.aspx",
+    "report": "https://www.stevenspass.com/the-mountain/mountain-conditions/weather-report.aspx"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "img/cat/stevens-pass.jpg",
+    "credit": "Buidhe",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:View_of_Stevens_Pass_resort_from_the_top_of_Kehr%27s_Chair_(30_January_2025).jpg"
+   },
+   "parking": {
+    "lat": 47.74472,
+    "lon": -121.08889
+   },
+   "summitLat": 47.7321886,
+   "summitLon": -121.102198,
+   "summitSource": "Summit 5,845 ft / 1,782 m (Stevens Pass, Cowboy Mountain)",
+   "baseSource": "Base 4,061 ft / 1,238 m (Stevens Pass)",
+   "wxGroup": 19
+  },
+  {
+   "id": "mt-baker",
+   "name": {
+    "en": "Mt. Baker",
+    "zh": "Mt. Baker"
+   },
+   "short": "Mt. Baker",
+   "passes": [],
+   "region": "PNW",
+   "tz": "America/Los_Angeles",
+   "lat": 48.86177,
+   "lon": -121.6789,
+   "baseElevM": 1067,
+   "summitElevM": 1551,
+   "driveMin": 94,
+   "driveSource": "OSRM route from BLI airport, no traffic (computed 2026-11-26)",
+   "gateway": "BLI",
+   "altGateway": "SEA",
+   "routeNote": {
+    "en": "BLI → I-5 SE → SR-542 NE → SR-9 SE → SR-542 NE → Mount Baker Highway E to Mt. Baker (Heather Meadows).",
+    "zh": "BLI → I-5 SE → SR-542 NE → SR-9 SE → SR-542 NE → Mount Baker Highway E to Mt. Baker (Heather Meadows)."
+   },
+   "route": [
+    {
+     "seg": "i5-bli-sr542",
+     "closure": "caution"
+    },
+    {
+     "seg": "sr542-bellingham-deming",
+     "closure": "caution"
+    },
+    {
+     "seg": "sr9-sr542-concurrency",
+     "closure": "caution"
+    },
+    {
+     "seg": "sr542-deming-glacier",
+     "closure": "caution"
+    },
+    {
+     "seg": "sr542-glacier-baker",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.mtbaker.us/",
+    "report": "https://www.mtbaker.us/snow-report/"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "img/cat/mt-baker.jpg",
+    "credit": "Maia! at English Wikipedia",
+    "license": "Public domain",
+    "licenseUrl": "https://en.wikipedia.org/wiki/Public_domain",
+    "page": "https://commons.wikimedia.org/wiki/File:MtBakerSkiAreaLodge.JPG"
+   },
+   "parking": {
+    "lat": 48.86177,
+    "lon": -121.6789
+   },
+   "summitSource": "Summit 5,089 ft / 1,551 m (Mt. Baker Ski Area)",
+   "baseSource": "Base 3,500 ft / 1,067 m (Mt. Baker Ski Area, White Salmon)",
+   "wxGroup": 19
+  },
+  {
+   "id": "mt-hood-meadows",
+   "name": {
+    "en": "Mt. Hood Meadows",
+    "zh": "Mt. Hood Meadows"
+   },
+   "short": "Meadows",
+   "passes": [
+    "indy"
+   ],
+   "region": "PNW",
+   "tz": "America/Los_Angeles",
+   "lat": 45.32889,
+   "lon": -121.6625,
+   "baseElevM": 1379,
+   "summitElevM": 2225,
+   "driveMin": 100,
+   "driveSource": "OSRM route from PDX airport, no traffic (computed 2026-11-26)",
+   "gateway": "PDX",
+   "routeNote": {
+    "en": "PDX → I-84 SE → Southeast Mount Hood Highway SE → US-26 E → OR-35 NE to Mt. Hood Meadows.",
+    "zh": "PDX → I-84 SE → Southeast Mount Hood Highway SE → US-26 E → OR-35 NE to Mt. Hood Meadows."
+   },
+   "route": [
+    {
+     "seg": "i84-pdx-fairview",
+     "closure": "caution"
+    },
+    {
+     "seg": "mt-hood-hwy-gresham",
+     "closure": "caution"
+    },
+    {
+     "seg": "us26-gresham-govcamp",
+     "closure": "caution"
+    },
+    {
+     "seg": "us26-govcamp-or35",
+     "closure": "caution"
+    },
+    {
+     "seg": "or35-govcamp-meadows",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.skihood.com/",
+    "webcams": "https://www.skihood.com/",
+    "report": "https://www.skihood.com/"
+   },
+   "webcams": [
+    {
+     "name": {
+      "en": "Base Area",
+      "zh": "Base Area"
+     },
+     "image": "https://api.wetmet.net/widgets/image/frame.php?uid=d7a6360b9dff90024f21fe07423232b5&type=image&format=image.jpg"
+    },
+    {
+     "name": {
+      "en": "Snowstake",
+      "zh": "Snowstake"
+     },
+     "image": "https://b15.hdrelay.com/camera/63cadf1f426d0a9136dc81da/snapshot"
+    },
+    {
+     "name": {
+      "en": "Top of Blue",
+      "zh": "Top of Blue"
+     },
+     "image": "https://api.wetmet.net/widgets/image/frame.php?uid=333155ae61a4d64093374b5330e94425&type=image&format=image.jpg"
+    },
+    {
+     "name": {
+      "en": "Bottom of Vista",
+      "zh": "Bottom of Vista"
+     },
+     "image": "https://api.wetmet.net/widgets/image/frame.php?uid=9998d9abcfc6daef75e09b7a553b99a1&type=image&format=image.jpg"
+    },
+    {
+     "name": {
+      "en": "Top of Vista",
+      "zh": "Top of Vista"
+     },
+     "image": "https://api.wetmet.net/widgets/image/frame.php?uid=c5a90b27806182f3b7b31fc9a79d6e7e&type=image&format=image.jpg"
+    },
+    {
+     "name": {
+      "en": "Top of Heather",
+      "zh": "Top of Heather"
+     },
+     "image": "https://api.wetmet.net/widgets/image/frame.php?uid=b33acd75e0ba216558a38590f4d924ae&type=image&format=image.jpg"
+    },
+    {
+     "name": {
+      "en": "Top of Cascade",
+      "zh": "Top of Cascade"
+     },
+     "image": "https://api.wetmet.net/widgets/image/frame.php?uid=3bd9c98d890c6890f92efcfc5c1892da&type=image&format=image.jpg"
+    },
+    {
+     "name": {
+      "en": "Nordic",
+      "zh": "Nordic"
+     },
+     "image": "https://api.wetmet.net/widgets/image/frame.php?uid=f4768c61b78bd9f60eda01318c7d546b&type=image&format=image.jpg"
+    }
+   ],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/10/Disabled_skier_at_Mt_Hood_Meadows-Mt_Hood_%2825827491143%29.jpg/960px-Disabled_skier_at_Mt_Hood_Meadows-Mt_Hood_%2825827491143%29.jpg",
+    "credit": "U.S. Forest Service",
+    "license": "Public domain",
+    "licenseUrl": "https://en.wikipedia.org/wiki/Public_domain",
+    "page": "https://commons.wikimedia.org/wiki/File:Disabled_skier_at_Mt_Hood_Meadows-Mt_Hood_(25827491143).jpg"
+   },
+   "parking": {
+    "lat": 45.32889,
+    "lon": -121.6625
+   },
+   "summitSource": "Summit 7,300 ft / 2,225 m (Mt. Hood Meadows)",
+   "baseSource": "Base 4,523 ft / 1,379 m (Mt. Hood Meadows)",
+   "wxGroup": 20
+  },
+  {
+   "id": "timberline",
+   "name": {
+    "en": "Timberline Lodge",
+    "zh": "Timberline Lodge"
+   },
+   "short": "Timberline",
+   "passes": [],
+   "region": "PNW",
+   "tz": "America/Los_Angeles",
+   "lat": 45.33,
+   "lon": -121.71,
+   "baseElevM": 1219,
+   "summitElevM": 2603,
+   "driveMin": 92,
+   "driveSource": "OSRM route from PDX airport, no traffic (computed 2026-11-26)",
+   "gateway": "PDX",
+   "routeNote": {
+    "en": "PDX → I-84 SE → Southeast Mount Hood Highway SE → US-26 E → OR-173 NE to Timberline Lodge.",
+    "zh": "PDX → I-84 SE → Southeast Mount Hood Highway SE → US-26 E → OR-173 NE to Timberline Lodge."
+   },
+   "route": [
+    {
+     "seg": "i84-pdx-fairview",
+     "closure": "caution"
+    },
+    {
+     "seg": "mt-hood-hwy-gresham",
+     "closure": "caution"
+    },
+    {
+     "seg": "us26-gresham-govcamp",
+     "closure": "caution"
+    },
+    {
+     "seg": "or173-timberline",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.timberlinelodge.com/",
+    "webcams": "https://timberlinelodge.com/webcams/",
+    "report": "https://timberlinelodge.com/conditions/"
+   },
+   "webcams": [
+    {
+     "name": {
+      "en": "Timberline Lodge Camera",
+      "zh": "Timberline Lodge Camera"
+     },
+     "image": "https://timberlinelodge.com/snowcameras/lodge.jpg"
+    },
+    {
+     "name": {
+      "en": "Pucci",
+      "zh": "Pucci"
+     },
+     "image": "https://timberlinelodge.com/snowcameras/pucci.jpg"
+    },
+    {
+     "name": {
+      "en": "Jeff Flood (East)",
+      "zh": "Jeff Flood (East)"
+     },
+     "image": "https://timberlinelodge.com/snowcameras/FloodEast.jpg"
+    },
+    {
+     "name": {
+      "en": "Jeff Flood (South)",
+      "zh": "Jeff Flood (South)"
+     },
+     "image": "https://timberlinelodge.com/snowcameras/FloodSouth.jpg"
+    },
+    {
+     "name": {
+      "en": "Palmer/Silcox (Palmer bottom)",
+      "zh": "Palmer/Silcox (Palmer bottom)"
+     },
+     "image": "https://timberlinelodge.com/snowcameras/palmerbottom.jpg"
+    },
+    {
+     "name": {
+      "en": "Bruno's (top)",
+      "zh": "Bruno's (top)"
+     },
+     "image": "https://timberlinelodge.com/snowcameras/brunotop.jpg"
+    },
+    {
+     "name": {
+      "en": "Snow Stake",
+      "zh": "Snow Stake"
+     },
+     "image": "https://timberlinelodge.com/snowcameras/snowstake.jpg"
+    },
+    {
+     "name": {
+      "en": "Summit Pass",
+      "zh": "Summit Pass"
+     },
+     "image": "https://timberlinelodge.com/snowcameras/summit.jpg"
+    },
+    {
+     "name": {
+      "en": "Summit Pass Shuttle",
+      "zh": "Summit Pass Shuttle"
+     },
+     "image": "https://timberlinelodge.com/snowcameras/SummitBus.jpg"
+    }
+   ],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "img/cat/timberline.jpg",
+    "credit": "Buidhe",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Timberline_Lodge_to_Palmer_ski_tour_(8_May_2025)_(71645).jpg"
+   },
+   "parking": {
+    "lat": 45.33,
+    "lon": -121.71
+   },
+   "summitSource": "Summit 8,540 ft / 2,603 m (Timberline Lodge)",
+   "baseSource": "Base 4,000 ft / 1,219 m (Timberline Lodge)",
+   "wxGroup": 20
+  },
+  {
+   "id": "mt-bachelor",
+   "name": {
+    "en": "Mt. Bachelor",
+    "zh": "Mt. Bachelor"
+   },
+   "short": "Mt. Bachelor",
+   "passes": [
+    "ikon"
+   ],
+   "region": "PNW",
+   "tz": "America/Los_Angeles",
+   "lat": 44.003,
+   "lon": -121.677,
+   "baseElevM": 1737,
+   "summitElevM": 2763,
+   "driveMin": 65,
+   "driveSource": "OSRM route from RDM airport, no traffic (computed 2026-11-26)",
+   "gateway": "RDM",
+   "altGateway": "PDX",
+   "routeNote": {
+    "en": "RDM → US-97 SW → Southwest Century Drive SW → Cascade Lakes Highway W to Mt. Bachelor.",
+    "zh": "RDM → US-97 SW → Southwest Century Drive SW → Cascade Lakes Highway W to Mt. Bachelor."
+   },
+   "route": [
+    {
+     "seg": "us97-rdm-bend",
+     "closure": "caution"
+    },
+    {
+     "seg": "century-dr-bend",
+     "closure": "caution"
+    },
+    {
+     "seg": "cascade-lakes-hwy",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.mtbachelor.com/",
+    "webcams": "https://www.mtbachelor.com/the-mountain/webcams/",
+    "report": "https://www.mtbachelor.com/the-mountain/mountain-report"
+   },
+   "webcams": [
+    {
+     "name": {
+      "en": "Mid-Mountain",
+      "zh": "Mid-Mountain"
+     },
+     "image": "https://api.mtbachelor.com/api/v1/cams/mtn/12"
+    },
+    {
+     "name": {
+      "en": "Snow Stake",
+      "zh": "Snow Stake"
+     },
+     "image": "https://api.mtbachelor.com/api/v1/cams/mtn/14"
+    },
+    {
+     "name": {
+      "en": "Top of Cloudchaser Lift",
+      "zh": "Top of Cloudchaser Lift"
+     },
+     "image": "https://api.mtbachelor.com/api/v1/cams/mtn/3"
+    },
+    {
+     "name": {
+      "en": "The Cone",
+      "zh": "The Cone"
+     },
+     "image": "https://api.mtbachelor.com/api/v1/cams/mtn/2"
+    },
+    {
+     "name": {
+      "en": "Rock Bar Patio",
+      "zh": "Rock Bar Patio"
+     },
+     "image": "https://api.mtbachelor.com/api/v1/cams/mtn/9"
+    },
+    {
+     "name": {
+      "en": "Pine Marten Lodge",
+      "zh": "Pine Marten Lodge"
+     },
+     "image": "https://api.mtbachelor.com/api/v1/cams/mtn/11"
+    },
+    {
+     "name": {
+      "en": "Tumalo Mountain & Top of Pine Marten",
+      "zh": "Tumalo Mountain & Top of Pine Marten"
+     },
+     "image": "https://api.mtbachelor.com/api/v1/cams/mtn/5"
+    },
+    {
+     "name": {
+      "en": "Sunrise Base",
+      "zh": "Sunrise Base"
+     },
+     "image": "https://api.mtbachelor.com/api/v1/cams/mtn/16"
+    },
+    {
+     "name": {
+      "en": "Nordic Center",
+      "zh": "Nordic Center"
+     },
+     "image": "https://api.mtbachelor.com/api/v1/cams/mtn/13"
+    }
+   ],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "img/cat/mt-bachelor.jpg",
+    "credit": "K50 Dude",
+    "license": "CC BY 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Pine_Marten_Express.JPG"
+   },
+   "parking": {
+    "lat": 44.003,
+    "lon": -121.677
+   },
+   "summitSource": "Summit 9,065 ft / 2,763 m (Mt. Bachelor)",
+   "baseSource": "Base 5,700 ft / 1,737 m (Mt. Bachelor)",
+   "wxGroup": 20
+  },
+  {
+   "id": "alyeska",
+   "name": {
+    "en": "Alyeska",
+    "zh": "Alyeska"
+   },
+   "short": "Alyeska",
+   "passes": [
+    "ikon"
+   ],
+   "region": "PNW",
+   "tz": "America/Anchorage",
+   "lat": 60.9705,
+   "lon": -149.0982,
+   "baseElevM": 76,
+   "summitElevM": 838,
+   "driveMin": 67,
+   "driveSource": "OSRM route from ANC airport, no traffic (computed 2026-11-26)",
+   "gateway": "ANC",
+   "routeNote": {
+    "en": "ANC → Point Woronzof Drive E → Minnesota Drive SE → AK-1 SE → Alyeska Highway NE to Alyeska.",
+    "zh": "ANC → Point Woronzof Drive E → Minnesota Drive SE → AK-1 SE → Alyeska Highway NE to Alyeska."
+   },
+   "route": [
+    {
+     "seg": "anc-airport-pt-woronzof",
+     "closure": "caution"
+    },
+    {
+     "seg": "minnesota-dr-anc",
+     "closure": "caution"
+    },
+    {
+     "seg": "ak1-anchorage-girdwood",
+     "closure": "nogo"
+    },
+    {
+     "seg": "alyeska-hwy-girdwood",
+     "closure": "nogo"
+    }
+   ],
+   "links": {
+    "site": "https://www.alyeskaresort.com/",
+    "report": "https://www.alyeskaresort.com/mountain-report-winter/"
+   },
+   "webcams": [],
+   "intel": null,
+   "intelFrom": "catalog",
+   "photo": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/56/Alyeska_Trip.jpg/960px-Alyeska_Trip.jpg",
+    "credit": "Jeff Noble",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Alyeska_Trip.jpg"
+   },
+   "parking": {
+    "lat": 60.9705,
+    "lon": -149.0982
+   },
+   "summitSource": "Summit 2,750 ft / 838 m (Alyeska Resort, lift-served top)",
+   "baseSource": "Base 250 ft / 76 m (Alyeska Resort)",
+   "wxGroup": 21
   }
  ],
  "cameras": [

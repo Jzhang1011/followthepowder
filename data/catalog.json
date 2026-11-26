@@ -1,6 +1,6 @@
 {
  "version": 1,
- "updated": "2026-11-18",
+ "updated": "2026-11-26",
  "note": "Coordinates and elevations from each resort's Wikipedia infobox (src) unless detail=full (verified in resorts.json) or noted; pass membership from ikonpass.com, epicpass.com and indypass.com for the 2026/27 season. passes:[] = none of Ikon, Epic or Indy. Photos: Wikimedia Commons, licence + author in photo{}; no photo = neutral placeholder.",
  "regions": [
   {
@@ -1147,13 +1147,19 @@
    "summitElevM": 2137,
    "tz": "America/Los_Angeles",
    "url": "https://www.crystalmountainresort.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Crystal_Mountain_(Washington)",
    "report": {
     "p": "mtnpowder",
     "ids": [
      80
     ]
+   },
+   "photo": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/63/Campbell_Basin_ski_run_at_Crystal_Mountain_%287_March_2025%29.jpg/960px-Campbell_Basin_ski_run_at_Crystal_Mountain_%287_March_2025%29.jpg",
+    "credit": "Buidhe",
+    "license": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Campbell_Basin_ski_run_at_Crystal_Mountain_(7_March_2025).jpg"
    }
   },
   {
@@ -1177,7 +1183,7 @@
    "summitElevM": 1652,
    "tz": "America/Los_Angeles",
    "url": "https://www.summitatsnoqualmie.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/The_Summit_at_Snoqualmie",
    "photo": {
     "src": "img/cat/snoqualmie.jpg",
@@ -1189,7 +1195,9 @@
     "p": "reportpal",
     "host": "www.summitatsnoqualmie.com",
     "code": "ss"
-   }
+   },
+   "summitLat": 47.4408708,
+   "summitLon": -121.4328381
   },
   {
    "id": "mt-bachelor",
@@ -1212,7 +1220,7 @@
    "summitElevM": 2763,
    "tz": "America/Los_Angeles",
    "url": "https://www.mtbachelor.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Mount_Bachelor_ski_area",
    "photo": {
     "src": "img/cat/mt-bachelor.jpg",
@@ -1244,8 +1252,14 @@
    "summitElevM": 838,
    "tz": "America/Anchorage",
    "url": "https://www.alyeskaresort.com/",
-   "detail": "basic",
-   "src": "https://en.wikipedia.org/wiki/Alyeska_Resort"
+   "detail": "full",
+   "src": "https://en.wikipedia.org/wiki/Alyeska_Resort",
+   "photo": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/56/Alyeska_Trip.jpg/960px-Alyeska_Trip.jpg",
+    "credit": "Jeff Noble",
+    "license": "CC BY 2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Alyeska_Trip.jpg"
+   }
   },
   {
    "id": "stevens-pass",
@@ -1265,7 +1279,7 @@
    "summitElevM": 1782,
    "tz": "America/Los_Angeles",
    "url": "https://www.stevenspass.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Stevens_Pass_Ski_Area",
    "photo": {
     "src": "img/cat/stevens-pass.jpg",
@@ -1278,7 +1292,9 @@
     "host": "www.stevenspass.com",
     "terrain": "/the-mountain/mountain-conditions/lift-and-terrain-status.aspx",
     "snow": "/the-mountain/mountain-conditions/weather-report.aspx"
-   }
+   },
+   "summitLat": 47.7321886,
+   "summitLon": -121.102198
   },
   {
    "id": "mt-baker",
@@ -1292,13 +1308,13 @@
    "region": "pnw",
    "range": "Cascade Range",
    "passes": [],
-   "lat": 48.862,
-   "lon": -121.654,
+   "lat": 48.86177,
+   "lon": -121.6789,
    "baseElevM": 1067,
    "summitElevM": 1551,
    "tz": "America/Los_Angeles",
    "url": "https://www.mtbaker.us/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Mt._Baker_Ski_Area",
    "photo": {
     "src": "img/cat/mt-baker.jpg",
@@ -1320,15 +1336,27 @@
    "country": "US",
    "region": "pnw",
    "range": "Cascade Range",
-   "passes": [],
+   "passes": [
+    "indy"
+   ],
    "lat": 45.32889,
    "lon": -121.6625,
    "baseElevM": 1379,
    "summitElevM": 2225,
    "tz": "America/Los_Angeles",
    "url": "https://www.skihood.com/",
-   "detail": "basic",
-   "src": "https://en.wikipedia.org/wiki/Mount_Hood_Meadows"
+   "detail": "full",
+   "src": "https://en.wikipedia.org/wiki/Mount_Hood_Meadows",
+   "photo": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/10/Disabled_skier_at_Mt_Hood_Meadows-Mt_Hood_%2825827491143%29.jpg/960px-Disabled_skier_at_Mt_Hood_Meadows-Mt_Hood_%2825827491143%29.jpg",
+    "credit": "U.S. Forest Service",
+    "license": "Public domain",
+    "page": "https://commons.wikimedia.org/wiki/File:Disabled_skier_at_Mt_Hood_Meadows-Mt_Hood_(25827491143).jpg"
+   },
+   "report": {
+    "p": "skihood",
+    "api": "https://www.skihood.com/api/weather/overview"
+   }
   },
   {
    "id": "timberline",
@@ -1349,7 +1377,7 @@
    "summitElevM": 2603,
    "tz": "America/Los_Angeles",
    "url": "https://www.timberlinelodge.com/",
-   "detail": "basic",
+   "detail": "full",
    "src": "https://en.wikipedia.org/wiki/Timberline_Lodge_ski_area",
    "photo": {
     "src": "img/cat/timberline.jpg",

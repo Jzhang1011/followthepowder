@@ -1,9 +1,9 @@
 // Resort discovery (default home) + basic resort view for catalog resorts without a full dashboard.
 // Data: data/catalog.json (static, verified) + api/catalog-conditions.json (Open-Meteo model, refreshed hourly by
 // the ski-data Worker; resort-published base depth / terrain open / lifts / 24 h snow where Follow the Powder reads a public feed) + api/forecast.json?r=<id> (basic view).
-import { fmt, weatherEmoji, chainLevel, recommendFrom, visLevel } from './core.js?v=490f8b8de0';
-import { STR } from './i18n.js?v=490f8b8de0';
-import { getRoute, getTable } from './start.js?v=490f8b8de0';
+import { fmt, weatherEmoji, chainLevel, recommendFrom, visLevel } from './core.js?v=4b3c2ee12c';
+import { STR } from './i18n.js?v=4b3c2ee12c';
+import { getRoute, getTable } from './start.js?v=4b3c2ee12c';
 
 const S = {
   en: {

@@ -19,6 +19,14 @@ export const inMT = ([lon, lat]) => lon >= MT_BOX.w && lon <= MT_BOX.e && lat >=
 export const inID = ([lon, lat]) => lon >= ID_BOX.w && lon <= ID_BOX.e && lat >= ID_BOX.s && lat <= ID_BOX.n;
 export const inNM = ([lon, lat]) => lon >= NM_BOX.w && lon <= NM_BOX.e && lat >= NM_BOX.s && lat <= NM_BOX.n;
 export const inRK = p => inWY(p) || inMT(p) || inID(p) || inNM(p);
+// Pacific Northwest states (one box each — the region spans three states, so no single box fits).
+export const WA_BOX = { w: -124.79, e: -116.91, s: 45.54, n: 49.01 };
+export const OR_BOX = { w: -124.57, e: -116.46, s: 41.99, n: 46.30 };
+export const AK_BOX = { w: -179.15, e: -129.99, s: 51.21, n: 71.44 };
+export const inWA = ([lon, lat]) => lon >= WA_BOX.w && lon <= WA_BOX.e && lat >= WA_BOX.s && lat <= WA_BOX.n;
+export const inOR = ([lon, lat]) => lon >= OR_BOX.w && lon <= OR_BOX.e && lat >= OR_BOX.s && lat <= OR_BOX.n;
+export const inAK = ([lon, lat]) => lon >= AK_BOX.w && lon <= AK_BOX.e && lat >= AK_BOX.s && lat <= AK_BOX.n;
+export const inPNW = p => inWA(p) || inOR(p) || inAK(p);
 
 export function decodePolyline(str, precision = 6) {
   const f = 10 ** precision, out = [];
@@ -56,7 +64,7 @@ const normRef = s => String(s || '').trim().replace(/^([A-Z]{1,3})[\s-]+(\d+[A-Z
  *  OSRM splits CA-88 into "SR-88" then "CA-88" (one road — merge the legs), and "US 40 Hist"
  *  is Donner Pass Road. OSRM also misspells Roxbury Mountain Road as "Roxburry" (Sugarbush approach).
  *  Aliases apply to the leg key only; the raw refs still match events. */
-const REF_ALIAS = { 'SR-88': 'CA-88', 'US 40 Hist': 'Donner Pass Rd', 'Roxburry Mountain Road': 'Roxbury Mountain Road', 'I 84 Business': 'US-20' };
+const REF_ALIAS = { 'SR-88': 'CA-88', 'US 40 Hist': 'Donner Pass Rd', 'Roxburry Mountain Road': 'Roxbury Mountain Road', 'I 84 Business': 'US-20', 'NF-7190': 'Crystal Mountain Blvd' };
 /** First ref of an OSRM step ("I 70; US 6" → "I-70"), else the street name. */
 function stepKey(s) {
   const ref = String(s.ref || '').split(';')[0].trim();
@@ -145,13 +153,17 @@ export function buildRoute(json) {
   // Rockies portion (same shape, for Rockies resorts — the four-state union box)
   const rkFirst = P.findIndex(inRK);
   const startsInRK = inRK(P[0]);
+  // Pacific Northwest portion (same shape, for PNW resorts — the three-state union box)
+  const pnwFirst = P.findIndex(inPNW);
+  const startsInPNW = inPNW(P[0]);
   return {
     pts: P, cum, legOf, legs, durS: r.duration, distM: r.distance,
     bbox: P.reduce((b, p) => [Math.min(b[0], p[0]), Math.min(b[1], p[1]), Math.max(b[2], p[0]), Math.max(b[3], p[1])], [180, 90, -180, -90]),
     startsInCO, coEntry: coFirst, coEntryAlongM: coFirst >= 0 ? cum[coFirst] : null,
     startsInUT, utEntry: utFirst, utEntryAlongM: utFirst >= 0 ? cum[utFirst] : null,
     startsInCA, caEntry: caFirst, caEntryAlongM: caFirst >= 0 ? cum[caFirst] : null,
-    startsInRK, rkEntry: rkFirst, rkEntryAlongM: rkFirst >= 0 ? cum[rkFirst] : null
+    startsInRK, rkEntry: rkFirst, rkEntryAlongM: rkFirst >= 0 ? cum[rkFirst] : null,
+    startsInPNW, pnwEntry: pnwFirst, pnwEntryAlongM: pnwFirst >= 0 ? cum[pnwFirst] : null
   };
 }
 
@@ -249,10 +261,10 @@ export function oppositeDirection(route, i, e) {
 }
 
 /** Turn a route into verdictFor-compatible {segments, legs[], events[]} with synthetic seg ids.
- *  `region` ('UT', 'CA', 'NE', 'RK' or 'CO', default 'CO') decides which state a leg is "outside" of: legs mostly
+ *  `region` ('UT', 'CA', 'NE', 'RK', 'PNW' or 'CO', default 'CO') decides which state a leg is "outside" of: legs mostly
  *  outside the resort's home region get the unknown level (no DOT data there), as Colorado legs do today. */
 export function routeSegments(route, events, startLabel, region) {
-  const inHome = region === 'UT' ? inUT : region === 'CA' ? inCA : region === 'NE' ? inNE : region === 'RK' ? inRK : inCO;
+  const inHome = region === 'UT' ? inUT : region === 'CA' ? inCA : region === 'NE' ? inNE : region === 'RK' ? inRK : region === 'PNW' ? inPNW : inCO;
   const segments = {}, legs = [];
   route.legs.forEach((l, i) => {
     const id = `dyn-${i}`;

@@ -3,13 +3,15 @@ import { openMeteoUrl, splitOpenMeteo, dailyRows, hourlyRows, weatherEmoji, cars
   utahCarsUrl, slimUtahEvents, caRoadsUrl, CA_DISTRICTS, slimCaEvents,
   c2cUrl, slimNeEvents, ny511Url, slimNyEvents, massdotUrl, slimMaEvents,
   slimWyTextEvents, wyoroadTextUrl, mdtGeoUrl, slimMtEvents, nmEventsUrl, slimNmEvents,
-  idahoWzdxUrl, slimIdWzdx, idahoMapIconsUrl, slimIdMapIcons } from './core.js?v=f07107d506';
-import { STR, PACK_DEFAULT } from './i18n.js?v=f07107d506';
-import { selectCameras, routeSegments, inCO, inUT, inRK } from './route.js?v=f07107d506';
-import { dl, initAnalytics, selectResort, resortCompare, forecast, gear, startSet, pageView } from './analytics.js?v=f07107d506';
-import { loadStart, saveStart, closestAirport, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=f07107d506';
-import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=f07107d506';
-import { wearCard } from './wear.js?v=f07107d506';
+  idahoWzdxUrl, slimIdWzdx, idahoMapIconsUrl, slimIdMapIcons,
+  wsdotPassUrl, wsdotAlertsUrl, slimWaPasses, slimWaAlerts, tripcheckUrl, slimOrRoads,
+  alaskaMapIconsUrl, slimAkMapIcons } from './core.js?v=4b3c2ee12c';
+import { STR, PACK_DEFAULT } from './i18n.js?v=4b3c2ee12c';
+import { selectCameras, routeSegments, inCO, inUT, inRK, inPNW } from './route.js?v=4b3c2ee12c';
+import { dl, initAnalytics, selectResort, resortCompare, forecast, gear, startSet, pageView } from './analytics.js?v=4b3c2ee12c';
+import { loadStart, saveStart, closestAirport, isAutoStart, hasManualStart, autoLocate, getRoute, mountStartUI } from './start.js?v=4b3c2ee12c';
+import { initDiscover, loadCatalog, loadConditions, renderDiscover, resolveResort, addRecent, showBasic, renderBasic, renderPlan, renderAlts, catalogReport, catalogResort } from './discover.js?v=4b3c2ee12c';
+import { wearCard } from './wear.js?v=4b3c2ee12c';
 
 const LS = {
   get: (k, d) => { try { const v = localStorage.getItem('ski.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -29,6 +31,9 @@ const state = {
   mtRoads: { data: null, mode: null, at: null }, // {events} from the MDT 511 feeds; null until loaded
   idRoads: { data: null, mode: null, at: null }, // {events} from the Idaho 511 feeds; null until loaded
   nmRoads: { data: null, mode: null, at: null }, // {events} from the NMRoads feeds; null until loaded
+  waRoads: { data: null, mode: null, at: null }, // {events} from the WSDOT feeds; null until loaded
+  orRoads: { data: null, mode: null, at: null }, // {events} from the ODOT TripCheck feeds; null until loaded
+  akRoads: { data: null, mode: null, at: null }, // {events} from the Alaska 511 feeds; null until loaded
   intel: { data: {}, at: null, mode: null }, cams: null, camsAt: null, start: null, routes: {}, camsAll: null, startUI: null, map: null, refreshing: false, lastLive: 0
 };
 
@@ -118,7 +123,7 @@ async function getText(url, ms = 20000) {
 // falling back to the git snapshot (data/*.json, GitHub Action backup). The browser only calls the
 // upstream APIs itself when neither copy is fresh enough (see LIMIT), so visitors share one fetch.
 const API = 'api/';
-const LIMIT = { wx: 180, roads: 30, utahRoads: 30, caRoads: 30, neRoads: 30, wyRoads: 30, mtRoads: 30, idRoads: 30, nmRoads: 30, alerts: 30, intel: 120 }; // minutes before a copy counts as stale
+const LIMIT = { wx: 180, roads: 30, utahRoads: 30, caRoads: 30, neRoads: 30, wyRoads: 30, mtRoads: 30, idRoads: 30, nmRoads: 30, waRoads: 30, orRoads: 30, akRoads: 30, alerts: 30, intel: 120 }; // minutes before a copy counts as stale
 const ageMin = at => { if (!at) return Infinity; const ms = typeof at === 'number' ? at : new Date(String(at).replace(/([+-]\d{2})(\d{2})$/, '$1:$2')).getTime(); return isNaN(ms) ? Infinity : (Date.now() - ms) / 60000; };
 const isStale = slot => !state[slot].data || ageMin(state[slot].at) > LIMIT[slot];
 
@@ -155,6 +160,9 @@ async function loadServer() {
     // Rockies: one source key per state, each into its own slot (same shape as utah/ca above).
     const rkKeys = { 'wy-roads': 'wyRoads', 'mt-roads': 'mtRoads', 'id-roads': 'idRoads', 'nm-roads': 'nmRoads' };
     for (const [k, slot] of Object.entries(rkKeys)) if (src[k]?.ok && s[k]) take(slot, s[k], src[k].fetchedAt, from, src[k].status);
+    // Pacific Northwest: one source key per state, each into its own slot (same shape as the Rockies above).
+    const pnwKeys = { 'wa-roads': 'waRoads', 'or-roads': 'orRoads', 'ak-roads': 'akRoads' };
+    for (const [k, slot] of Object.entries(pnwKeys)) if (src[k]?.ok && s[k]) take(slot, s[k], src[k].fetchedAt, from, src[k].status);
     if (s.alerts && src.alerts?.ok !== false && Object.values(s.alerts).some(v => v)) take('alerts', s.alerts, src.alerts?.fetchedAt, from, src.alerts?.status);
     if (s.cameras) state.cams = s.cameras;
   }
@@ -204,8 +212,28 @@ const rkSlot = r => ({ WY: state.wyRoads, MT: state.mtRoads, ID: state.idRoads, 
 const RK_NO_SLOT = { data: null, mode: null, at: null };
 /** Chain levels exist as data only in Wyoming (WyoRoad CL1/CL2); MT/ID/NM feeds carry none. */
 const rkChainKnown = r => rkState(r) === 'WY';
+/* ---------- Pacific Northwest (region 'PNW'): one road source per state, not one per region ---------- */
+/** Resort state: the resort object carries `state` when the data adds it; until then the
+ *  resort-id map below (research — Crystal, Snoqualmie, Stevens Pass, Mt. Baker WA;
+ *  Mt. Hood Meadows, Timberline, Mt. Bachelor OR; Alyeska AK). */
+const PNW_STATE = { 'crystal': 'WA', 'snoqualmie': 'WA', 'stevens-pass': 'WA', 'mt-baker': 'WA', 'mt-hood-meadows': 'OR', 'timberline': 'OR', 'mt-bachelor': 'OR', 'alyeska': 'AK' };
+const pnwState = r => r?.region === 'PNW' ? (r?.state || PNW_STATE[r?.id] || null) : null;
+/** The road-data slot for one PNW state (WA/OR/AK have different road sources). */
+const pnwSlot = r => ({ WA: state.waRoads, OR: state.orRoads, AK: state.akRoads })[pnwState(r)] || null;
+/** Empty stand-in slot: a PNW resort with no known state shows roads unavailable, never another state's data. */
+const PNW_NO_SLOT = { data: null, mode: null, at: null };
+/** Chain levels exist as data in Washington (WSDOT restriction text) and Oregon (ODOT chain
+ *  codes); Alaska publishes no chain data at all. */
+const pnwChainKnown = r => pnwState(r) === 'WA' || pnwState(r) === 'OR';
+/** Per-state road-source strings + links (research §1: WSDOT, ODOT TripCheck, Alaska 511). */
+const PNW_ROAD_META = {
+  WA: { srcRoads: 'src_roads_wa', src: 'src_wa', gSrc: 'g_src_wa', open: 'open_wa', url: 'https://wsdot.wa.gov/traffic/api/', traffic: 'g_traffic_link_wa', rest: 'rec_src_rest_wa' },
+  OR: { srcRoads: 'src_roads_or', src: 'src_or', gSrc: 'g_src_or', open: 'open_or', url: 'https://tripcheck.com/', traffic: 'g_traffic_link_or', rest: 'rec_src_rest_or' },
+  AK: { srcRoads: 'src_roads_ak', src: 'src_ak', gSrc: 'g_src_ak', open: 'open_ak', url: 'https://511.alaska.gov/', traffic: 'g_traffic_link_ak', rest: 'rec_src_rest_ak' }
+};
+const pnwMeta = r => PNW_ROAD_META[pnwState(r)] || null;
 /** Whether absence of a chain event is positive evidence (go) rather than "not reported". */
-const chainKnownFor = r => r?.region === 'UT' || r?.region === 'NE' ? false : r?.region === 'RK' ? rkChainKnown(r) : true;
+const chainKnownFor = r => r?.region === 'UT' || r?.region === 'NE' ? false : r?.region === 'RK' ? rkChainKnown(r) : r?.region === 'PNW' ? pnwChainKnown(r) : true;
 /** Per-state road-source strings + links (research §1: WYDOT, MDT 511, Idaho 511, NMRoads). */
 const RK_ROAD_META = {
   WY: { srcRoads: 'src_roads_wy', src: 'src_wy', gSrc: 'g_src_wy', open: 'open_wy', url: 'https://www.wyoroad.info/', traffic: 'g_traffic_link_wy', rest: 'rec_src_rest_wy' },
@@ -215,11 +243,11 @@ const RK_ROAD_META = {
 };
 const rkMeta = r => RK_ROAD_META[rkState(r)] || null;
 
-/** The road-data slot for a resort: CDOT for Colorado, UDOT for Utah, Caltrans for California, the three Northeast feeds merged for the Northeast, one slot per state for the Rockies. */
-const roadsSlot = r => r?.region === 'UT' ? state.utahRoads : r?.region === 'CA' ? state.caRoads : r?.region === 'NE' ? state.neRoads : r?.region === 'RK' ? (rkSlot(r) || RK_NO_SLOT) : state.roads;
+/** The road-data slot for a resort: CDOT for Colorado, UDOT for Utah, Caltrans for California, the three Northeast feeds merged for the Northeast, one slot per state for the Rockies and the Pacific Northwest. */
+const roadsSlot = r => r?.region === 'UT' ? state.utahRoads : r?.region === 'CA' ? state.caRoads : r?.region === 'NE' ? state.neRoads : r?.region === 'RK' ? (rkSlot(r) || RK_NO_SLOT) : r?.region === 'PNW' ? (pnwSlot(r) || PNW_NO_SLOT) : state.roads;
 /** The slim events array for a resort's road slot (null when not loaded — the verdict then says roads
  *  are unavailable instead of a false all-clear). */
-const roadsEvents = r => r?.region === 'UT' ? (state.utahRoads.data?.events || null) : r?.region === 'CA' ? (state.caRoads.data?.events || null) : r?.region === 'NE' ? (state.neRoads.data?.events || null) : r?.region === 'RK' ? (rkSlot(r)?.data?.events || null) : state.roads.data;
+const roadsEvents = r => r?.region === 'UT' ? (state.utahRoads.data?.events || null) : r?.region === 'CA' ? (state.caRoads.data?.events || null) : r?.region === 'NE' ? (state.neRoads.data?.events || null) : r?.region === 'RK' ? (rkSlot(r)?.data?.events || null) : r?.region === 'PNW' ? (pnwSlot(r)?.data?.events || null) : state.roads.data;
 
 /** Browser-side direct fetch for one Rockies state (last resort when the worker copy is stale).
  *  Keyless feeds only: the WyoRoad PBF decode and the keyed Idaho 511 API are worker-only and are
@@ -264,6 +292,46 @@ async function rkLiveFallback(cfg, st) {
   } catch (e) { fail(e); }
 }
 
+/** Browser-side direct fetch for one PNW state (last resort when the worker copy is stale).
+ *  Keyless feeds only: the keyed Alaska 511 API is worker-only and is never attempted here.
+ *  If every fetch fails, the slot keeps no data and roads show unavailable — a PNW resort
+ *  NEVER falls through to the CDOT fetch below. NOTE (verified 2026-11-26): none of the three
+ *  PNW feeds sends an Access-Control-Allow-Origin header, so this fallback is currently CORS-
+ *  blocked in the browser and the worker copy (15-min cron) is the real source; the code stays
+ *  so it starts working if the DOTs ever add CORS.
+ *  Assumed core.js signatures (cross-check against the worker agent's exports):
+ *  wsdotPassUrl() / slimWaPasses(cfg, xml); wsdotAlertsUrl() / slimWaAlerts(cfg, kml);
+ *  tripcheckUrl(file) / slimOrRoads(cfg, {rw, incd, event});
+ *  alaskaMapIconsUrl(layer) / slimAkMapIcons(cfg, json, layer). */
+async function pnwLiveFallback(cfg, st) {
+  const slot = { WA: 'waRoads', OR: 'orRoads', AK: 'akRoads' }[st];
+  if (!slot) return;
+  const done = evs => { state[slot] = { data: { events: evs }, mode: 'live', at: new Date().toISOString(), status: 'ok' }; };
+  const fail = e => { state[slot].error = String(e?.message || e); };
+  try {
+    if (st === 'WA') {
+      // Both feeds, either failing throws (same rule as the worker collector): a partial
+      // tick would silently drop the other feed's events, so last good is kept instead.
+      const [passes, alerts] = await Promise.all([
+        getText(wsdotPassUrl(), 30000),
+        getText(wsdotAlertsUrl(), 30000)
+      ]);
+      done([...slimWaPasses(cfg, passes).events, ...slimWaAlerts(cfg, alerts).events]);
+    } else if (st === 'OR') {
+      // TripCheck 406s on application/json — fetch as plain text and parse.
+      const [rw, incd, event] = await Promise.all(['rw', 'INCD', 'EVENT'].map(f => getText(tripcheckUrl(f), 30000).then(JSON.parse)));
+      done(slimOrRoads(cfg, { rw, incd, event }).events);
+    } else if (st === 'AK') {
+      // Keyless only — never the keyed Developer API in the browser. Each layer on its own:
+      // one failing must not drop the others.
+      const parts = await Promise.allSettled(['Closures', 'Incidents', 'Construction'].map(layer => getJson(alaskaMapIconsUrl(layer), 30000).then(j => slimAkMapIcons(cfg, j, layer))));
+      const evs = parts.flatMap(p => p.status === 'fulfilled' ? p.value.events : []);
+      if (parts.some(p => p.status === 'fulfilled')) done(evs);
+      else throw new Error(parts.map(p => String(p.reason?.message || p.reason)).join('; '));
+    }
+  } catch (e) { fail(e); }
+}
+
 /** Last resort: fetch upstream directly, only for sources with no fresh copy. */
 async function loadLiveFallback() {
   const cfg = state.cfg; const jobs = []; const g = wxGroupOf(resort());
@@ -273,8 +341,10 @@ async function loadLiveFallback() {
   const rr = resort().region;
   // The slot whose freshness gates the road fallback. RK resolves per state; an RK resort
   // with no known state gets null and skips the block entirely (roads stay unavailable).
+  // Same for PNW.
   const roadSlotName = rr === 'UT' ? 'utahRoads' : rr === 'CA' ? 'caRoads' : rr === 'NE' ? 'neRoads'
-    : rr === 'RK' ? ({ WY: 'wyRoads', MT: 'mtRoads', ID: 'idRoads', NM: 'nmRoads' })[rkState(resort())] || null : 'roads';
+    : rr === 'RK' ? ({ WY: 'wyRoads', MT: 'mtRoads', ID: 'idRoads', NM: 'nmRoads' })[rkState(resort())] || null
+    : rr === 'PNW' ? ({ WA: 'waRoads', OR: 'orRoads', AK: 'akRoads' })[pnwState(resort())] || null : 'roads';
   if (roadSlotName && isStale(roadSlotName)) {
     if (rr === 'UT') jobs.push(getJson(utahCarsUrl(cfg), 30000)
       .then(j => { state.utahRoads = { data: { events: slimUtahEvents(cfg, j), cameras: [], passes: [] }, mode: 'live', at: new Date().toISOString(), status: 'ok' }; })
@@ -295,6 +365,7 @@ async function loadLiveFallback() {
       else state.neRoads.error = parts.map(p => String(p.reason?.message || p.reason)).join('; ');
     })());
     else if (rr === 'RK') jobs.push(rkLiveFallback(cfg, rkState(resort())));
+    else if (rr === 'PNW') jobs.push(pnwLiveFallback(cfg, pnwState(resort())));
     else jobs.push(Promise.all(EVENT_CLASSES.map(c => getJson(carsUrl(cfg, c), 30000).then(j => slimEvents(cfg, c, j))))
       .then(all => { state.roads = { data: all.flat(), mode: 'live', at: new Date().toISOString(), status: 'ok' }; })
       .catch(e => { state.roads.error = String(e.message || e); }));
@@ -333,14 +404,15 @@ const ctxMemo = new Map();
 function ctxFor(r) {
   const rs = state.routes[r.id];
   if (!rs || rs.status !== 'ok') return null;
-  const ut = r.region === 'UT'; const ca = r.region === 'CA'; const ne = r.region === 'NE'; const rk = r.region === 'RK';
+  const ut = r.region === 'UT'; const ca = r.region === 'CA'; const ne = r.region === 'NE'; const rk = r.region === 'RK'; const pnw = r.region === 'PNW';
   const rkSlotData = rk ? rkSlot(r)?.data : null;
-  const evData = ut ? (state.utahRoads.data?.events || []) : ca ? (state.caRoads.data?.events || []) : ne ? (state.neRoads.data?.events || []) : rk ? (rkSlotData?.events || []) : (state.roads.data || []);
+  const pnwSlotData = pnw ? pnwSlot(r)?.data : null;
+  const evData = ut ? (state.utahRoads.data?.events || []) : ca ? (state.caRoads.data?.events || []) : ne ? (state.neRoads.data?.events || []) : rk ? (rkSlotData?.events || []) : pnw ? (pnwSlotData?.events || []) : (state.roads.data || []);
   // Cameras: the resort state's own feed when the worker copy carries them (UDOT pattern),
   // otherwise the statewide CDOT list — proximity-filtered by selectCameras, so a Rockies
   // route only ever picks up cameras actually near it (e.g. on a Colorado start leg).
   const camData = ut ? (state.utahRoads.data?.cameras || null) : rk ? (rkSlotData?.cameras || state.camsAll) : state.camsAll;
-  const key = `${rs.key}|${ut ? state.utahRoads.at : ca ? state.caRoads.at : ne ? state.neRoads.at : rk ? (rkSlot(r)?.at || null) : state.roads.at}|${camData ? camData.length : 0}`;
+  const key = `${rs.key}|${ut ? state.utahRoads.at : ca ? state.caRoads.at : ne ? state.neRoads.at : rk ? (rkSlot(r)?.at || null) : pnw ? (pnwSlot(r)?.at || null) : state.roads.at}|${camData ? camData.length : 0}`;
   if (ctxMemo.get(r.id)?.key === key) return ctxMemo.get(r.id);
   const route = rs.route;
   const dyn = routeSegments(route, evData, undefined, r.region);
@@ -352,7 +424,9 @@ function ctxFor(r) {
   const leavesUt = route.utEntry >= 0 && route.pts.slice(ue).some(p => !inUT(p));
   const rke = Math.max(0, route.rkEntry);
   const leavesRk = rk && route.rkEntry >= 0 && route.pts.slice(rke).some(p => !inRK(p));
-  const c = { key, route, ...dyn, cams, leaves, leavesUt, leavesRk, camState: !!(ut || (rk && rkSlotData?.cameras)) };
+  const pnwe = Math.max(0, route.pnwEntry);
+  const leavesPnw = pnw && route.pnwEntry >= 0 && route.pts.slice(pnwe).some(p => !inPNW(p));
+  const c = { key, route, ...dyn, cams, leaves, leavesUt, leavesRk, leavesPnw, camState: !!(ut || (rk && rkSlotData?.cameras)) };
   ctxMemo.set(r.id, c);
   return c;
 }
@@ -442,6 +516,11 @@ function reasonText(x) {
   // chainLevel() in core.js only sets the level (caution); the wording lives here, in the
   // event data itself — no other region's chain event contains "Level 1/2" or "CL1/CL2".
   if (x.kind === 'chain' && /level [12]\b|CL[12]/i.test(ev)) return t('r_chain_wy', ev.replace(/\bCL([12])\b/gi, 'Level $1'));
+  // WSDOT / ODOT chain wording arrives as event text ("Traction Tires Advised", "Carry
+  // Chains or Traction Tires", ...): render it in the state's own words, never as Caltrans
+  // R-0..R-3 or Colorado Code 15/16. Gated on the event source, not the wording — CO/CA
+  // chain titles must not fall through to this branch.
+  if (x.kind === 'chain' && (x.ev?.src === 'wa' || x.ev?.src === 'or')) return t('r_chain_pnw', ev);
   switch (x.key) {
     case 'r_heavy_snow': case 'r_snow_ok': return t(x.key, fmt.snow(x.val, u));
     case 'r_wind': case 'r_wind_ok': return t(x.key, fmt.wind(x.val, u));
@@ -470,7 +549,11 @@ function srcOf(x, r) {
     if (es === 'mt') return t('src_mt');
     if (es === 'id') return t('src_id');
     if (es === 'nm') return t('src_nm');
+    if (es === 'wa') return t('src_wa');
+    if (es === 'or') return t('src_or');
+    if (es === 'ak') return t('src_ak');
     if (r.region === 'RK') { const m = rkMeta(r); return m ? t(m.src) : t('src_rk'); }
+    if (r.region === 'PNW') { const m = pnwMeta(r); return m ? t(m.src) : t('src_pnw'); }
     return r.region === 'UT' ? t('src_udot') : r.region === 'CA' ? t('src_caltrans') : r.region === 'NE' ? t('src_ne') : t('src_cdot');
   }
   return x.kind === 'nws' ? t('src_nws') : t('src_om');
@@ -515,7 +598,7 @@ function renderVerdict() {
   $$('#hero-credit').innerHTML = r.photo ? `📷 ${esc(r.photo.credit)} · <a href="${esc(r.photo.page)}" target="_blank" rel="noopener">${esc(r.photo.license)}</a>` : '';
   const bad = [...v.reasons].filter(x => x.level === 'nogo' || x.level === 'caution').sort((a, b) => SEV[a.level] - SEV[b.level]);
   const when = i?.ok ? fmtTime([i.asOf, i.snowAsOf].filter(Boolean).sort((a, b) => ageMin(a) - ageMin(b))[0] || i.fetchedAt) : '';
-  const basis = rec.key === 'rec_noreport' ? (noFeed(r) ? t('intel_nofeed') : t('rec_noreport_sub')) : t('rec_basis', `${t('rec_src_rep', `${i.source?.name || r.short}, ${when}`)}, ${t(r.region === 'UT' ? 'rec_src_rest_ut' : r.region === 'CA' ? 'rec_src_rest_ca' : r.region === 'NE' ? 'rec_src_rest_ne' : r.region === 'RK' ? (rkMeta(r)?.rest || 'rec_src_rest') : 'rec_src_rest')}`);
+  const basis = rec.key === 'rec_noreport' ? (noFeed(r) ? t('intel_nofeed') : t('rec_noreport_sub')) : t('rec_basis', `${t('rec_src_rep', `${i.source?.name || r.short}, ${when}`)}, ${t(r.region === 'UT' ? 'rec_src_rest_ut' : r.region === 'CA' ? 'rec_src_rest_ca' : r.region === 'NE' ? 'rec_src_rest_ne' : r.region === 'RK' ? (rkMeta(r)?.rest || 'rec_src_rest') : r.region === 'PNW' ? (pnwMeta(r)?.rest || 'rec_src_rest') : 'rec_src_rest')}`);
   $('#verdict').innerHTML = UI.rec(rec, bad.map(reasonText), basis);
 
   // A. Mountain conditions
@@ -539,16 +622,20 @@ function renderVerdict() {
   const ca = r.region === 'CA';
   const ne = r.region === 'NE';
   const rk = r.region === 'RK';
+  const pnw = r.region === 'PNW';
   const rkM = rk ? rkMeta(r) : null;
+  const pnwM = pnw ? pnwMeta(r) : null;
   const slot = roadsSlot(r);
-  const roadsOk = ut ? !!state.utahRoads.data?.events : ca ? !!state.caRoads.data?.events : ne ? !!state.neRoads.data?.events : rk ? !!rkSlot(r)?.data?.events : !!state.roads.data;
+  const roadsOk = ut ? !!state.utahRoads.data?.events : ca ? !!state.caRoads.data?.events : ne ? !!state.neRoads.data?.events : rk ? !!rkSlot(r)?.data?.events : pnw ? !!pnwSlot(r)?.data?.events : !!state.roads.data;
   const cnt = kinds => roadCount(v.reasons, kinds, roadsOk);
   const ch0 = cnt(['chain']), cl = cnt(['closure']), inc = cnt(['incident', 'conditions']);
   // Utah feeds carry no chain data, and no Northeast feed reports chain / traction law at all:
   // no chain reason on the route means "not reported", not "none". Same for the Rockies outside
-  // Wyoming: only WYDOT reports chain levels as data (CL1/CL2).
+  // Wyoming: only WYDOT reports chain levels as data (CL1/CL2). Same for Alaska: no chain
+  // data exists at all (WA/OR do report it, so their no-chain reason is a real "none").
   const ch = ((ut || ne) && !v.reasons.some(x => x.kind === 'chain' && x.seg)) ? { cls: 'unknown', txt: t(ne ? 'g_chain_na_ne' : 'g_chain_na') }
     : (rk && rkState(r) !== 'WY' && !v.reasons.some(x => x.kind === 'chain' && x.seg)) ? { cls: 'unknown', txt: t(rkState(r) === 'MT' ? 'g_chain_na_mt' : 'g_chain_na_rk') }
+    : (pnw && pnwState(r) === 'AK' && !v.reasons.some(x => x.kind === 'chain' && x.seg)) ? { cls: 'unknown', txt: t('g_chain_na_ak') }
     : ch0;
   const traffic = ut
     ? `<a href="https://www.udottraffic.utah.gov/" target="_blank" rel="noopener">${esc(t('g_traffic_link_ut'))} ↗</a>`
@@ -561,7 +648,9 @@ function renderVerdict() {
           : `<a href="https://newengland511.org/" target="_blank" rel="noopener">${esc(t('g_traffic_link_ne'))} ↗</a>`)
         : rk && rkM
           ? `<a href="${rkM.url}" target="_blank" rel="noopener">${esc(t(rkM.traffic))} ↗</a>`
-          : `<a href="https://www.cotrip.org/trip-planner" target="_blank" rel="noopener">${esc(t('g_traffic_link'))} ↗</a>`;
+          : pnw && pnwM
+            ? `<a href="${pnwM.url}" target="_blank" rel="noopener">${esc(t(pnwM.traffic))} ↗</a>`
+            : `<a href="https://www.cotrip.org/trip-planner" target="_blank" rel="noopener">${esc(t('g_traffic_link'))} ↗</a>`;
   $$('#getthere').innerHTML = `<ul class="glist">
       ${UI.grow(t('g_dist'), rs?.status === 'ok' ? esc(km(rs.route.distM)) : rs?.status === 'loading' ? `<span class="muted">${esc(t('route_loading'))}</span>` : '—')}
       ${UI.grow(t('g_time'), dur ? `~${esc(dur)}` : '—', '', esc(rs?.status === 'ok' ? t('g_time_note') : dur ? t('g_time_static', L((closestAirport(state.cfg, r) || state.cfg.trip.origin).name)) : ''))}
@@ -569,7 +658,7 @@ function renderVerdict() {
       ${UI.grow(t('g_chain'), esc(ch.txt), ch.cls)}
       ${UI.grow(t('g_closure'), esc(cl.txt), cl.cls)}
       ${UI.grow(t('g_incident'), esc(inc.txt), inc.cls)}
-    </ul><p class="hp-src">${esc(t(ut ? 'g_src_ut' : ca ? 'g_src_ca' : ne ? 'g_src_ne' : rk && rkM ? rkM.gSrc : 'g_src', roadsOk ? ago(slot.at) : t('unavailable')))} · <a href="#roads">${esc(t('g_more'))} ↓</a></p>`;
+    </ul><p class="hp-src">${esc(t(ut ? 'g_src_ut' : ca ? 'g_src_ca' : ne ? 'g_src_ne' : rk && rkM ? rkM.gSrc : pnw && pnwM ? pnwM.gSrc : 'g_src', roadsOk ? ago(slot.at) : t('unavailable')))} · <a href="#roads">${esc(t('g_more'))} ↓</a></p>`;
 
   // What you should know before heading out: Mountain / Road / Weather
   // core.js verdictFor has no RK branch for its two fallbacks: with chainKnown false it emits
@@ -583,7 +672,18 @@ function renderVerdict() {
     if (x.key === 'r_roads_unavailable') return t('r_roads_unavailable_rk');
     return null;
   };
-  const item = x => ({ level: x.level, text: rkFallbackText(x) ?? reasonText(x), src: srcOf(x, r),
+  // Same story for the Pacific Northwest: core.js verdictFor has no PNW branch for its two
+  // fallbacks — with chainKnown false it emits r_chain_unknown_ca ("...for California routes")
+  // for Alaska, and with no road data it emits r_roads_unavailable ("check COtrip"). Rewrite
+  // both here for PNW resorts only; the keys r_chain_unknown_ak / r_roads_unavailable_pnw
+  // exist in i18n.js so a one-line core.js change can emit them directly later.
+  const pnwFallbackText = x => {
+    if (r.region !== 'PNW') return null;
+    if (x.key === 'r_chain_unknown_ca' && pnwState(r) === 'AK') return t('r_chain_unknown_ak');
+    if (x.key === 'r_roads_unavailable') return t('r_roads_unavailable_pnw');
+    return null;
+  };
+  const item = x => ({ level: x.level, text: rkFallbackText(x) ?? pnwFallbackText(x) ?? reasonText(x), src: srcOf(x, r),
     det: [x.seg ? `<b>${esc(segName(r, x.seg))}</b>` : '', x.ev?.detail ? esc(x.ev.detail) : '', x.alert?.headline ? esc(x.alert.headline) : '', x.kind === 'resort' && x.note ? esc(x.note) : ''].filter(Boolean).join('<br>') });
   const groups = ['mountain', 'road', 'weather'].map(g => ({ g, items: v.reasons.filter(x => (GROUP[x.kind] || 'weather') === g).map(item),
     empty: g === 'mountain' ? intelNa(r) : t('unavailable'), note: g === 'weather' ? weatherNote() : '' }));
@@ -731,7 +831,7 @@ function freshness(kind, r) {
     return { cls: stale ? 'stale' : 'ok', text: stale ? t('b_cached', ago(at)) : t('b_report', ago(at)) };
   }
   if (kind === 'roads') {
-    const s = r?.region === 'UT' ? state.utahRoads : r?.region === 'CA' ? state.caRoads : r?.region === 'NE' ? state.neRoads : r?.region === 'RK' ? (rkSlot(r) || RK_NO_SLOT) : state.roads;
+    const s = r?.region === 'UT' ? state.utahRoads : r?.region === 'CA' ? state.caRoads : r?.region === 'NE' ? state.neRoads : r?.region === 'RK' ? (rkSlot(r) || RK_NO_SLOT) : r?.region === 'PNW' ? (pnwSlot(r) || PNW_NO_SLOT) : state.roads;
     if (!s?.data) return { cls: 'na', text: t('b_na') };
     if (ageMin(s.at) > LIMIT.roads || s.status === 'stale') return { cls: 'stale', text: t('b_cached', ago(s.at)) };
     return { cls: 'ok', text: t('b_live', ago(s.at)) };
@@ -788,6 +888,10 @@ function routeNoteHtml(r) {
     // Four state sources cover the Rockies; road status begins at the region boundary.
     if (!c.route.startsInRK) bits.push(`<p class="rnote warn">🗺️ ${esc(t('outside_rk', km(c.route.rkEntryAlongM || 0)))}</p>`);
     if (c.leavesRk) bits.push(`<p class="rnote warn">🗺️ ${esc(t('leaves_rk'))}</p>`);
+  } else if (r.region === 'PNW') {
+    // Three state sources cover the PNW; road status begins at the region boundary.
+    if (!c.route.startsInPNW) bits.push(`<p class="rnote warn">🗺️ ${esc(t('outside_pnw', km(c.route.pnwEntryAlongM || 0)))}</p>`);
+    if (c.leavesPnw) bits.push(`<p class="rnote warn">🗺️ ${esc(t('leaves_pnw'))}</p>`);
   } else {
     if (!c.route.startsInCO) bits.push(`<p class="rnote warn">🗺️ ${esc(t('outside_co', km(c.route.coEntryAlongM || 0)))}</p>`);
     if (c.leaves) bits.push(`<p class="rnote warn">🗺️ ${esc(t('leaves_co'))}</p>`);
@@ -815,7 +919,7 @@ function passBlock(r, c) {
 }
 
 function renderRoads() {
-  const r = resort(); const cfg = state.cfg; const ut = r.region === 'UT'; const ca = r.region === 'CA'; const ne = r.region === 'NE'; const rk = r.region === 'RK'; const rkM = rk ? rkMeta(r) : null;
+  const r = resort(); const cfg = state.cfg; const ut = r.region === 'UT'; const ca = r.region === 'CA'; const ne = r.region === 'NE'; const rk = r.region === 'RK'; const rkM = rk ? rkMeta(r) : null; const pnw = r.region === 'PNW'; const pnwM = pnw ? pnwMeta(r) : null;
   const slot = roadsSlot(r);
   const evs = roadsEvents(r); const el = $('#roads');
   const c = ctxFor(r);
@@ -830,7 +934,7 @@ function renderRoads() {
     const segR = allR.filter(x => x.seg === leg.seg);
     const lvl = !evs || seg.outside ? 'unknown' : !segR.length ? 'go' : segR.some(x => x.level === 'nogo') ? 'nogo' : segR.some(x => x.level === 'caution') ? 'caution' : 'info';
     const nm = c ? `${esc(seg.key)} <small class="muted">· ${km(seg.km * 1000)}</small>` : esc(L(seg.name));
-    const name = `${nm}${seg.outside ? ` <small class="tag">${esc(t(ut ? 'outside_tag_ut' : ca ? 'outside_tag_ca' : ne ? 'outside_tag_ne' : rk ? 'outside_tag_rk' : 'outside_tag'))}</small>` : ''}${leg.alt ? ` <small class="muted">(${esc(t('alt'))})</small>` : ''}`;
+    const name = `${nm}${seg.outside ? ` <small class="tag">${esc(t(ut ? 'outside_tag_ut' : ca ? 'outside_tag_ca' : ne ? 'outside_tag_ne' : rk ? 'outside_tag_rk' : pnw ? 'outside_tag_pnw' : 'outside_tag'))}</small>` : ''}${leg.alt ? ` <small class="muted">(${esc(t('alt'))})</small>` : ''}`;
     return `<li class="rrow"><span class="pill-s p-${PILL[lvl]}">${esc(t(PILL[lvl]))}</span>${list.length
       ? `<details><summary>${name} <small class="muted">· ${list.length}</small></summary><ul class="evs">${list.map(e => `<li>${icon(e)} ${esc(e.tooltip || e.title)}${e.oppDir ? ` <small class="tag">${esc(t('opp_dir'))}</small>` : ''}<br><small class="muted">${esc(e.detail)}</small></li>`).join('')}</ul></details>`
       : `<span>${name}</span>`}</li>`;
@@ -847,14 +951,14 @@ function renderRoads() {
     const camHref = m => (ut || c.camState) ? m.img : `https://www.cotrip.org/camera/${m.id}`;
     camsHtml = c.cams.length ? c.cams.map((m, i) => camTile({ href: camHref(m), img: m.img, name: camShort(m.name), title: m.name, ts: m.ts, broken: m.broken,
       extra: `<i class="num">${i + 1}</i><em class="km">${km(m.along)}</em>` })).join('')
-      : `<p class="muted">${esc(t(ut ? 'cams_none_ut' : ca ? 'cams_none_ca' : ne ? 'cams_none_ne' : rk ? 'cams_none_rk' : 'cams_none'))}</p>`;
+      : `<p class="muted">${esc(t(ut ? 'cams_none_ut' : ca ? 'cams_none_ca' : ne ? 'cams_none_ne' : rk ? 'cams_none_rk' : pnw ? 'cams_none_pnw' : 'cams_none'))}</p>`;
   } else {
     const meta = new Map((state.cams || []).map(x => [x.id, x]));
     const onRoute = new Set(r.route.map(x => x.seg));
     const list = ut ? [] : cfg.cameras.filter(x => onRoute.has(x.seg));
     camCount = list.length;
     camsHtml = list.length ? list.map(x => { const mm = meta.get(x.id); return camTile({ href: `https://www.cotrip.org/camera/${x.id}`, img: mm?.image || x.image, name: camShort(x.name), title: x.name, ts: mm?.ts, broken: mm?.broken }); }).join('')
-      : `<p class="muted">${esc(t(ut ? 'cams_none_ut' : ca ? 'cams_none_ca' : ne ? 'cams_none_ne' : rk ? 'cams_none_rk' : 'cams_none'))}</p>`;
+      : `<p class="muted">${esc(t(ut ? 'cams_none_ut' : ca ? 'cams_none_ca' : ne ? 'cams_none_ne' : rk ? 'cams_none_rk' : pnw ? 'cams_none_pnw' : 'cams_none'))}</p>`;
   }
   const from = c ? L(state.start.name) : L(state.cfg.trip.origin.name);
   const srcLine = ut
@@ -865,6 +969,8 @@ function renderRoads() {
         ? `Tri-State 511 · 511NY · ${slot.data ? `${esc(fmtTime(slot.at))} (${esc(ago(slot.at))})` : esc(t('unavailable'))}${c ? ` · ${esc(t('route_src'))} <a href="https://project-osrm.org/" target="_blank" rel="noopener">OSRM</a> (© OpenStreetMap)` : ''} · <a href="https://newengland511.org/" target="_blank" rel="noopener">${esc(t('open_ne511'))} ↗</a> · <a href="https://511ny.org/" target="_blank" rel="noopener">${esc(t('open_511ny'))} ↗</a>`
       : rk && rkM
         ? `${t(rkM.srcRoads)} · ${slot.data ? `${esc(fmtTime(slot.at))} (${esc(ago(slot.at))})` : esc(t('unavailable'))}${c ? ` · ${esc(t('route_src'))} <a href="https://project-osrm.org/" target="_blank" rel="noopener">OSRM</a> (© OpenStreetMap)` : ''} · <a href="${rkM.url}" target="_blank" rel="noopener">${esc(t(rkM.open))} ↗</a>`
+      : pnw && pnwM
+        ? `${t(pnwM.srcRoads)} · ${slot.data ? `${esc(fmtTime(slot.at))} (${esc(ago(slot.at))})` : esc(t('unavailable'))}${c ? ` · ${esc(t('route_src'))} <a href="https://project-osrm.org/" target="_blank" rel="noopener">OSRM</a> (© OpenStreetMap)` : ''} · <a href="${pnwM.url}" target="_blank" rel="noopener">${esc(t(pnwM.open))} ↗</a>`
         : `CDOT COtrip · ${state.roads.data ? `${esc(fmtTime(state.roads.at))} (${esc(ago(state.roads.at))})` : esc(t('unavailable'))}${c ? ` · ${esc(t('route_src'))} <a href="https://project-osrm.org/" target="_blank" rel="noopener">OSRM</a> (© OpenStreetMap)` : ''} · <a href="https://www.cotrip.org/" target="_blank" rel="noopener">${esc(t('open_cotrip'))} ↗</a> · <a href="https://www.cotrip.org/road-conditions" target="_blank" rel="noopener">${esc(t('cotrip_cond'))} ↗</a>`;
   const driveLink = ut
     ? `<a href="https://www.udottraffic.utah.gov/" target="_blank" rel="noopener">${esc(t('open_udot'))} ↗</a>`
@@ -876,6 +982,8 @@ function renderRoads() {
           : `<a href="https://newengland511.org/" target="_blank" rel="noopener">${esc(t('open_ne511'))} ↗</a>`)
         : rk && rkM
           ? `<a href="${rkM.url}" target="_blank" rel="noopener">${esc(t(rkM.open))} ↗</a>`
+        : pnw && pnwM
+          ? `<a href="${pnwM.url}" target="_blank" rel="noopener">${esc(t(pnwM.open))} ↗</a>`
           : `<a href="https://www.cotrip.org/trip-planner" target="_blank" rel="noopener">${esc(t('cotrip_tt'))} ↗</a>`;
   el.innerHTML = `<div class="sec-h"><h2>${esc(t('roads_h'))}</h2><span class="sub-h">${esc(from)} → ${esc(r.short)}${c ? ` · ${km(c.route.distM)}` : ''}</span>${badge('roads', r)}</div>
     ${routeNoteHtml(r)}
@@ -1010,7 +1118,7 @@ function renderWear() {
 function renderResorts() {
   const sel = resort(); const others = state.cfg.resorts.filter(r => r.id !== sel.id);
   const block = r => `<div class="links"><b>${esc(L(r.name))}</b>
-      <a href="${esc(r.links.webcams)}" target="_blank" rel="noopener">${esc(t('official'))} ↗</a>
+      ${r.links.webcams ? `<a href="${esc(r.links.webcams)}" target="_blank" rel="noopener">${esc(t('official'))} ↗</a>` : ''}
       <a href="${esc(r.links.report)}" target="_blank" rel="noopener">${esc(t('report'))} ↗</a></div>
     <div class="thumbs">${(r.webcams || []).map(w => w.youtube
       ? `<div class="thumb yt" data-yt="${esc(w.youtube)}" role="button" tabindex="0" aria-label="${esc(t('play'))}"><img loading="lazy" alt="" src="https://i.ytimg.com/vi/${esc(w.youtube)}/hqdefault_live.jpg"><b class="play">▶</b><span>${esc(L(w.name))}</span></div>`
@@ -1056,10 +1164,10 @@ function renderSources() {
   const via = m => t(m === 'live' ? 'via_live' : m === 'server' ? 'via_server' : 'via_snapshot');
   const cls = f => f.cls === 'ok' ? 'ok' : f.cls === 'stale' ? 'snap' : 'bad';
   const r = resort();
-  const item = (k, slot, rr) => { const f = freshness(slot, rr), s = (slot === 'roads' && rr?.region === 'UT') ? state.utahRoads : (slot === 'roads' && rr?.region === 'CA') ? state.caRoads : (slot === 'roads' && rr?.region === 'NE') ? state.neRoads : (slot === 'roads' && rr?.region === 'RK') ? (rkSlot(rr) || RK_NO_SLOT) : state[slot];
+  const item = (k, slot, rr) => { const f = freshness(slot, rr), s = (slot === 'roads' && rr?.region === 'UT') ? state.utahRoads : (slot === 'roads' && rr?.region === 'CA') ? state.caRoads : (slot === 'roads' && rr?.region === 'NE') ? state.neRoads : (slot === 'roads' && rr?.region === 'RK') ? (rkSlot(rr) || RK_NO_SLOT) : (slot === 'roads' && rr?.region === 'PNW') ? (pnwSlot(rr) || PNW_NO_SLOT) : state[slot];
     return `<span class="${cls(f)}">${esc(t(k))}: ${esc(f.text)}${s.data ? ` · ${esc(fmtTime(s.at))} · ${esc(via(s.mode))}` : ''}</span>`; };
   const fi = freshness('intel', r);
-  const roadsItem = r?.region === 'CA' ? item('src_roads_ca', 'roads', r) : r?.region === 'NE' ? item('src_roads_ne', 'roads', r) : r?.region === 'RK' ? item(rkMeta(r)?.srcRoads || 'src_roads', 'roads', r) : item(r?.region === 'UT' ? 'src_roads_ut' : 'src_roads', 'roads', r);
+  const roadsItem = r?.region === 'CA' ? item('src_roads_ca', 'roads', r) : r?.region === 'NE' ? item('src_roads_ne', 'roads', r) : r?.region === 'RK' ? item(rkMeta(r)?.srcRoads || 'src_roads', 'roads', r) : r?.region === 'PNW' ? item(pnwMeta(r)?.srcRoads || 'src_roads', 'roads', r) : item(r?.region === 'UT' ? 'src_roads_ut' : 'src_roads', 'roads', r);
   $('#sources').innerHTML = roadsItem + item('src_weather', 'wx') + item('src_alerts', 'alerts')
     + `<span class="${cls(fi)}">${esc(t('intel_h'))}: ${esc(fi.text)}${state.intel.at ? ` · ${esc(fmtTime(state.intel.at))} · ${esc(via(state.intel.mode))}` : ''}</span>`
     + (state.camsAt ? `<span class="${ageMin(state.camsAt) > 60 ? 'snap' : 'ok'}">${esc(t('cameras'))}: ${esc(t('cam_list'))} ${esc(ago(state.camsAt))}</span>` : '');
